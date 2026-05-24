@@ -4482,20 +4482,9 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v72', date:'23/05/2569', items:['แก้ delete: patients PK = hn (ไม่ใช่ id)','แก้ find/badge/tier ให้รองรับ hn'] },
-  { ver:'v71', date:'23/05/2569', items:['แก้ลบผู้ป่วย: data-* ปลอดภัยกับชื่อไทย','แก้ settings API update ถูกต้อง'] },
-  { ver:'v70', date:'23/05/2569', items:['หน้ารักษา โหลด 4 คนล่าสุด','herb โหลด 20 ล่าสุด + ปุ่มดูทั้งหมด'] },
-  { ver:'v69', date:'23/05/2569', items:['badge ประเภทผู้ป่วยอัตโนมัติ 4 ระดับ (ใหม่/เก่า/ประจำ/VIP)'] },
-  { ver:'v68', date:'23/05/2569', items:['badge เก่า(ทอง) เมื่อผู้ป่วยใหม่มีประวัติแล้ว'] },
-  { ver:'v67', date:'23/05/2569', items:['sidebar changelog 8 versions ครบ'] },
-  { ver:'v66', date:'23/05/2569', items:['หน้ารักษา แบ่ง 50/50 นัดวันนี้ + ค้นหา','herb search แยก fresh/medi'] },
-  { ver:'v65', date:'23/05/2569', items:['sidebar changelog แสดง 2 version ล่าสุด'] },
-  { ver:'v64', date:'23/05/2569', items:['sidebar changelog widget + ลบด้วยรหัส 000000'] },
-  { ver:'v63', date:'23/05/2569', items:['ปุ่มแก้ไข pill มาตรฐานทุกที่'] },
-  { ver:'v62', date:'23/05/2569', items:['มูลค่าสต็อกสมุนไพรแสดงค่าจริงทันที'] },
-  { ver:'v61', date:'23/05/2569', items:['Today appt box ในหน้าบันทึกรักษา','ปุ่มแก้ไขใน appt-card'] },
-  { ver:'v60', date:'23/05/2569', items:['SearchX convention ทุกช่องค้นหา','แก้ delete bug ชื่อภาษาไทย'] },
-  { ver:'v59', date:'23/05/2569', items:['Custom Date Picker ↑↓ วัน/เดือน/ปี','Appt View/Edit modal'] },
+  { ver:'v3', date:'25/05/2569', items:['Face Recognition ผ่าน Webcam (face-api.js)','บันทึกใบหน้า + ค้นหาผู้ป่วยจากใบหน้า Top-3'] },
+  { ver:'v2', date:'25/05/2569', items:['วันที่ auto-detect พ.ศ./ค.ศ. แสดงผล พ.ศ. ทุกที่','ID Card Reader (USB HID) ปุ่มทางเลือก'] },
+  { ver:'v1', date:'25/05/2569', items:['เตือนนัดซ้ำใน Dashboard ภาพรวม','backup superclinic-vXX อัตโนมัติทุก push'] },
 ];
 
 function renderSidebarChangelog(){
