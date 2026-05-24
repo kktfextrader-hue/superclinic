@@ -496,7 +496,6 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
     <a class="nav-item" onclick="showPage('reports',this)"><i class="ti ti-chart-bar"></i>รายงาน & สถิติ</a>
     <a class="nav-item" onclick="showPage('finance',this)"><i class="ti ti-receipt"></i>การเงิน</a>
     <a class="nav-item" onclick="showPage('settings',this)"><i class="ti ti-settings"></i>ตั้งค่าระบบ</a>
-    <a class="nav-item" onclick="showPage('features',this)"><i class="ti ti-adjustments-horizontal"></i>ตั้งค่าฟังก์ชัน</a>
   </nav>
 
   <div class="sidebar-divider"></div>
@@ -1214,59 +1213,32 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
         </div>
       </div>
     </div>
-  </div>
-</section>
 
 
-<section class="page" id="page-features">
-  <div class="page-header">
-    <div class="page-h1">🔧 ตั้งค่าฟังก์ชันการทำงาน</div>
-    <div class="page-sub">เปิด/ปิดฟังก์ชันพิเศษของระบบ</div>
-  </div>
-  <div style="max-width:600px;">
-    <div class="card">
-      <div class="card-head"><div class="card-title"><i class="ti ti-cpu"></i>ฟังก์ชันขั้นสูง</div></div>
+    <!-- Feature Toggles -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head"><div class="card-title"><i class="ti ti-cpu"></i>ฟังก์ชันการทำงาน</div></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:0;">
-
-        <!-- Face Recognition -->
-        <div class="setting-row" style="padding:18px 0;border-bottom:1px solid rgba(0,0,0,0.07);">
+        <div class="setting-row" style="padding:14px 0;border-bottom:1px solid rgba(0,0,0,0.07);">
           <div style="flex:1;">
-            <div class="setting-label" style="font-size:15px;">
-              <i class="ti ti-face-id" style="color:var(--g1);margin-right:6px;"></i>ระบบจดจำใบหน้า
-            </div>
-            <div class="setting-sub" style="margin-top:4px;">ใช้กล้อง Webcam บันทึก & ค้นหาผู้ป่วยจากใบหน้า<br>
-              <span id="feat-face-status" style="font-size:11px;color:var(--g2);"></span>
-            </div>
+            <div class="setting-label"><i class="ti ti-face-id" style="color:var(--g1);margin-right:6px;"></i>ระบบจดจำใบหน้า</div>
+            <div class="setting-sub">ใช้กล้อง Webcam บันทึก & ค้นหาผู้ป่วยจากใบหน้า &nbsp;<span id="feat-face-status" style="font-size:11px;"></span></div>
           </div>
           <button id="toggle-face" class="toggle" onclick="toggleFeature('face')"></button>
         </div>
-
-        <!-- ID Card Reader -->
-        <div class="setting-row" style="padding:18px 0;">
+        <div class="setting-row" style="padding:14px 0;">
           <div style="flex:1;">
-            <div class="setting-label" style="font-size:15px;">
-              <i class="ti ti-credit-card" style="color:var(--g1);margin-right:6px;"></i>ระบบอ่านบัตรประชาชน
-            </div>
-            <div class="setting-sub" style="margin-top:4px;">อ่านข้อมูลจากบัตรประชาชนผ่านเครื่องอ่าน USB HID<br>
-              <span id="feat-idcard-status" style="font-size:11px;color:var(--g2);"></span>
-            </div>
+            <div class="setting-label"><i class="ti ti-credit-card" style="color:var(--g1);margin-right:6px;"></i>ระบบอ่านบัตรประชาชน</div>
+            <div class="setting-sub">อ่านข้อมูลจากบัตรประชาชนผ่านเครื่องอ่าน USB HID &nbsp;<span id="feat-idcard-status" style="font-size:11px;"></span></div>
           </div>
           <button id="toggle-idcard" class="toggle" onclick="toggleFeature('idcard')"></button>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:16px;background:rgba(47,93,80,0.04);border:1px solid rgba(47,93,80,0.12);">
-      <div class="card-body" style="padding:14px 18px;">
-        <div style="font-size:12px;color:#888;line-height:1.8;">
-          <i class="ti ti-info-circle" style="color:var(--g1);margin-right:4px;"></i>
-          การตั้งค่าเหล่านี้จะถูกจดจำไว้ในเครื่อง — ปุ่มเปิด/ปิดในแต่ละหน้าจะแสดงตามการตั้งค่านี้
         </div>
       </div>
     </div>
   </div>
 </section>
+
+
 
 </main>
 </div>
@@ -1290,8 +1262,7 @@ const titles = {
   stock:'📦 จัดการสต็อก',
   reports:'📊 รายงาน & สถิติ',
   finance:'💰 การเงิน',
-  settings:'⚙️ ตั้งค่าระบบ',
-  features:'🔧 ตั้งค่าฟังก์ชันการทำงาน'
+  settings:'⚙️ ตั้งค่าระบบ'
 };
 
 function checkFinancePw(){
@@ -2157,7 +2128,8 @@ function viewPatient(id){
         </div>
       </div>`:''}
     </div>`,
-    `<button class="btn btn-outline" onclick="closeModal()">ปิด</button>
+    `<button class="btn btn-outline" onclick="closeModal()" style="margin-right:auto;">ปิด</button>
+     <button class="btn btn-outline" onclick="" style="border-color:var(--g1);color:var(--g1);gap:6px;"><i class="ti ti-certificate"></i>ออกใบรับรองแพทย์</button>
      <button class="btn btn-green" onclick="closeModal();goRegisterWithPatient('${id}')"><i class="ti ti-clipboard-list"></i>ลงทะเบียน</button>
      <button class="btn-edit" onclick="closeModal();openEditPatient('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>`
   );
@@ -3754,9 +3726,11 @@ function renderStockTable(filter){
       <td>${h.min_quantity||0} ${h.unit||''}</td>
       <td>฿${h.cost_per_unit||0}/${h.unit||''}</td>
       <td>${badgeHerb(h.status)}</td>
-      <td>${isLow
-        ?`<button class="btn btn-primary btn-sm" onclick="openAdjStock('${hid}')"><i class="ti ti-shopping-cart"></i>สั่งซื้อ</button>`
-        :`<button class="btn-edit" onclick="openAdjStock('${hid}')"><i class="ti ti-pencil"></i>แก้ไข</button>`}
+      <td style="white-space:nowrap;">
+        ${isLow
+          ?`<button class="btn btn-primary btn-sm" onclick="openAdjStock('${hid}')"><i class="ti ti-shopping-cart"></i>สั่งซื้อ</button>`
+          :`<button class="btn-edit" onclick="openAdjStock('${hid}')"><i class="ti ti-pencil"></i>แก้ไข</button>`}
+        <button class="btn btn-outline btn-sm" onclick="printHerbLabel('${hid}')" style="margin-left:4px;border-color:var(--g1);color:var(--g1);padding:4px 8px;font-size:11px;"><i class="ti ti-printer"></i>พิมพ์ฉลากยา</button>
       </td>
     </tr>`;
   }).join('');
@@ -5090,6 +5064,16 @@ function syncFeatureButtons() {
 // เรียกตอน DOMContentLoaded (เพิ่มใน boot)
 function initFeatures() {
   syncFeatureButtons();
+}
+</script>
+
+
+<script>
+function printHerbLabel(herbId) {
+  const h = allHerbs.find(x => (x.id||'') === herbId);
+  if (!h) { showToast('ไม่พบข้อมูลสินค้า', 'error'); return; }
+  showToast('🖨️ เตรียมพิมพ์ฉลาก: ' + (h.name_th || herbId));
+  // TODO: เพิ่ม template ฉลากยาในอนาคต
 }
 </script>
 
