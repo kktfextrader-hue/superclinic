@@ -721,7 +721,9 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     <!-- ค้นหาผู้ป่วย -->
     <div class="card">
-      <div class="card-head"><div class="card-title"><i class="ti ti-search"></i>ค้นหาผู้ป่วย</div></div>
+      <div class="card-head"><div class="card-title"><i class="ti ti-search"></i>ค้นหาผู้ป่วย</div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="openIdCardReader('register')" style="gap:6px;font-size:12px;border-color:var(--go);color:var(--g1);"><i class="ti ti-credit-card" style="font-size:14px;"></i>อ่านบัตร ปชช.</button>
+      </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
         <div class="search-wrap" style="width:100%;"><i class="ti ti-search"></i><input id="reg-search" class="search-input" style="width:100%;" placeholder="ค้นหาชื่อ / HN / เบอร์โทร..." oninput="searchRegPatient(this.value)" onkeydown="regSearchKeyNav(event)"></div>
         <div id="reg-search-result" style="max-height:320px;overflow-y:auto;"></div>
@@ -2253,6 +2255,9 @@ function goRegisterWithPatient(patId){
 
 function openAddPatient(prefillName){
   openModal('➕ เพิ่มผู้ป่วยใหม่',`
+    <div style="text-align:right;margin-bottom:8px;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="openIdCardReader('addpatient')" style="gap:6px;font-size:12px;border-color:var(--go);color:var(--g1);"><i class="ti ti-credit-card" style="font-size:14px;"></i>อ่านบัตร ปชช. อัตโนมัติ</button>
+    </div>
     <form id="fp-add" style="display:flex;flex-direction:column;gap:14px;" onsubmit="submitAddPatient(event)">
 
       <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);border-bottom:1px solid rgba(200,169,107,.2);padding-bottom:6px;">ข้อมูลส่วนตัว</div>
@@ -2705,7 +2710,16 @@ function openAddAppt(){
       #appt-pat-suggestions div.ac-focused{background:#f5f0e8;}
       #appt-pat-suggestions div:hover{background:#f5f0e8;}
       #appt-pat-suggestions .new-patient-opt{color:var(--g1);font-weight:600;border-top:1px solid #eee;}
-    </style>
+  
+    /* ID Card Reader */
+    .idcard-reader-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;}
+    .idcard-reader-box{background:#fff;border-radius:16px;padding:28px 32px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;}
+    .idcard-reader-box h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--g1);margin-bottom:6px;}
+    .idcard-reader-box p{font-size:13px;color:#888;margin-bottom:18px;}
+    .idcard-icon{font-size:52px;margin-bottom:12px;animation:cardPulse 1.2s ease-in-out infinite;}
+    @keyframes cardPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.08);opacity:.75;}}
+    #idcard-hidden-input{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;}
+  </style>
     <form id="form-add-appt" onsubmit="submitAddAppt(event)" style="display:flex;flex-direction:column;gap:14px;">
       <div class="form-group" style="position:relative;">
         <label class="form-label">ผู้ป่วย <span style="color:var(--er)">*</span></label>
