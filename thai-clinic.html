@@ -73,7 +73,7 @@
 html,body{height:100%;font-family:'Sarabun',sans-serif;background:var(--cr);color:var(--dt);}
 
 /* ── LAYOUT ── */
-.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:60px 1fr;height:100vh;overflow:hidden;}
+.app{display:grid;grid-template-columns:260px 1fr;grid-template-rows:60px 1fr;height:100vh;overflow:hidden;}
 
 /* ── SIDEBAR ── */
 .sidebar{
@@ -87,14 +87,70 @@ html,body{height:100%;font-family:'Sarabun',sans-serif;background:var(--cr);colo
   content:'';position:absolute;inset:0;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='none' stroke='%23E5D3A3' stroke-width='0.4' opacity='0.10'%3E%3Cpath d='M30 5 Q42 18 30 28 Q18 18 30 5z'/%3E%3Cpath d='M30 32 Q42 45 30 55 Q18 45 30 32z'/%3E%3Cpath d='M5 30 Q18 18 28 30 Q18 42 5 30z'/%3E%3Cpath d='M32 30 Q45 18 55 30 Q45 42 32 30z'/%3E%3C/g%3E%3C/svg%3E") repeat;
 }
-.logo-area{padding:28px 20px 20px;border-bottom:1px solid rgba(200,169,107,0.25);position:relative;flex-shrink:0;overflow:hidden;}
-.logo-area-bg{position:absolute;inset:0;pointer-events:none;opacity:0.18;}
-.logo-wrap{display:flex;align-items:center;gap:13px;position:relative;z-index:1;}
-.logo-icon{width:48px;height:48px;background:var(--grad-gold);border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(200,169,107,0.55);flex-shrink:0;position:relative;overflow:hidden;}
-.logo-icon svg{width:28px;height:28px;}
-.logo-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;letter-spacing:0.04em;line-height:1.1;background:linear-gradient(135deg,#F5DFA0 0%,#C8A96B 40%,#E8C97A 60%,#A67C3A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;}
-.logo-name-en{font-family:'Cormorant Garamond',serif;font-size:9.5px;font-weight:400;color:rgba(229,211,163,0.5);letter-spacing:0.22em;text-transform:uppercase;margin-top:3px;display:block;}
-.logo-sub{font-size:9px;font-weight:300;color:rgba(229,211,163,0.45);letter-spacing:0.1em;text-transform:uppercase;margin-top:1px;}
+.logo-area{
+  padding:0;border-bottom:none;position:relative;flex-shrink:0;overflow:hidden;
+  background:linear-gradient(180deg,rgba(200,169,107,0.08) 0%,rgba(200,169,107,0.02) 100%);
+}
+.logo-area-inner{
+  padding:28px 20px 24px;position:relative;z-index:2;
+}
+.logo-area-vector{
+  position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;
+}
+/* Gold shimmer animation */
+@keyframes goldShimmer{
+  0%{background-position:200% center;}
+  100%{background-position:-200% center;}
+}
+@keyframes fadeGlow{
+  0%,100%{opacity:0.55;} 50%{opacity:1;}
+}
+.logo-emblem{
+  width:76px;height:76px;margin:0 auto 16px;
+  background:linear-gradient(145deg,#1a3d32,#2F5D50,#1a3d32);
+  border-radius:20px;
+  box-shadow:0 0 0 1px rgba(200,169,107,0.5),0 0 0 3px rgba(200,169,107,0.12),0 8px 32px rgba(0,0,0,0.4),inset 0 1px 0 rgba(200,169,107,0.2);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.logo-emblem::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(200,169,107,0.15) 0%,transparent 50%,rgba(200,169,107,0.08) 100%);
+}
+.logo-emblem svg{width:46px;height:46px;position:relative;z-index:1;}
+.logo-title-wrap{text-align:center;}
+.logo-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:26px;font-weight:700;
+  letter-spacing:0.15em;line-height:1;
+  background:linear-gradient(90deg,#8B6914 0%,#C8A96B 20%,#F5DFA0 40%,#E8C97A 50%,#F5DFA0 60%,#C8A96B 80%,#8B6914 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:goldShimmer 5s linear infinite;
+  display:block;
+}
+.logo-rule{
+  width:100%;height:1px;margin:10px 0 9px;
+  background:linear-gradient(90deg,transparent,rgba(200,169,107,0.7),transparent);
+  position:relative;
+}
+.logo-rule::before{
+  content:'✦';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:8px;color:#C8A96B;line-height:1;
+  background:#2F5D50;padding:0 4px;
+}
+.logo-name-en{
+  font-family:'Cormorant Garamond',serif;
+  font-size:10px;font-weight:400;
+  color:rgba(229,211,163,0.6);
+  letter-spacing:0.3em;text-transform:uppercase;
+  display:block;text-align:center;
+}
+.logo-border-bottom{
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,169,107,0.55),transparent);
+  margin-top:22px;
+}
 .gold-divider{height:1px;background:linear-gradient(90deg,transparent,#C8A96B,transparent);margin-top:14px;opacity:0.4;}
 
 nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position:relative;}
@@ -320,61 +376,108 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="logo-area">
-    <!-- Luxury background vector -->
-    <svg class="logo-area-bg" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;">
+    <!-- Full luxury background vector -->
+    <svg class="logo-area-vector" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
       <defs>
-        <linearGradient id="goldLine" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="lgH" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stop-color="#C8A96B" stop-opacity="0"/>
-          <stop offset="50%" stop-color="#C8A96B" stop-opacity="1"/>
+          <stop offset="50%" stop-color="#C8A96B" stop-opacity="0.9"/>
           <stop offset="100%" stop-color="#C8A96B" stop-opacity="0"/>
         </linearGradient>
+        <radialGradient id="lgR" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#C8A96B" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#C8A96B" stop-opacity="0"/>
+        </radialGradient>
       </defs>
-      <!-- Corner ornament top-right -->
-      <g stroke="#C8A96B" stroke-width="0.6" fill="none" opacity="0.7">
-        <path d="M170 5 L215 5 L215 50" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M180 5 L215 5 L215 40" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
-        <circle cx="215" cy="5" r="2.5" fill="#C8A96B" opacity="0.8"/>
+      <!-- Radial glow center -->
+      <ellipse cx="110" cy="80" rx="90" ry="60" fill="url(#lgR)"/>
+      <!-- Top-left corner bracket -->
+      <g stroke="#C8A96B" stroke-width="1" fill="none" opacity="0.6" stroke-linecap="round">
+        <polyline points="6,22 6,6 22,6"/>
+        <polyline points="10,22 10,10 22,10"/>
+        <circle cx="6" cy="6" r="1.5" fill="#C8A96B"/>
       </g>
-      <!-- Corner ornament bottom-left -->
-      <g stroke="#C8A96B" stroke-width="0.6" fill="none" opacity="0.5">
-        <path d="M5 65 L5 105 L50 105" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M5 75 L5 105 L40 105" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
-        <circle cx="5" cy="105" r="2" fill="#C8A96B" opacity="0.7"/>
+      <!-- Top-right corner bracket -->
+      <g stroke="#C8A96B" stroke-width="1" fill="none" opacity="0.6" stroke-linecap="round">
+        <polyline points="198,22 198,6 214,6"/>
+        <polyline points="198,10 210,10 210,22"/>
+        <circle cx="214" cy="6" r="1.5" fill="#C8A96B"/>
       </g>
-      <!-- Central lotus/floral motif -->
-      <g transform="translate(110,55)" stroke="#C8A96B" stroke-width="0.5" fill="none" opacity="0.6">
-        <path d="M0,-22 C6,-14 6,-6 0,0 C-6,-6 -6,-14 0,-22z"/>
-        <path d="M0,22 C6,14 6,6 0,0 C-6,6 -6,14 0,22z"/>
-        <path d="M-22,0 C-14,-6 -6,-6 0,0 C-6,6 -14,6 -22,0z"/>
-        <path d="M22,0 C14,-6 6,-6 0,0 C6,6 14,6 22,0z"/>
-        <path d="M-15,-15 C-8,-12 -4,-8 0,0 C-4,-4 -10,-6 -15,-15z" opacity="0.5"/>
-        <path d="M15,-15 C8,-12 4,-8 0,0 C4,-4 10,-6 15,-15z" opacity="0.5"/>
-        <path d="M-15,15 C-8,12 -4,8 0,0 C-4,4 -10,6 -15,15z" opacity="0.5"/>
-        <path d="M15,15 C8,12 4,8 0,0 C4,4 10,6 15,15z" opacity="0.5"/>
-        <circle cx="0" cy="0" r="3" fill="#C8A96B" opacity="0.4"/>
-        <circle cx="0" cy="0" r="1.2" fill="#C8A96B" opacity="0.9"/>
+      <!-- Bottom-left corner bracket -->
+      <g stroke="#C8A96B" stroke-width="1" fill="none" opacity="0.4" stroke-linecap="round">
+        <polyline points="6,138 6,154 22,154"/>
+        <polyline points="10,138 10,150 22,150"/>
+        <circle cx="6" cy="154" r="1.5" fill="#C8A96B"/>
       </g>
-      <!-- Thin decorative lines -->
-      <line x1="0" y1="108" x2="220" y2="108" stroke="url(#goldLine)" stroke-width="0.5"/>
+      <!-- Bottom-right corner bracket -->
+      <g stroke="#C8A96B" stroke-width="1" fill="none" opacity="0.4" stroke-linecap="round">
+        <polyline points="198,138 198,154 214,154"/>
+        <polyline points="198,150 210,150 210,138"/>
+        <circle cx="214" cy="154" r="1.5" fill="#C8A96B"/>
+      </g>
+      <!-- Top horizontal rule with diamonds -->
+      <line x1="30" y1="18" x2="90" y2="18" stroke="#C8A96B" stroke-width="0.5" opacity="0.4"/>
+      <polygon points="110,14 114,18 110,22 106,18" fill="none" stroke="#C8A96B" stroke-width="0.7" opacity="0.7"/>
+      <line x1="130" y1="18" x2="190" y2="18" stroke="#C8A96B" stroke-width="0.5" opacity="0.4"/>
+      <!-- Lotus ornament left -->
+      <g transform="translate(26,80)" stroke="#C8A96B" stroke-width="0.7" fill="none" opacity="0.45">
+        <path d="M0,-14 C4,-8 4,0 0,4 C-4,0 -4,-8 0,-14z"/>
+        <path d="M0,14 C4,8 4,0 0,-4 C-4,0 -4,8 0,14z" opacity="0.6"/>
+        <path d="M-14,0 C-8,-4 0,-4 4,0 C0,4 -8,4 -14,0z" opacity="0.6"/>
+        <path d="M14,0 C8,-4 0,-4 -4,0 C0,4 8,4 14,0z" opacity="0.6"/>
+        <circle cx="0" cy="0" r="2" fill="#C8A96B" opacity="0.5"/>
+      </g>
+      <!-- Lotus ornament right -->
+      <g transform="translate(194,80)" stroke="#C8A96B" stroke-width="0.7" fill="none" opacity="0.45">
+        <path d="M0,-14 C4,-8 4,0 0,4 C-4,0 -4,-8 0,-14z"/>
+        <path d="M0,14 C4,8 4,0 0,-4 C-4,0 -4,8 0,14z" opacity="0.6"/>
+        <path d="M-14,0 C-8,-4 0,-4 4,0 C0,4 -8,4 -14,0z" opacity="0.6"/>
+        <path d="M14,0 C8,-4 0,-4 -4,0 C0,4 8,4 14,0z" opacity="0.6"/>
+        <circle cx="0" cy="0" r="2" fill="#C8A96B" opacity="0.5"/>
+      </g>
+      <!-- Dotted side lines -->
+      <line x1="18" y1="32" x2="18" y2="128" stroke="#C8A96B" stroke-width="0.4" stroke-dasharray="2,5" opacity="0.3"/>
+      <line x1="202" y1="32" x2="202" y2="128" stroke="#C8A96B" stroke-width="0.4" stroke-dasharray="2,5" opacity="0.3"/>
+      <!-- Bottom rule -->
+      <line x1="0" y1="158" x2="220" y2="158" stroke="url(#lgH)" stroke-width="0.8"/>
     </svg>
-    <div class="logo-wrap">
-      <div class="logo-icon">
-        <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" fill="none">
-          <!-- Lotus icon -->
-          <path d="M14 4 C17 8 17 12 14 14 C11 12 11 8 14 4z" fill="#2F5D50" opacity="0.9"/>
-          <path d="M14 24 C17 20 17 16 14 14 C11 16 11 20 14 24z" fill="#2F5D50" opacity="0.7"/>
-          <path d="M4 14 C8 11 12 11 14 14 C12 17 8 17 4 14z" fill="#2F5D50" opacity="0.7"/>
-          <path d="M24 14 C20 11 16 11 14 14 C16 17 20 17 24 14z" fill="#2F5D50" opacity="0.7"/>
-          <circle cx="14" cy="14" r="2.5" fill="#2F5D50"/>
-          <circle cx="14" cy="14" r="1" fill="rgba(47,93,80,0.5)"/>
+
+    <div class="logo-area-inner">
+      <!-- Emblem / icon -->
+      <div class="logo-emblem">
+        <svg viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <defs>
+            <linearGradient id="petalGold" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#F5DFA0"/>
+              <stop offset="50%" stop-color="#C8A96B"/>
+              <stop offset="100%" stop-color="#8B6914"/>
+            </linearGradient>
+          </defs>
+          <!-- 8-petal lotus -->
+          <path d="M19 3 C22 9 22 15 19 19 C16 15 16 9 19 3z" fill="url(#petalGold)" opacity="0.95"/>
+          <path d="M19 35 C22 29 22 23 19 19 C16 23 16 29 19 35z" fill="url(#petalGold)" opacity="0.75"/>
+          <path d="M3 19 C9 16 15 16 19 19 C15 22 9 22 3 19z" fill="url(#petalGold)" opacity="0.75"/>
+          <path d="M35 19 C29 16 23 16 19 19 C23 22 29 22 35 19z" fill="url(#petalGold)" opacity="0.75"/>
+          <path d="M6.5 6.5 C10 11 13 15 19 19 C15 13 11 10 6.5 6.5z" fill="url(#petalGold)" opacity="0.6"/>
+          <path d="M31.5 6.5 C28 11 25 15 19 19 C23 13 27 10 31.5 6.5z" fill="url(#petalGold)" opacity="0.6"/>
+          <path d="M6.5 31.5 C10 27 13 23 19 19 C15 25 11 28 6.5 31.5z" fill="url(#petalGold)" opacity="0.6"/>
+          <path d="M31.5 31.5 C28 27 25 23 19 19 C23 25 27 28 31.5 31.5z" fill="url(#petalGold)" opacity="0.6"/>
+          <!-- Center -->
+          <circle cx="19" cy="19" r="4" fill="#C8A96B"/>
+          <circle cx="19" cy="19" r="2" fill="#F5DFA0"/>
+          <circle cx="19" cy="19" r="0.8" fill="#8B6914"/>
         </svg>
       </div>
-      <div>
-        <div class="logo-name">Superclinic</div>
+
+      <!-- Text -->
+      <div class="logo-title-wrap">
+        <span class="logo-name">SUPERCLINIC</span>
+        <div class="logo-rule"></div>
         <span class="logo-name-en">Thai Herbal Medicine</span>
       </div>
     </div>
-    <div class="gold-divider"></div>
+
+    <div class="logo-border-bottom"></div>
   </div>
 
   <nav>
