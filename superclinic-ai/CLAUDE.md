@@ -43,7 +43,7 @@ Barcode   : html5-qrcode (future)
 ## 3. Workspace Structure
 
 ```
-superclinic-v61/
+superclinic-ai/
 ├── ai/
 │   ├── agents/         ← agent specs per domain
 │   ├── prompts/        ← prompt templates

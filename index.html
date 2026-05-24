@@ -87,11 +87,14 @@ html,body{height:100%;font-family:'Sarabun',sans-serif;background:var(--cr);colo
   content:'';position:absolute;inset:0;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='none' stroke='%23E5D3A3' stroke-width='0.4' opacity='0.10'%3E%3Cpath d='M30 5 Q42 18 30 28 Q18 18 30 5z'/%3E%3Cpath d='M30 32 Q42 45 30 55 Q18 45 30 32z'/%3E%3Cpath d='M5 30 Q18 18 28 30 Q18 42 5 30z'/%3E%3Cpath d='M32 30 Q45 18 55 30 Q45 42 32 30z'/%3E%3C/g%3E%3C/svg%3E") repeat;
 }
-.logo-area{padding:24px 20px 18px;border-bottom:1px solid rgba(200,169,107,0.25);position:relative;flex-shrink:0;}
-.logo-wrap{display:flex;align-items:center;gap:11px;}
-.logo-icon{width:42px;height:42px;background:var(--grad-gold);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 12px rgba(200,169,107,0.45);flex-shrink:0;}
-.logo-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:#E5D3A3;letter-spacing:0.03em;line-height:1.2;}
-.logo-sub{font-size:10px;font-weight:300;color:rgba(229,211,163,0.55);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;}
+.logo-area{padding:28px 20px 20px;border-bottom:1px solid rgba(200,169,107,0.25);position:relative;flex-shrink:0;overflow:hidden;}
+.logo-area-bg{position:absolute;inset:0;pointer-events:none;opacity:0.18;}
+.logo-wrap{display:flex;align-items:center;gap:13px;position:relative;z-index:1;}
+.logo-icon{width:48px;height:48px;background:var(--grad-gold);border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(200,169,107,0.55);flex-shrink:0;position:relative;overflow:hidden;}
+.logo-icon svg{width:28px;height:28px;}
+.logo-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;letter-spacing:0.04em;line-height:1.1;background:linear-gradient(135deg,#F5DFA0 0%,#C8A96B 40%,#E8C97A 60%,#A67C3A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;}
+.logo-name-en{font-family:'Cormorant Garamond',serif;font-size:9.5px;font-weight:400;color:rgba(229,211,163,0.5);letter-spacing:0.22em;text-transform:uppercase;margin-top:3px;display:block;}
+.logo-sub{font-size:9px;font-weight:300;color:rgba(229,211,163,0.45);letter-spacing:0.1em;text-transform:uppercase;margin-top:1px;}
 .gold-divider{height:1px;background:linear-gradient(90deg,transparent,#C8A96B,transparent);margin-top:14px;opacity:0.4;}
 
 nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position:relative;}
@@ -317,11 +320,58 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="logo-area">
+    <!-- Luxury background vector -->
+    <svg class="logo-area-bg" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;">
+      <defs>
+        <linearGradient id="goldLine" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#C8A96B" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#C8A96B" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#C8A96B" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- Corner ornament top-right -->
+      <g stroke="#C8A96B" stroke-width="0.6" fill="none" opacity="0.7">
+        <path d="M170 5 L215 5 L215 50" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M180 5 L215 5 L215 40" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+        <circle cx="215" cy="5" r="2.5" fill="#C8A96B" opacity="0.8"/>
+      </g>
+      <!-- Corner ornament bottom-left -->
+      <g stroke="#C8A96B" stroke-width="0.6" fill="none" opacity="0.5">
+        <path d="M5 65 L5 105 L50 105" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 75 L5 105 L40 105" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+        <circle cx="5" cy="105" r="2" fill="#C8A96B" opacity="0.7"/>
+      </g>
+      <!-- Central lotus/floral motif -->
+      <g transform="translate(110,55)" stroke="#C8A96B" stroke-width="0.5" fill="none" opacity="0.6">
+        <path d="M0,-22 C6,-14 6,-6 0,0 C-6,-6 -6,-14 0,-22z"/>
+        <path d="M0,22 C6,14 6,6 0,0 C-6,6 -6,14 0,22z"/>
+        <path d="M-22,0 C-14,-6 -6,-6 0,0 C-6,6 -14,6 -22,0z"/>
+        <path d="M22,0 C14,-6 6,-6 0,0 C6,6 14,6 22,0z"/>
+        <path d="M-15,-15 C-8,-12 -4,-8 0,0 C-4,-4 -10,-6 -15,-15z" opacity="0.5"/>
+        <path d="M15,-15 C8,-12 4,-8 0,0 C4,-4 10,-6 15,-15z" opacity="0.5"/>
+        <path d="M-15,15 C-8,12 -4,8 0,0 C-4,4 -10,6 -15,15z" opacity="0.5"/>
+        <path d="M15,15 C8,12 4,8 0,0 C4,4 10,6 15,15z" opacity="0.5"/>
+        <circle cx="0" cy="0" r="3" fill="#C8A96B" opacity="0.4"/>
+        <circle cx="0" cy="0" r="1.2" fill="#C8A96B" opacity="0.9"/>
+      </g>
+      <!-- Thin decorative lines -->
+      <line x1="0" y1="108" x2="220" y2="108" stroke="url(#goldLine)" stroke-width="0.5"/>
+    </svg>
     <div class="logo-wrap">
-      <div class="logo-icon">🌿</div>
+      <div class="logo-icon">
+        <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <!-- Lotus icon -->
+          <path d="M14 4 C17 8 17 12 14 14 C11 12 11 8 14 4z" fill="#2F5D50" opacity="0.9"/>
+          <path d="M14 24 C17 20 17 16 14 14 C11 16 11 20 14 24z" fill="#2F5D50" opacity="0.7"/>
+          <path d="M4 14 C8 11 12 11 14 14 C12 17 8 17 4 14z" fill="#2F5D50" opacity="0.7"/>
+          <path d="M24 14 C20 11 16 11 14 14 C16 17 20 17 24 14z" fill="#2F5D50" opacity="0.7"/>
+          <circle cx="14" cy="14" r="2.5" fill="#2F5D50"/>
+          <circle cx="14" cy="14" r="1" fill="rgba(47,93,80,0.5)"/>
+        </svg>
+      </div>
       <div>
         <div class="logo-name">Superclinic</div>
-        <div class="logo-sub">S.H.I.E.L.D. Approved Thai Medicine</div>
+        <span class="logo-name-en">Thai Herbal Medicine</span>
       </div>
     </div>
     <div class="gold-divider"></div>
@@ -362,7 +412,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="topbar-title" id="topbar-title">🌿 Superclinic</div>
+  <div class="topbar-title" id="topbar-title" style="font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:0.04em;background:linear-gradient(135deg,#F5DFA0,#C8A96B,#E8C97A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">✦ Superclinic</div>
   <div class="topbar-right">
     <button class="tb-btn notif-pos" title="การแจ้งเตือน"><i class="ti ti-bell"></i></button>
     <button class="tb-btn" title="ค้นหา"><i class="ti ti-search"></i></button>
@@ -1072,7 +1122,7 @@ const API_TOKEN = 'MARVEL-SECRET-TOKEN-2025';
 
 /* ── Page Navigation ── */
 const titles = {
-  dashboard:'🌿 Superclinic',
+  dashboard:'✦ Superclinic',
   appointments:'📅 ตารางนัดหมาย',
   patients:'👤 ทะเบียนผู้ป่วย',
   treatments:'💆 ประวัติการรักษา',
