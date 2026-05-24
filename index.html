@@ -369,6 +369,8 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(200,169,107,0.3);border-radius:4px;}
 </style>
+  <!-- face-api.js for Face Recognition -->
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -723,6 +725,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
     <div class="card">
       <div class="card-head"><div class="card-title"><i class="ti ti-search"></i>ค้นหาผู้ป่วย</div>
         <button type="button" class="btn btn-outline btn-sm" onclick="openIdCardReader('register')" style="gap:6px;font-size:12px;border-color:var(--go);color:var(--g1);"><i class="ti ti-credit-card" style="font-size:14px;"></i>อ่านบัตร ปชช.</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="openFaceSearch()" style="gap:6px;font-size:12px;border-color:#5F8D4E;color:#2F5D50;"><i class="ti ti-face-id" style="font-size:14px;"></i>🔍 ค้นหาจากใบหน้า</button>
       </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
         <div class="search-wrap" style="width:100%;"><i class="ti ti-search"></i><input id="reg-search" class="search-input" style="width:100%;" placeholder="ค้นหาชื่อ / HN / เบอร์โทร..." oninput="searchRegPatient(this.value)" onkeydown="regSearchKeyNav(event)"></div>
@@ -1610,27 +1613,36 @@ function todayISO(){ return new Date().toISOString().split('T')[0]; }
 function dateToISO(d){
   if(!d) return '';
   d = String(d);
-  // รูปแบบ DD/MM/YY หรือ DD/MM/YYYY
+  // รูปแบบ DD/MM/YY หรือ DD/MM/YYYY (อาจเป็น พ.ศ. หรือ ค.ศ.)
   if(d.includes('/')) {
-    const [dd,mm,yy] = d.split('/');
-    const fullYear = parseInt(yy) < 100 ? 2000+parseInt(yy) : parseInt(yy);
-    return `${fullYear}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+    const parts = d.split('/');
+    const dd = parts[0], mm = parts[1], yy = parts[2] || '';
+    let yr = parseInt(yy);
+    if(yr < 100) yr += (yr >= 0 && yr <= 99) ? 2500 : 2000; // YY → ถ้า < 100 ถือว่า พ.ศ. 25XX
+    if(yr > 2400) yr -= 543; // แปลง พ.ศ. → ค.ศ. เพื่อเก็บใน ISO
+    return `${yr}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
   }
   // รูปแบบ ISO full: 2025-05-14T07:00:00.000Z → แปลงเป็น local date
   if(d.includes('T')) {
-    // ใช้ Date object เพื่อ handle timezone ถูกต้อง (offset +7)
     const dt = new Date(d);
     if(!isNaN(dt)){
-      // เพิ่ม 7 ชั่วโมงเพื่อแปลง UTC→Asia/Bangkok
       const local = new Date(dt.getTime() + 7*3600*1000);
-      const y = local.getUTCFullYear();
+      let y = local.getUTCFullYear();
+      if(y > 2400) y -= 543; // พ.ศ. → ค.ศ.
       const m = String(local.getUTCMonth()+1).padStart(2,'0');
       const day = String(local.getUTCDate()).padStart(2,'0');
       return `${y}-${m}-${day}`;
     }
   }
-  // YYYY-MM-DD
-  return d.substring(0,10);
+  // YYYY-MM-DD: detect พ.ศ. vs ค.ศ.
+  const raw = d.substring(0,10);
+  const parts = raw.split('-');
+  if(parts.length === 3) {
+    let yr = parseInt(parts[0]);
+    if(yr > 2400) yr -= 543; // แปลง พ.ศ. → ค.ศ.
+    return `${yr}-${parts[1]}-${parts[2]}`;
+  }
+  return raw;
 }
 
 /* แปลง time field จาก Sheets (อาจเป็น 1899-12-30T17:00:00.000Z หรือ HH:MM) */
@@ -1651,10 +1663,13 @@ function parseTimeStr(t){
 
 function toThaiDisplay(iso){
   if(!iso) return '—';
-  const isoStr = dateToISO(iso);
+  const isoStr = dateToISO(iso); // dateToISO คืน ค.ศ. เสมอ
   if(!isoStr || !isoStr.includes('-')) return '—';
   const [y,m,d] = isoStr.split('-');
-  return `${d}/${m}/${parseInt(y)+543}`;
+  const yr = parseInt(y);
+  // แสดงผลเป็น พ.ศ. เสมอ — dateToISO คืน ค.ศ. จึงบวก 543 ได้เลย
+  const buddhistYear = yr > 2400 ? yr : yr + 543;
+  return `${d}/${m}/${buddhistYear}`;
 }
 function toThaiDateFull(iso){
   return toThaiDisplay(iso);
@@ -2255,9 +2270,19 @@ function goRegisterWithPatient(patId){
 
 function openAddPatient(prefillName){
   openModal('➕ เพิ่มผู้ป่วยใหม่',`
-    <div style="text-align:right;margin-bottom:8px;">
-      <button type="button" class="btn btn-outline btn-sm" onclick="openIdCardReader('addpatient')" style="gap:6px;font-size:12px;border-color:var(--go);color:var(--g1);"><i class="ti ti-credit-card" style="font-size:14px;"></i>อ่านบัตร ปชช. อัตโนมัติ</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="openIdCardReader('addpatient')" style="gap:6px;font-size:12px;border-color:var(--go);color:var(--g1);"><i class="ti ti-credit-card" style="font-size:14px;"></i>อ่านบัตร ปชช.</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="openFaceCapture('addpatient')" style="gap:6px;font-size:12px;border-color:#5F8D4E;color:#2F5D50;"><i class="ti ti-camera" style="font-size:14px;"></i>📷 บันทึกใบหน้า</button>
     </div>
+    <div id="addpat-face-preview" style="display:none;align-items:center;gap:10px;padding:8px 12px;background:rgba(47,93,80,.06);border:1px solid rgba(47,93,80,.2);border-radius:8px;margin-bottom:8px;">
+      <img id="addpat-face-thumb" src="" alt="face" class="face-preview-thumb">
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:700;color:var(--g1);">✅ บันทึกใบหน้าแล้ว</div>
+        <div style="font-size:11px;color:#888;">กดอีกครั้งเพื่ออัปเดตใบหน้า</div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="clearFaceCapture('addpatient')" style="font-size:11px;color:var(--er);border-color:var(--er);">ลบ</button>
+    </div>
+    <input type="hidden" id="addpat-face-descriptor" name="face_descriptor">
     <form id="fp-add" style="display:flex;flex-direction:column;gap:14px;" onsubmit="submitAddPatient(event)">
 
       <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);border-bottom:1px solid rgba(200,169,107,.2);padding-bottom:6px;">ข้อมูลส่วนตัว</div>
@@ -2360,6 +2385,9 @@ async function submitAddPatient(e){
     if(m<0){y--;m+=12;}
     data.age=String(y);
   }
+  // รวม face_descriptor จาก hidden input
+  const faceDescEl = document.getElementById('addpat-face-descriptor');
+  if(faceDescEl && faceDescEl.value) data.face_descriptor = faceDescEl.value;
   data.created_at=todayISO(); data.updated_at=todayISO(); data.is_active='TRUE';
   // เก็บ body map
   const bmVal = bmGetValue('addpat');
@@ -2719,6 +2747,32 @@ function openAddAppt(){
     .idcard-icon{font-size:52px;margin-bottom:12px;animation:cardPulse 1.2s ease-in-out infinite;}
     @keyframes cardPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.08);opacity:.75;}}
     #idcard-hidden-input{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;}
+
+    /* ── Face Recognition ─────────────────────────────────────────── */
+    .face-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:center;justify-content:center;}
+    .face-modal-box{background:#1a1a2e;border-radius:20px;padding:24px;width:520px;max-width:96vw;box-shadow:0 24px 80px rgba(0,0,0,.5);border:1px solid rgba(200,169,107,.2);}
+    .face-modal-box h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:#C8A96B;margin-bottom:4px;text-align:center;}
+    .face-modal-box p{font-size:12px;color:#888;text-align:center;margin-bottom:14px;}
+    .face-video-wrap{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;}
+    .face-video-wrap video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+    .face-video-wrap canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
+    .face-status-bar{margin-top:10px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;transition:all .3s;}
+    .face-status-bar.detecting{background:rgba(200,169,107,.12);color:#C8A96B;}
+    .face-status-bar.found{background:rgba(39,174,96,.15);color:#27AE60;}
+    .face-status-bar.matched{background:rgba(47,93,80,.3);color:#5F8D4E;}
+    .face-status-bar.error{background:rgba(192,57,43,.15);color:#C0392B;}
+    .face-match-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;}
+    .face-match-item{display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(200,169,107,.15);border-radius:10px;cursor:pointer;transition:all .2s;}
+    .face-match-item:hover{background:rgba(200,169,107,.1);border-color:rgba(200,169,107,.4);}
+    .face-match-rank{width:22px;height:22px;border-radius:50%;background:rgba(200,169,107,.2);color:#C8A96B;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .face-match-name{flex:1;font-size:13px;font-weight:500;color:#e0e0e0;}
+    .face-match-score{font-size:11px;color:#888;}
+    .face-btn-row{display:flex;gap:8px;margin-top:12px;}
+    .face-capture-btn{flex:1;padding:11px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+    .face-capture-btn.primary{background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;}
+    .face-capture-btn.primary:disabled{background:#444;color:#888;cursor:not-allowed;}
+    .face-capture-btn.secondary{background:rgba(255,255,255,.08);color:#aaa;border:1px solid rgba(255,255,255,.12);}
+    .face-preview-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid rgba(200,169,107,.4);flex-shrink:0;}
   </style>
     <form id="form-add-appt" onsubmit="submitAddAppt(event)" style="display:flex;flex-direction:column;gap:14px;">
       <div class="form-group" style="position:relative;">
@@ -4536,5 +4590,399 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 </script>
+
+<script>
+/* ============================================================
+   FACE RECOGNITION — Phase 2 JS
+   face-api.js 0.22.2  |  ssdMobilenetv1 + faceRecognitionNet
+   Threshold 0.45, Top-3 match
+   ============================================================ */
+
+const FACE_MODELS_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+let _faceModelsLoaded = false;
+let _faceStream = null;      // active MediaStream
+let _faceAnimFrame = null;   // requestAnimationFrame id
+let _faceDetecting = false;  // loop guard
+let _faceCaptureMode = null; // 'addpatient' | 'search'
+
+/* ── Load models (once) ───────────────────────────────────── */
+async function loadFaceModels() {
+  if (_faceModelsLoaded) return;
+  await Promise.all([
+    faceapi.nets.ssdMobilenetv1.loadFromUri(FACE_MODELS_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODELS_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODELS_URL),
+  ]);
+  _faceModelsLoaded = true;
+}
+
+/* ── Stop webcam & animation loop ────────────────────────── */
+function stopFaceStream() {
+  if (_faceAnimFrame) { cancelAnimationFrame(_faceAnimFrame); _faceAnimFrame = null; }
+  _faceDetecting = false;
+  if (_faceStream) { _faceStream.getTracks().forEach(t => t.stop()); _faceStream = null; }
+}
+
+/* ── Remove modal overlay ────────────────────────────────── */
+function closeFaceModal() {
+  stopFaceStream();
+  const el = document.getElementById('face-modal-overlay');
+  if (el) el.remove();
+}
+
+/* ── Build modal DOM ─────────────────────────────────────── */
+function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCapture, onCancel }) {
+  closeFaceModal(); // ensure clean state
+
+  const overlay = document.createElement('div');
+  overlay.id = 'face-modal-overlay';
+  overlay.className = 'face-modal-overlay';
+  overlay.innerHTML = `
+    <div class="face-modal-box">
+      <h3>${title}</h3>
+      <p>${subtitle}</p>
+      <div class="face-video-wrap">
+        <video id="face-video" autoplay playsinline muted></video>
+        <canvas id="face-canvas"></canvas>
+      </div>
+      <div id="face-status" class="face-status-bar detecting">⏳ กำลังโหลดโมเดล…</div>
+      ${showMatchList ? '<div id="face-match-list" class="face-match-list"></div>' : ''}
+      <div class="face-btn-row">
+        <button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()">${captureLabel}</button>
+        <button class="face-capture-btn secondary" onclick="closeFaceModal();${onCancel ? onCancel + '()' : ''}">ยกเลิก</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+/* ── Start webcam ────────────────────────────────────────── */
+async function startFaceWebcam() {
+  const video = document.getElementById('face-video');
+  _faceStream = await navigator.mediaDevices.getUserMedia({
+    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+  });
+  video.srcObject = _faceStream;
+  await new Promise(res => { video.onloadedmetadata = res; });
+  await video.play();
+}
+
+/* ── Draw detections on canvas ───────────────────────────── */
+function drawDetections(detections) {
+  const video = document.getElementById('face-video');
+  const canvas = document.getElementById('face-canvas');
+  if (!canvas || !video) return;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  faceapi.draw.drawDetections(canvas, detections);
+}
+
+/* ── Internal capture trigger (called from onclick) ──────── */
+let _faceCaptureCallback = null;
+function _faceCaptureTrigger() {
+  if (_faceCaptureCallback) _faceCaptureCallback();
+}
+
+/* ============================================================
+   MODE 1: openFaceCapture(mode)
+   Captures a face descriptor and stores it in the form
+   mode = 'addpatient'
+   ============================================================ */
+async function openFaceCapture(mode) {
+  _faceCaptureMode = mode;
+  let lastDescriptor = null;
+
+  buildFaceModal({
+    title: '📷 บันทึกใบหน้า',
+    subtitle: 'วางใบหน้าให้อยู่ในกรอบ แล้วกด "บันทึกใบหน้า"',
+    captureLabel: 'บันทึกใบหน้า',
+    showMatchList: false,
+    onCancel: null,
+  });
+
+  const setStatus = (cls, msg) => {
+    const el = document.getElementById('face-status');
+    if (!el) return;
+    el.className = 'face-status-bar ' + cls;
+    el.textContent = msg;
+  };
+
+  const setCaptureBtnEnabled = (ok) => {
+    const btn = document.getElementById('face-capture-btn');
+    if (btn) btn.disabled = !ok;
+  };
+
+  // Capture callback
+  _faceCaptureCallback = async () => {
+    if (!lastDescriptor) return;
+
+    // Capture thumbnail from video
+    const video = document.getElementById('face-video');
+    const thumb = document.createElement('canvas');
+    thumb.width = 112; thumb.height = 112;
+    const ctx = thumb.getContext('2d');
+    // mirror the video for natural feel
+    ctx.translate(112, 0); ctx.scale(-1, 1);
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const side = Math.min(vw, vh);
+    const sx = (vw - side) / 2, sy = (vh - side) / 2;
+    ctx.drawImage(video, sx, sy, side, side, 0, 0, 112, 112);
+    const thumbDataUrl = thumb.toDataURL('image/jpeg', 0.8);
+
+    const descriptorArr = Array.from(lastDescriptor);
+    const descriptorJson = JSON.stringify(descriptorArr);
+
+    if (mode === 'addpatient') {
+      const descEl = document.getElementById('addpat-face-descriptor');
+      if (descEl) descEl.value = descriptorJson;
+      const preview = document.getElementById('addpat-face-preview');
+      const thumbImg = document.getElementById('addpat-face-thumb');
+      if (preview) { preview.style.display = 'flex'; }
+      if (thumbImg) { thumbImg.src = thumbDataUrl; }
+    }
+
+    showToast('✅ บันทึกใบหน้าสำเร็จ');
+    closeFaceModal();
+  };
+
+  try {
+    setStatus('detecting', '⏳ กำลังโหลดโมเดล…');
+    await loadFaceModels();
+    await startFaceWebcam();
+    setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
+
+    const video = document.getElementById('face-video');
+    const opts = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+
+    const loop = async () => {
+      if (!document.getElementById('face-modal-overlay')) return;
+      if (!video || video.paused || video.ended) { _faceAnimFrame = requestAnimationFrame(loop); return; }
+
+      const det = await faceapi
+        .detectSingleFace(video, opts)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (det) {
+        lastDescriptor = det.descriptor;
+        drawDetections([det.detection]);
+        setStatus('found', '✅ พบใบหน้า — กด "บันทึกใบหน้า"');
+        setCaptureBtnEnabled(true);
+      } else {
+        lastDescriptor = null;
+        const canvas = document.getElementById('face-canvas');
+        if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+        setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
+        setCaptureBtnEnabled(false);
+      }
+
+      _faceAnimFrame = requestAnimationFrame(loop);
+    };
+
+    _faceAnimFrame = requestAnimationFrame(loop);
+
+  } catch (err) {
+    const setStatus2 = (cls, msg) => {
+      const el = document.getElementById('face-status');
+      if (el) { el.className = 'face-status-bar ' + cls; el.textContent = msg; }
+    };
+    setStatus2('error', '❌ ' + (err.message || 'เกิดข้อผิดพลาด'));
+    console.error('Face capture error:', err);
+  }
+}
+
+/* ============================================================
+   MODE 2: openFaceSearch()
+   Detect face from webcam and match against all patients
+   Shows Top-3 results; click to select patient in register
+   ============================================================ */
+async function openFaceSearch() {
+  buildFaceModal({
+    title: '🔍 ค้นหาจากใบหน้า',
+    subtitle: 'วางใบหน้าให้อยู่ในกรอบ แล้วกด "ค้นหาผู้ป่วย"',
+    captureLabel: 'ค้นหาผู้ป่วย',
+    showMatchList: true,
+    onCancel: null,
+  });
+
+  const setStatus = (cls, msg) => {
+    const el = document.getElementById('face-status');
+    if (el) { el.className = 'face-status-bar ' + cls; el.textContent = msg; }
+  };
+
+  const setCaptureBtnEnabled = (ok) => {
+    const btn = document.getElementById('face-capture-btn');
+    if (btn) btn.disabled = !ok;
+  };
+
+  let lastDescriptor = null;
+  let _searching = false;
+
+  _faceCaptureCallback = async () => {
+    if (!lastDescriptor || _searching) return;
+    _searching = true;
+    setCaptureBtnEnabled(false);
+    stopFaceStream(); // freeze video during search
+
+    const setStatus3 = (cls, msg) => {
+      const el = document.getElementById('face-status');
+      if (el) { el.className = 'face-status-bar ' + cls; el.textContent = msg; }
+    };
+
+    setStatus3('detecting', '⏳ กำลังจับคู่ใบหน้า…');
+
+    try {
+      // Load patients with face_descriptor
+      const resp = await callApi('patients', 'list');
+      const patients = (resp && resp.rows ? resp.rows : []).filter(p =>
+        p.is_active !== 'FALSE' && p.is_active !== false && p.face_descriptor
+      );
+
+      if (patients.length === 0) {
+        setStatus3('error', '❌ ยังไม่มีข้อมูลใบหน้าในระบบ');
+        _searching = false;
+        return;
+      }
+
+      const THRESHOLD = 0.45;
+      const results = [];
+
+      for (const p of patients) {
+        try {
+          const arr = JSON.parse(p.face_descriptor);
+          const stored = new Float32Array(arr);
+          const dist = faceapi.euclideanDistance(lastDescriptor, stored);
+          results.push({ patient: p, dist });
+        } catch(_) {}
+      }
+
+      results.sort((a, b) => a.dist - b.dist);
+      const top3 = results.slice(0, 3).filter(r => r.dist < THRESHOLD + 0.2); // show top3 even slightly over threshold
+
+      const matchList = document.getElementById('face-match-list');
+      if (!matchList) { _searching = false; return; }
+
+      if (top3.length === 0) {
+        setStatus3('error', '❌ ไม่พบผู้ป่วยที่ตรงกัน');
+        matchList.innerHTML = '<div style="color:#888;text-align:center;font-size:13px;padding:12px;">ไม่พบข้อมูลที่ตรงกัน</div>';
+        _searching = false;
+        return;
+      }
+
+      const bestDist = top3[0].dist;
+      if (bestDist <= THRESHOLD) {
+        setStatus3('matched', `✅ พบผู้ป่วย (ความมั่นใจ ${Math.round((1 - bestDist) * 100)}%)`);
+      } else {
+        setStatus3('found', `⚠️ ผลที่ใกล้เคียงที่สุด (กรุณาตรวจสอบ)`);
+      }
+
+      matchList.innerHTML = top3.map((r, i) => {
+        const p = r.patient;
+        const conf = Math.max(0, Math.round((1 - r.dist) * 100));
+        const name = `${p.prefix || ''}${p.first_name || ''} ${p.last_name || ''}`.trim();
+        const isBest = i === 0 && r.dist <= THRESHOLD;
+        return `<div class="face-match-item ${isBest ? 'best-match' : ''}"
+          data-hn="${p.hn || ''}"
+          data-name="${name}"
+          onclick="faceSelectPatient(this)">
+          <div class="face-match-rank">${i + 1}</div>
+          <div class="face-match-name">
+            <div style="font-size:13px;font-weight:600;color:${isBest ? '#C8A96B' : '#e0e0e0'}">${name}</div>
+            <div style="font-size:11px;color:#888">HN: ${p.hn || '—'} | โทร: ${p.phone || '—'}</div>
+          </div>
+          <div class="face-match-score" style="color:${conf >= 60 ? '#27AE60' : '#C8A96B'}">${conf}%</div>
+        </div>`;
+      }).join('');
+
+    } catch (err) {
+      setStatus3('error', '❌ ' + (err.message || 'เกิดข้อผิดพลาด'));
+      console.error('Face search error:', err);
+    }
+
+    _searching = false;
+  };
+
+  // Select patient from match list
+  window.faceSelectPatient = function(el) {
+    const hn = el.dataset.hn;
+    const name = el.dataset.name;
+    closeFaceModal();
+    // Fill register search
+    const regSearch = document.getElementById('reg-search');
+    if (regSearch) {
+      regSearch.value = name;
+      regSearch.dispatchEvent(new Event('input'));
+      // After a short delay, try to click the first result
+      setTimeout(() => {
+        const dd = document.getElementById('reg-search-result');
+        if (dd) {
+          const first = dd.querySelector('[data-hn]') || dd.querySelector('div[onclick]') || dd.firstElementChild;
+          if (first) first.click();
+        }
+        showToast('✅ พบผู้ป่วย: ' + name);
+      }, 600);
+    } else {
+      showToast('พบผู้ป่วย HN: ' + hn + ' — ' + name);
+    }
+  };
+
+  try {
+    setStatus('detecting', '⏳ กำลังโหลดโมเดล…');
+    await loadFaceModels();
+    await startFaceWebcam();
+    setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
+
+    const video = document.getElementById('face-video');
+    const opts = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+
+    const loop = async () => {
+      if (!document.getElementById('face-modal-overlay')) return;
+      if (!video || video.paused || video.ended) { _faceAnimFrame = requestAnimationFrame(loop); return; }
+
+      const det = await faceapi
+        .detectSingleFace(video, opts)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (det) {
+        lastDescriptor = det.descriptor;
+        drawDetections([det.detection]);
+        setStatus('found', '✅ พบใบหน้า — กด "ค้นหาผู้ป่วย"');
+        setCaptureBtnEnabled(true);
+      } else {
+        lastDescriptor = null;
+        const canvas = document.getElementById('face-canvas');
+        if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+        setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
+        setCaptureBtnEnabled(false);
+      }
+
+      _faceAnimFrame = requestAnimationFrame(loop);
+    };
+
+    _faceAnimFrame = requestAnimationFrame(loop);
+
+  } catch (err) {
+    const el = document.getElementById('face-status');
+    if (el) { el.className = 'face-status-bar error'; el.textContent = '❌ ' + (err.message || 'เกิดข้อผิดพลาด'); }
+    console.error('Face search open error:', err);
+  }
+}
+
+/* ── Clear face capture data ─────────────────────────────── */
+function clearFaceCapture(mode) {
+  if (mode === 'addpatient') {
+    const descEl = document.getElementById('addpat-face-descriptor');
+    if (descEl) descEl.value = '';
+    const preview = document.getElementById('addpat-face-preview');
+    if (preview) preview.style.display = 'none';
+    const thumbImg = document.getElementById('addpat-face-thumb');
+    if (thumbImg) thumbImg.src = '';
+  }
+}
+</script>
+
 </body>
 </html>
