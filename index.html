@@ -1757,13 +1757,37 @@ async function loadDashboard(){
     // render นัดวันนี้ + พรุ่งนี้
     const dashList = document.getElementById('dash-appt-list');
     if(dashList){
+      // ── ตรวจนัดซ้ำสำหรับ dashboard (ชื่อผู้ป่วยซ้ำในวันนี้) ─────────────────
+      const dashNameCounts = {};
+      todayAp.filter(a=>normalizeStatus(a.status)!=='cancelled')
+              .forEach(a=>{
+                const nm=(a.patient_name||'').trim().toLowerCase();
+                if(nm) dashNameCounts[nm]=(dashNameCounts[nm]||[]).concat(a.id||'');
+              });
+      const dashDupIds = new Set();
+      Object.values(dashNameCounts).forEach(ids=>{
+        if(ids.length>1) ids.slice(1).forEach(id=>dashDupIds.add(id));
+      });
+      const dashDupNames = Object.entries(dashNameCounts)
+            .filter(([,ids])=>ids.length>1).map(([nm])=>nm);
+
       let html = '';
       if(!todayAp.length && !tomorrowAp.length){
         html = `<div style="text-align:center;padding:30px;color:#aaa;">ไม่มีนัดหมายวันนี้และพรุ่งนี้</div>`;
       } else {
         if(todayAp.length){
+          // banner เตือนนัดซ้ำ
+          if(dashDupNames.length){
+            html += `<div style="margin:8px 16px 4px;padding:8px 12px;background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.25);border-radius:8px;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">⚠️</span>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#8B3A3A;">พบการนัดหมายซ้ำ ${dashDupNames.length} ราย</div>
+                <div style="font-size:11px;color:#B04040;margin-top:1px;">${dashDupNames.map(n=>n.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ')).join(', ')}</div>
+              </div>
+            </div>`;
+          }
           html += `<div class="dash-day-label" style="padding:0 16px;">📅 วันนี้ — ${todayAp.length} นัด</div>`;
-          html += todayAp.map(a=>renderDashApptRow(a, today)).join('');
+          html += todayAp.map(a=>renderDashApptRow(a, today, dashDupIds)).join('');
         }
         if(tomorrowAp.length){
           html += `<div class="dash-day-label" style="padding:6px 16px 4px;">📅 พรุ่งนี้ — ${tomorrowAp.length} นัด</div>`;
@@ -1831,7 +1855,7 @@ function lateMinutes(appt, today){
 }
 function isOverdue(appt, today){ return lateMinutes(appt, today) >= 60; }
 
-function renderDashApptRow(a, today){
+function renderDashApptRow(a, today, dupIds){
   const lateMins = lateMinutes(a, today);
   const overdue  = lateMins >= 60;  // สาย 60+ นาที → missed
   const late30   = lateMins >= 30;  // สาย 30+ นาที → badge เตือน
@@ -1859,7 +1883,7 @@ function renderDashApptRow(a, today){
     <div class="av" style="flex-shrink:0;cursor:pointer;" onclick="quickViewPatient('${patId}')">${initials(a.patient_name)}</div>
     <div style="flex:1;min-width:0;">
       <div style="font-size:13px;font-weight:500;cursor:pointer;" onclick="quickViewPatient('${patId}')">${a.patient_name||'—'}</div>
-      <div style="font-size:11.5px;color:#999;">${a.treatment_type||'—'}${lateBadge?' ':''}${lateBadge}</div>
+      <div style="font-size:11.5px;color:#999;">${a.treatment_type||'—'}${lateBadge?' ':''}${lateBadge}${dupIds&&dupIds.has(a.id||'')?'<span class="badge-duplicate" style="margin-left:4px;font-size:10px;">⚠️ นัดซ้ำ</span>':''}</div>
     </div>
     ${isToday && nsFinal!=='completed' && nsFinal!=='cancelled' && nsFinal!=='missed' ? `<button class="btn btn-outline btn-sm" style="font-size:11px;padding:3px 8px;white-space:nowrap;" onclick="goRegisterWithPatient('${patId}')"><i class="ti ti-clipboard-list" style="font-size:11px;"></i>ลงทะเบียน</button>` : ''}
     <button class="btn-edit" title="แก้ไขนัดหมาย" onclick="viewAppt('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>
