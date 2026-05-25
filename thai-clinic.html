@@ -3446,9 +3446,16 @@ async function loadHerbs(){
     const val=allHerbs.reduce((s,h)=>s+(parseFloat(h.quantity||0)*parseFloat(h.cost_per_unit||0)),0);
     const hsv=document.getElementById("herb-stock-val"); if(hsv) hsv.textContent=`฿${Math.round(val/1000)}k`;
     // บันทึกมูลค่าคงเหลือล่าสุดลง settings
-    // upsert herb_stock_value (update ถ้ามี, create ถ้าไม่มี)
-    callApi('settings','update',{value:String(Math.round(val)), description:'มูลค่าสต็อกสมุนไพรและยา (บาท) — คำนวณอัตโนมัติ'},'herb_stock_value')
-      .catch(()=>callApi('settings','create',{key:'herb_stock_value', value:String(Math.round(val)), description:'มูลค่าสต็อกสมุนไพรและยา (บาท) — คำนวณอัตโนมัติ'}).catch(()=>{}));
+    // upsert herb_stock_value — silent, ไม่ throw ไม่ log error
+    (async()=>{
+      const vStr = String(Math.round(val));
+      const desc = 'มูลค่าสต็อกสมุนไพรและยา (บาท) — คำนวณอัตโนมัติ';
+      try { await callApi('settings','update',{value:vStr,description:desc},'herb_stock_value'); }
+      catch(_){
+        try { await callApi('settings','create',{key:'herb_stock_value',value:vStr,description:desc}); }
+        catch(__){} // ไม่มี settings sheet ก็ข้ามไป
+      }
+    })();
   } catch(e){ showToast('ไม่สามารถโหลดข้อมูลสมุนไพรได้','error'); }
 }
 
