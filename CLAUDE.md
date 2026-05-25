@@ -11,8 +11,9 @@
 |---|---|
 | ชื่อคลินิค | Superclinic |
 | แพทย์ | Dr. Stephen Strange |
-| GitHub | kktfextrader-hue/Marvel-Clinic (branch: main) |
-| Live URL | https://kktfextrader-hue.github.io/Marvel-Clinic/ |
+| GitHub | kktfextrader-hue/superclinic (branch: main) |
+| Live URL | https://kktfextrader-hue.github.io/superclinic/ |
+| ไฟล์หลัก | superclinic.html (เดิม: thai-clinic.html) |
 
 ---
 
@@ -126,19 +127,22 @@ bmClear('uid')              // ล้าง
 ## 8. Deploy Workflow
 
 ```bash
-# หา path อัตโนมัติ (ไม่ hardcode)
-SRC=$(dirname $(find /sessions -name "thai-clinic.html" 2>/dev/null | head -1))
-REPO=/tmp/MC-push
+# ใช้ push-now.bat บน Windows แทน (อัตโนมัติ backup + version)
+# C:\Users\acer\Desktop\Claude\superclinic\push-now.bat
+
+# หรือ manual (bash sandbox):
+SRC=/sessions/happy-intelligent-einstein/mnt/superclinic
+REPO=/tmp/SC-push
 
 # ตรวจก่อน push ทุกครั้ง
-grep -n "async async" $SRC/thai-clinic.html   # ต้องได้ (no output)
+grep -n "async async" $SRC/superclinic.html   # ต้องได้ (no output)
 
 # copy + commit + push
-cp $SRC/thai-clinic.html $REPO/index.html
-cp $SRC/thai-clinic.html $REPO/thai-clinic.html
+cp $SRC/superclinic.html $REPO/index.html
+cp $SRC/superclinic.html $REPO/superclinic.html
 cd $REPO && git add -A
 git commit -m "feat: vXX — [description]"
-git push https://[PAT]@github.com/kktfextrader-hue/Marvel-Clinic.git main
+git push https://[PAT]@github.com/kktfextrader-hue/superclinic.git main
 ```
 
 **กฎ:** PAT token เก็บเฉพาะใน session — ห้ามใส่ในไฟล์ที่ push
@@ -298,6 +302,8 @@ callApi('settings','update',{ key:'herb_stock_value', value: String(Math.round(v
 | 2026-05-25 | v61 | Face Recognition (face-api.js), Feature Toggles ON/OFF, ปุ่มออกใบรับรองแพทย์ |
 | 2026-05-25 | v62 | ระบบพิมพ์ฉลากยา (Label Printer) — modal, preview, ขนาด, จำนวน, พิมพ์จริง |
 | 2026-05-25 | v63 | Label Printer v2 — font size inputs/preset, live preview, autocomplete search |
+| 2026-05-25 | v64 | ใบรับรองแพทย์แผนไทยประยุกต์ — modal A4, live preview, พิมพ์จริง |
+| 2026-05-25 | v65 | เปลี่ยนชื่อไฟล์หลัก thai-clinic.html → superclinic.html, อัพเดท push-now.bat และ CLAUDE.md |
 
 ---
 
@@ -310,5 +316,8 @@ C:\Users\acer\Desktop\Claude\superclinic\push-now.bat
 ```
 
 ไฟล์ที่อัพเดทแล้ว:
-- `thai-clinic.html` — Label Printer, Face Recognition, Feature Toggles, CHANGELOG v4
-- `CLAUDE.md` — changelog และ section นี้
+- `superclinic.html` — ไฟล์หลัก (เปลี่ยนชื่อจาก thai-clinic.html ตั้งแต่ v65+)
+- `CLAUDE.md` — อัพเดท Section 1, 8, 16 ให้สอดคล้องกับ superclinic.html
+- `push-now.bat` — อัพเดทให้ copy superclinic.html แทน thai-clinic.html
+
+> ⚠️ **ห้ามใช้ Edit tool กับ superclinic.html** — ใช้ Python str.replace() เท่านั้น (ไฟล์ใหญ่กว่า 100 บรรทัด)
