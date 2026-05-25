@@ -960,7 +960,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div><div class="page-h1">🌿 สมุนไพร & ยาแผนไทย</div><div class="page-sub">คลังสมุนไพรและยาแผนโบราณ</div></div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-outline" onclick="openLabelPrinter(null)" style="border-color:var(--g1);color:var(--g1);"><i class="ti ti-printer"></i>พิมพ์ฉลากยา</button>
+        <button class="btn btn-outline" onclick="(async()=>openLabelPrinter(null))()" style="border-color:var(--g1);color:var(--g1);"><i class="ti ti-printer"></i>พิมพ์ฉลากยา</button>
         <button class="btn btn-primary" onclick="openAddHerb()"><i class="ti ti-plus"></i>เพิ่มรายการสมุนไพร</button>
       </div>
     </div>
@@ -3446,7 +3446,9 @@ async function loadHerbs(){
     const val=allHerbs.reduce((s,h)=>s+(parseFloat(h.quantity||0)*parseFloat(h.cost_per_unit||0)),0);
     const hsv=document.getElementById("herb-stock-val"); if(hsv) hsv.textContent=`฿${Math.round(val/1000)}k`;
     // บันทึกมูลค่าคงเหลือล่าสุดลง settings
-    callApi('settings','update',{value:String(Math.round(val)), description:'มูลค่าสต็อกสมุนไพรและยา (บาท) — คำนวณอัตโนมัติ'},'herb_stock_value').catch(()=>{});
+    // upsert herb_stock_value (update ถ้ามี, create ถ้าไม่มี)
+    callApi('settings','update',{value:String(Math.round(val)), description:'มูลค่าสต็อกสมุนไพรและยา (บาท) — คำนวณอัตโนมัติ'},'herb_stock_value')
+      .catch(()=>callApi('settings','create',{key:'herb_stock_value', value:String(Math.round(val)), description:'มูลค่าสต็อกสมุนไพรและยา (บาท) — คำนวณอัตโนมัติ'}).catch(()=>{}));
   } catch(e){ showToast('ไม่สามารถโหลดข้อมูลสมุนไพรได้','error'); }
 }
 
@@ -3676,7 +3678,7 @@ function herbRowHtml(h){
         ${badgeHerb(h.status)}
       </div>
       <button class="btn btn-outline btn-sm" title="พิมพ์ฉลากยา"
-        onclick="event.stopPropagation();openLabelPrinter('${hid}')"
+        onclick="event.stopPropagation();(async()=>openLabelPrinter('${hid}'))()"
         style="padding:5px 8px;border-color:var(--g1);color:var(--g1);flex-shrink:0;">
         <i class="ti ti-printer" style="font-size:14px;"></i>
       </button>
@@ -3701,7 +3703,7 @@ function viewHerb(id){
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">สรรพคุณ</label><div style="padding:12px;background:#f9f6f0;border-radius:10px;line-height:1.6;">${h['สรรพคุณ']||h.description||'—'}</div></div>
     </div>`,
     `<button class="btn btn-outline" onclick="closeModal()" style="margin-right:auto;">ปิด</button>
-     <button class="btn btn-outline" onclick="closeLabelPrinter();openLabelPrinter('${id}')" style="border-color:var(--g1);color:var(--g1);"><i class="ti ti-printer"></i>พิมพ์ฉลาก</button>
+     <button class="btn btn-outline" onclick="closeLabelPrinter();(async()=>openLabelPrinter('${id}'))()" style="border-color:var(--g1);color:var(--g1);"><i class="ti ti-printer"></i>พิมพ์ฉลาก</button>
      <button class="btn btn-primary" onclick="closeModal();openAdjStock('${id}')"><i class="ti ti-package"></i>ปรับสต็อก</button>`
   );
 }
@@ -3779,7 +3781,7 @@ function renderStockTable(filter){
         ${isLow
           ?`<button class="btn btn-primary btn-sm" onclick="openAdjStock('${hid}')"><i class="ti ti-shopping-cart"></i>สั่งซื้อ</button>`
           :`<button class="btn-edit" onclick="openAdjStock('${hid}')"><i class="ti ti-pencil"></i>แก้ไข</button>`}
-        <button class="btn btn-outline btn-sm" onclick="openLabelPrinter('${hid}')" style="margin-left:4px;border-color:var(--g1);color:var(--g1);padding:4px 8px;font-size:11px;"><i class="ti ti-printer"></i>พิมพ์ฉลากยา</button>
+        <button class="btn btn-outline btn-sm" onclick="(async()=>openLabelPrinter('${hid}'))()" style="margin-left:4px;border-color:var(--g1);color:var(--g1);padding:4px 8px;font-size:11px;"><i class="ti ti-printer"></i>พิมพ์ฉลากยา</button>
       </td>
     </tr>`;
   }).join('');
