@@ -5140,7 +5140,7 @@ function printHerbLabel(herbId) {
 
 <script>
 /* ════════════════════════════════════════════════════════
-   LABEL PRINTER SYSTEM
+   LABEL PRINTER SYSTEM v2
    openLabelPrinter(herbId|null)
 ════════════════════════════════════════════════════════ */
 
@@ -5160,19 +5160,46 @@ const LP_SIZES = [
   { label:'กำหนดเอง...', w:0, h:0 },
 ];
 
-let _lpHerb = null; // herb object ปัจจุบัน
-let _lpData = {};   // ข้อมูลที่แก้ไขใน modal
+// Font size preset key
+const LP_PRESET_KEY = 'superclinic_lp_font';
+const LP_FONT_DEFAULTS = { name:14, name_en:10, indication:9, usage:9, warning:8, clinic:8 };
+
+let _lpHerb = null;
+let _lpData = {};
+let _lpW = 5, _lpH = 4;
+let _lpFonts = {};   // font sizes ปัจจุบัน
+let _lpAcIdx = -1;   // autocomplete keyboard index
+
+// โหลด preset จาก localStorage
+function _lpLoadPreset(){
+  try { return JSON.parse(localStorage.getItem(LP_PRESET_KEY)) || {...LP_FONT_DEFAULTS}; }
+  catch(e){ return {...LP_FONT_DEFAULTS}; }
+}
+function _lpSavePreset(){
+  localStorage.setItem(LP_PRESET_KEY, JSON.stringify(_lpFonts));
+  showToast('✅ บันทึก font preset แล้ว');
+}
+function _lpResetPreset(){
+  _lpFonts = {...LP_FONT_DEFAULTS};
+  localStorage.removeItem(LP_PRESET_KEY);
+  // sync inputs
+  Object.keys(_lpFonts).forEach(k=>{
+    const el = document.getElementById('lp-fs-'+k);
+    if(el) el.value = _lpFonts[k];
+  });
+  lpRenderPreview();
+  showToast('รีเซ็ต font size เป็นค่าเริ่มต้นแล้ว');
+}
 
 async function openLabelPrinter(herbId) {
-  // โหลด allHerbs ถ้ายังว่างอยู่
   if(!allHerbs.length){
     try {
       const r = await callApi('herbs','list');
       allHerbs = r.data?.rows || [];
     } catch(e){ showToast('ไม่สามารถโหลดข้อมูลยาได้','error'); return; }
   }
-  // ถ้ามี herbId ให้โหลดข้อมูลยา ถ้าไม่มีให้เปิดว่างเปล่า
   _lpHerb = herbId ? (allHerbs.find(h=>h.id===herbId)||null) : null;
+  _lpFonts = _lpLoadPreset();
   _lpData = _lpHerb ? {
     name:       _lpHerb.name_th||'',
     name_en:    _lpHerb.name_en||'',
@@ -5186,6 +5213,17 @@ async function openLabelPrinter(herbId) {
     warning:'', clinic:'Superclinic\n053-123-456',
   };
 
+  // font size rows HTML
+  const fsLabels = { name:'ชื่อยา', name_en:'ชื่ออังกฤษ', indication:'สรรพคุณ', usage:'วิธีใช้', warning:'คำเตือน', clinic:'ข้อมูลคลินิก' };
+  const fsRows = Object.keys(LP_FONT_DEFAULTS).map(k=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <label style="flex:1;font-size:11px;color:#555;">${fsLabels[k]}</label>
+      <input type="number" id="lp-fs-${k}" class="lp-input" style="width:60px;padding:3px 6px;text-align:center;"
+        value="${_lpFonts[k]||LP_FONT_DEFAULTS[k]}" min="6" max="32" step="1"
+        oninput="_lpFonts['${k}']=parseInt(this.value)||${LP_FONT_DEFAULTS[k]};lpRenderPreview()">
+      <span style="font-size:10px;color:#aaa;">px</span>
+    </div>`).join('');
+
   const overlay = document.createElement('div');
   overlay.className = 'lp-overlay';
   overlay.id = 'lp-overlay';
@@ -5196,19 +5234,24 @@ async function openLabelPrinter(herbId) {
         <button onclick="closeLabelPrinter()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:18px;">✕</button>
       </div>
       <div class="lp-body">
-        <!-- LEFT: Controls -->
+
+        <!-- LEFT -->
         <div class="lp-left">
 
-          <!-- ค้นหายา -->
-          <div>
+          <!-- SearchX: ค้นหายา -->
+          <div style="position:relative;">
             <div class="lp-section-title">🔍 เลือกยา / สมุนไพร</div>
-            <input class="lp-input" id="lp-search" placeholder="ค้นหาชื่อยา..." oninput="lpSearchHerb(this.value)">
-            <div id="lp-search-dd" style="display:none;max-height:140px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;margin-top:4px;background:#fff;"></div>
+            <input class="lp-input" id="lp-search" placeholder="ค้นหาชื่อยา (ไทย/อังกฤษ)..."
+              oninput="lpSearchHerb(this.value)"
+              onkeydown="acKeyNav(event,'lp-search-dd',el=>el.click())"
+              onblur="setTimeout(()=>{const d=document.getElementById('lp-search-dd');if(d)d.style.display='none'},200)"
+              autocomplete="off">
+            <div id="lp-search-dd" style="display:none;position:absolute;left:0;right:0;z-index:9999;max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;margin-top:2px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
           </div>
 
+          <!-- ข้อมูลบนฉลาก -->
           <div style="border-top:1px solid #eee;padding-top:12px;">
             <div class="lp-section-title">✏️ ข้อมูลบนฉลาก (แก้ไขได้)</div>
-
             <div style="margin-bottom:8px;">
               <label style="font-size:11px;color:#666;font-weight:600;">ชื่อยา / ผลิตภัณฑ์</label>
               <input class="lp-input" id="lp-name" value="${_escHtml(_lpData.name)}" oninput="lpUpdateField('name',this.value)">
@@ -5235,9 +5278,21 @@ async function openLabelPrinter(herbId) {
             </div>
           </div>
 
+          <!-- Font Size -->
+          <div style="border-top:1px solid #eee;padding-top:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div class="lp-section-title" style="margin:0;">🔤 ขนาด Font (px)</div>
+              <div style="display:flex;gap:6px;">
+                <button onclick="_lpSavePreset()" style="font-size:10px;padding:3px 8px;border:1px solid var(--g1);border-radius:6px;background:#fff;color:var(--g1);cursor:pointer;">💾 บันทึก</button>
+                <button onclick="_lpResetPreset()" style="font-size:10px;padding:3px 8px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#888;cursor:pointer;">↺ รีเซ็ต</button>
+              </div>
+            </div>
+            ${fsRows}
+          </div>
+
+          <!-- ตั้งค่าการพิมพ์ -->
           <div style="border-top:1px solid #eee;padding-top:12px;">
             <div class="lp-section-title">⚙️ ตั้งค่าการพิมพ์</div>
-
             <div style="margin-bottom:8px;">
               <label style="font-size:11px;color:#666;font-weight:600;">ขนาดฉลาก</label>
               <select class="lp-select" id="lp-size-sel" onchange="lpSizeChange(this.value)">
@@ -5270,19 +5325,18 @@ async function openLabelPrinter(herbId) {
           <div class="lp-section-title" style="width:100%;text-align:center;">👁 Preview ฉลาก</div>
           <div id="lp-preview-area" class="label-preview-wrap"></div>
         </div>
+
       </div>
 
       <div class="lp-footer">
-        ${_lpHerb ? `<button class="btn btn-outline" onclick="lpSaveData()" style="border-color:var(--g1);color:var(--g1);margin-right:auto;"><i class="ti ti-device-floppy"></i>บันทึกข้อมูลยา</button>` : ''}
+        ${_lpHerb ? `<button class="btn btn-outline" onclick="lpSaveData()" style="border-color:var(--g1);color:var(--g1);margin-right:auto;"><i class="ti ti-device-floppy"></i> บันทึกข้อมูลยา</button>` : ''}
         <button class="btn btn-outline" onclick="closeLabelPrinter()">ปิด</button>
-        <button class="btn btn-primary" onclick="lpPrint()"><i class="ti ti-printer"></i>สั่งพิมพ์</button>
+        <button class="btn btn-primary" onclick="lpPrint()"><i class="ti ti-printer"></i> สั่งพิมพ์</button>
       </div>
     </div>`;
 
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e=>{ if(e.target===overlay) closeLabelPrinter(); });
-
-  // init size
   lpSizeChange('0');
   lpRenderPreview();
 }
@@ -5294,15 +5348,26 @@ function closeLabelPrinter(){
   if(el) el.remove();
 }
 
-// ── ค้นหายา ──
+// ── SearchX autocomplete ──
 function lpSearchHerb(q){
   const dd=document.getElementById('lp-search-dd');
-  if(!q){ dd.style.display='none'; return; }
-  const res=allHerbs.filter(h=>(h.name_th||'').includes(q)||(h.name_en||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if(!q||q.length<1){ dd.style.display='none'; return; }
+  const ql=q.toLowerCase();
+  const res=allHerbs.filter(h=>
+    (h.name_th||'').includes(q)||
+    (h.name_en||'').toLowerCase().includes(ql)||
+    (h.id||'').toLowerCase().includes(ql)
+  ).slice(0,10);
   if(!res.length){ dd.style.display='none'; return; }
   dd.innerHTML=res.map(h=>`
-    <div data-hid="${h.id}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''" onclick="lpSelectHerb('${(h.id||'').replace(/'/g,"\\'")}')">
-      <strong>${h.name_th||''}</strong> <span style="color:#aaa;font-size:11px;">${h.category||''}</span>
+    <div class="ac-item" data-hid="${h.id}"
+      style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;"
+      onmouseover="this.classList.add('ac-focused')"
+      onmouseout="this.classList.remove('ac-focused')"
+      onclick="lpSelectHerb('${(h.id||'').replace(/'/g,"\\'")}')">
+      <strong>${_escHtml(h.name_th||'')}</strong>
+      ${h.name_en?`<span style="color:#aaa;font-size:11px;margin-left:6px;">${_escHtml(h.name_en)}</span>`:''}
+      <span style="float:right;color:#bbb;font-size:10px;">${h.id||''}</span>
     </div>`).join('');
   dd.style.display='block';
 }
@@ -5315,24 +5380,24 @@ function lpSelectHerb(hid){
   _lpData.indication=h['สรรพคุณ']||h.description||'';
   _lpData.usage=h.usage||h['วิธีใช้']||'รับประทานครั้งละ ... เม็ด วันละ ... ครั้ง';
   _lpData.warning=h.warning||h['คำเตือน']||'';
-  // sync inputs
   ['name','name_en','indication','usage','warning','clinic'].forEach(k=>{
     const el=document.getElementById('lp-'+k.replace('_','-'));
-    if(el){ if(el.tagName==='TEXTAREA') el.value=_lpData[k]||''; else el.value=_lpData[k]||''; }
+    if(el) el.value=_lpData[k]||'';
   });
-  document.getElementById('lp-search-dd').style.display='none';
-  document.getElementById('lp-search').value=h.name_th||'';
+  const dd=document.getElementById('lp-search-dd');
+  if(dd) dd.style.display='none';
+  const si=document.getElementById('lp-search');
+  if(si) si.value=h.name_th||'';
   lpRenderPreview();
 }
 
-// ── อัพเดท field ──
+// ── อัพเดท field → live preview ──
 function lpUpdateField(key,val){
   _lpData[key]=val;
   lpRenderPreview();
 }
 
 // ── Size ──
-let _lpW=5, _lpH=4;
 function lpSizeChange(idx){
   const s=LP_SIZES[parseInt(idx)];
   const customDiv=document.getElementById('lp-custom-size');
@@ -5346,63 +5411,58 @@ function lpSizeChange(idx){
   }
 }
 function lpApplyCustomSize(){
-  const w=parseFloat(document.getElementById('lp-cw').value)||5;
-  const h=parseFloat(document.getElementById('lp-ch').value)||4;
-  _lpW=w; _lpH=h;
+  _lpW=parseFloat(document.getElementById('lp-cw').value)||5;
+  _lpH=parseFloat(document.getElementById('lp-ch').value)||4;
   lpRenderPreview();
 }
 
 // ── Qty ──
 function lpQtySelChange(v){
   const ci=document.getElementById('lp-qty-custom');
-  if(v==='custom'){ if(ci) ci.style.display=''; }
-  else { if(ci) ci.style.display='none'; }
+  if(ci) ci.style.display = v==='custom' ? '' : 'none';
   lpRenderPreview();
 }
 function lpGetQty(){
   const sel=document.getElementById('lp-qty-sel');
   if(!sel) return 1;
-  if(sel.value==='custom'){
-    return parseInt(document.getElementById('lp-qty-custom').value)||1;
-  }
+  if(sel.value==='custom') return parseInt(document.getElementById('lp-qty-custom')?.value)||1;
   return parseInt(sel.value)||1;
 }
 
-// ── Render Preview ──
+// ── Render Preview (live) ──
 function lpRenderPreview(){
   const area=document.getElementById('lp-preview-area'); if(!area) return;
   const qty=lpGetQty();
-  // Scale: แสดงผลบน screen ให้สูงสุด 280px
-  const PX_PER_CM=37.8; // 1cm ≈ 37.8px
+  const PX_PER_CM=37.8;
   const scale=Math.min(1, 280/(_lpH*PX_PER_CM));
   const W=Math.round(_lpW*PX_PER_CM*scale);
   const H=Math.round(_lpH*PX_PER_CM*scale);
-  const baseFontSize=Math.max(7, Math.min(13, H/8));
-
-  const cardHTML=_lpBuildCard(W,H,baseFontSize);
-  // แสดง max 3 ใน preview
   const showN=Math.min(qty,3);
-  let html='';
-  for(let i=0;i<showN;i++) html+=cardHTML;
-  if(qty>3) html+=`<div style="color:#aaa;font-size:12px;text-align:center;">...และอีก ${qty-3} ใบ</div>`;
+  let html='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">';
+  for(let i=0;i<showN;i++) html+=_lpBuildCard(W,H,_lpFonts,scale);
+  html+='</div>';
+  if(qty>3) html+=`<div style="color:#aaa;font-size:12px;text-align:center;margin-top:6px;">...และอีก ${qty-3} ใบ</div>`;
+  html+=`<div class="lp-preview-size">${_lpW} × ${_lpH} cm &nbsp;|&nbsp; ${qty} ใบ</div>`;
   area.innerHTML=html;
-  area.insertAdjacentHTML('beforeend',`<div class="lp-preview-size">${_lpW} × ${_lpH} cm &nbsp;|&nbsp; ${qty} ใบ</div>`);
 }
 
-function _lpBuildCard(W,H,fs){
+function _lpBuildCard(W,H,fonts,scale){
+  scale=scale||1;
   const d=_lpData;
+  const fs=fonts||_lpFonts||LP_FONT_DEFAULTS;
   const lines=s=>s?s.split('\n').map(l=>`<div>${_escHtml(l)}</div>`).join(''):'';
-  return `<div class="label-card" style="width:${W}px;height:${H}px;font-size:${fs}px;">
+  const sz=k=>Math.max(6,Math.round((fs[k]||LP_FONT_DEFAULTS[k])*scale))+'px';
+  return `<div class="label-card" style="width:${W}px;height:${H}px;">
     <div class="label-inner">
-      <div class="label-name" style="font-size:${Math.round(fs*1.5)}px;">${_escHtml(d.name||'ชื่อยา')}</div>
-      ${d.name_en?`<div class="label-name-en">${_escHtml(d.name_en)}</div>`:''}
+      <div class="label-name" style="font-size:${sz('name')};">${_escHtml(d.name||'ชื่อยา')}</div>
+      ${d.name_en?`<div class="label-name-en" style="font-size:${sz('name_en')};">${_escHtml(d.name_en)}</div>`:''}
       <div class="label-divider"></div>
-      ${d.indication?`<div class="label-indication" style="font-size:${fs}px;">${lines(d.indication)}</div>`:''}
-      ${d.usage?`<div class="label-usage" style="font-size:${Math.round(fs*1.05)}px;">${lines(d.usage)}</div>`:''}
-      ${d.warning?`<div class="label-warning" style="font-size:${Math.round(fs*.9)}px;">⚠️ ${lines(d.warning)}</div>`:''}
+      ${d.indication?`<div class="label-indication" style="font-size:${sz('indication')};">${lines(d.indication)}</div>`:''}
+      ${d.usage?`<div class="label-usage" style="font-size:${sz('usage')};">${lines(d.usage)}</div>`:''}
+      ${d.warning?`<div class="label-warning" style="font-size:${sz('warning')};">⚠️ ${lines(d.warning)}</div>`:''}
     </div>
     <div class="label-footer-box">
-      <div class="label-clinic" style="font-size:${Math.round(fs*.82)}px;">${lines(d.clinic)}</div>
+      <div class="label-clinic" style="font-size:${sz('clinic')};">${lines(d.clinic)}</div>
     </div>
   </div>`;
 }
@@ -5413,9 +5473,8 @@ function lpPrint(){
   const PX_PER_CM=37.8;
   const W=Math.round(_lpW*PX_PER_CM);
   const H=Math.round(_lpH*PX_PER_CM);
-  const fs=Math.max(8,Math.min(14,H/7));
   let html='<div style="display:flex;flex-wrap:wrap;gap:6mm;padding:4mm;">';
-  for(let i=0;i<qty;i++) html+=_lpBuildCard(W,H,fs);
+  for(let i=0;i<qty;i++) html+=_lpBuildCard(W,H,_lpFonts,1);
   html+='</div>';
   const pa=document.getElementById('lp-print-area');
   pa.innerHTML=html;
@@ -5424,29 +5483,31 @@ function lpPrint(){
   setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; },1000);
 }
 
-// ── Save label data กลับ herb ──
+// ── Save herb data ──
 async function lpSaveData(){
   if(!_lpHerb){ showToast('กรุณาเลือกยาก่อน','error'); return; }
   const upd={
-    'สรรพคุณ': _lpData.indication||'',
-    'วิธีใช้':  _lpData.usage||'',
-    'คำเตือน':  _lpData.warning||'',
-    name_th:   _lpData.name||_lpHerb.name_th,
-    name_en:   _lpData.name_en||_lpHerb.name_en||'',
+    'สรรพคุณ':_lpData.indication||'',
+    'วิธีใช้': _lpData.usage||'',
+    'คำเตือน': _lpData.warning||'',
+    name_th:  _lpData.name||_lpHerb.name_th,
+    name_en:  _lpData.name_en||_lpHerb.name_en||'',
   };
+  const btn=document.querySelector('#lp-modal .lp-footer .btn-primary');
+  const _done=showLoading(btn);
   try {
-    const _done=showLoading(document.querySelector('#lp-modal .lp-footer .btn-primary'));
     await callApi('herbs','update',upd,_lpHerb.id);
-    // อัพเดท local cache
     const idx=allHerbs.findIndex(h=>h.id===_lpHerb.id);
     if(idx>=0) Object.assign(allHerbs[idx],upd);
     _done();
     showToast('✅ บันทึกข้อมูลยาเรียบร้อย');
   } catch(err){
+    _done();
     showToast('เกิดข้อผิดพลาด: '+err.message,'error');
   }
 }
 </script>
+
 
 </body>
 </html>
