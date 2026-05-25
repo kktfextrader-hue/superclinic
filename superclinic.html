@@ -407,6 +407,105 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
       @page { margin:8mm; }
     }
     #lp-print-area { display:none; }
+
+/* ══ MOBILE RESPONSIVE ══ */
+/* Hamburger button (ซ่อนบน desktop) */
+#hamburger-btn {
+  display: none;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(200,169,107,0.28);
+  background: rgba(255,255,255,0.7);
+  color: var(--g1);
+  align-items: center; justify-content: center;
+  cursor: pointer; font-size: 20px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+#hamburger-btn:hover { background: var(--gs); border-color: var(--go); }
+
+/* Sidebar overlay backdrop */
+#sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 199;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+#sidebar-backdrop.open { display: block; }
+
+@media (max-width: 768px) {
+  /* Layout: เปลี่ยนเป็น 1 column */
+  .app {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 56px 1fr !important;
+  }
+
+  /* Sidebar: ซ่อนอยู่นอกจอ ซ้ายมือ */
+  .sidebar {
+    position: fixed !important;
+    top: 0; left: 0; bottom: 0;
+    width: 280px !important;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    grid-row: unset !important;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 32px rgba(0,0,0,0.25);
+  }
+
+  /* Topbar: row 1 */
+  .topbar {
+    padding: 0 14px;
+    grid-column: 1 / -1;
+  }
+
+  /* Main: row 2 */
+  .main {
+    grid-column: 1 / -1;
+  }
+
+  /* แสดงปุ่ม hamburger */
+  #hamburger-btn { display: flex; }
+
+  /* Page padding ลดลง */
+  .page { padding: 16px 14px; }
+
+  /* Grid ปรับ column */
+  .grid-4 { grid-template-columns: 1fr 1fr !important; }
+  .grid-3 { grid-template-columns: 1fr 1fr !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Dashboard layout */
+  .app > .main [style*="grid-template-columns:1fr 300px"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .app > .main [style*="grid-template-columns:340px 1fr"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Search input กว้างขึ้น */
+  .search-input { width: 100% !important; }
+  .search-wrap { width: 100% !important; }
+
+  /* Table scroll แนวนอน */
+  .card-body .tbl-wrap, .card { overflow-x: auto; }
+
+  /* Topbar title */
+  .topbar-title { font-size: 15px !important; }
+}
+
+@media (max-width: 480px) {
+  .grid-4 { grid-template-columns: 1fr 1fr !important; }
+  .stat-val { font-size: 22px !important; }
+  .page-h1 { font-size: 20px !important; }
+}
+
 </style>
   <!-- face-api.js for Face Recognition -->
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -415,7 +514,8 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 <div class="app">
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<div id="sidebar-backdrop"></div>
+<aside class="sidebar" id="main-sidebar">
   <div class="logo-area">
     <!-- Full luxury background vector -->
     <svg class="logo-area-vector" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
@@ -556,6 +656,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 
 <!-- TOPBAR -->
 <header class="topbar">
+  <button id="hamburger-btn" title="เมนู" aria-label="เปิด/ปิดเมนู"><i class="ti ti-menu-2"></i></button>
   <div class="topbar-title" id="topbar-title" style="font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:0.04em;background:linear-gradient(135deg,#F5DFA0,#C8A96B,#E8C97A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">✦ Superclinic</div>
   <div class="topbar-right">
     <button class="tb-btn notif-pos" title="การแจ้งเตือน"><i class="ti ti-bell"></i></button>
@@ -5903,5 +6004,48 @@ function mcPrint(){
 }
 </script>
 
+<script>
+/* ── Mobile Sidebar Toggle ── */
+(function(){
+  const btn      = document.getElementById('hamburger-btn');
+  const sidebar  = document.getElementById('main-sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (!btn || !sidebar || !backdrop) return;
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  btn.addEventListener('click', function(){
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+
+  // ปิด sidebar เมื่อคลิก backdrop
+  backdrop.addEventListener('click', closeSidebar);
+
+  // ปิด sidebar เมื่อเลือก nav item บน mobile
+  sidebar.querySelectorAll('.nav-item').forEach(function(item){
+    item.addEventListener('click', function(){
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // อัปเดต icon hamburger ตาม state
+  sidebar.addEventListener('transitionend', function(){
+    const icon = btn.querySelector('i');
+    if (!icon) return;
+    icon.className = sidebar.classList.contains('open')
+      ? 'ti ti-x'
+      : 'ti ti-menu-2';
+  });
+})();
+</script>
 </body>
 </html>
