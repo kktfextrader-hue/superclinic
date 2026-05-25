@@ -368,6 +368,44 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(200,169,107,0.3);border-radius:4px;}
+    /* ══ LABEL PRINTER ══ */
+    .lp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;display:flex;align-items:center;justify-content:center;}
+    .lp-modal{background:#fff;border-radius:20px;width:900px;max-width:97vw;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.3);}
+    .lp-header{padding:18px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;background:var(--g1);}
+    .lp-header h2{font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;margin:0;}
+    .lp-body{display:flex;flex:1;overflow:hidden;}
+    .lp-left{width:320px;min-width:280px;border-right:1px solid #eee;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+    .lp-right{flex:1;padding:20px;overflow-y:auto;background:#f4f4f4;display:flex;flex-direction:column;align-items:center;gap:16px;}
+    .lp-section-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;}
+    .lp-input{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:'Sarabun',sans-serif;}
+    .lp-input:focus{outline:none;border-color:var(--g1);}
+    .lp-textarea{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:12px;font-family:'Sarabun',sans-serif;resize:vertical;min-height:56px;}
+    .lp-textarea:focus{outline:none;border-color:var(--g1);}
+    .lp-select{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;}
+    .lp-row{display:flex;gap:8px;}
+    .lp-row .lp-input,.lp-row .lp-select{flex:1;}
+    .lp-footer{padding:14px 24px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end;background:#fff;}
+    /* ── Label Preview Card ── */
+    .label-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
+    .label-card{background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:0;overflow:hidden;position:relative;box-sizing:border-box;}
+    .label-inner{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;padding:12px 10px 8px;box-sizing:border-box;gap:4px;}
+    .label-name{font-weight:800;text-align:center;line-height:1.2;color:#111;}
+    .label-name-en{font-size:.75em;color:#555;text-align:center;font-style:italic;}
+    .label-divider{width:80%;height:1px;background:#ccc;margin:3px 0;}
+    .label-indication{text-align:center;color:#333;line-height:1.5;}
+    .label-usage{text-align:center;color:#222;font-weight:600;line-height:1.5;}
+    .label-warning{text-align:center;color:#8B0000;font-weight:700;line-height:1.4;}
+    .label-footer-box{width:100%;background:#f0f0f0;padding:5px 8px;box-sizing:border-box;border-top:1px solid #ddd;}
+    .label-clinic{text-align:center;color:#444;line-height:1.5;}
+    .lp-preview-size{font-size:11px;color:#999;text-align:center;}
+    /* ── Print Media ── */
+    @media print {
+      body > *:not(#lp-print-area) { display:none !important; }
+      #lp-print-area { display:block !important; }
+      .label-card { box-shadow:none !important; break-inside:avoid; }
+      @page { margin:8mm; }
+    }
+    #lp-print-area { display:none; }
 </style>
   <!-- face-api.js for Face Recognition -->
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -2801,44 +2839,7 @@ function openAddAppt(){
     .face-capture-btn.primary:disabled{background:#444;color:#888;cursor:not-allowed;}
     .face-capture-btn.secondary{background:rgba(255,255,255,.08);color:#aaa;border:1px solid rgba(255,255,255,.12);}
     .face-preview-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid rgba(200,169,107,.4);flex-shrink:0;}
-    /* ══ LABEL PRINTER ══ */
-    .lp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;display:flex;align-items:center;justify-content:center;}
-    .lp-modal{background:#fff;border-radius:20px;width:900px;max-width:97vw;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.3);}
-    .lp-header{padding:18px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;background:var(--g1);}
-    .lp-header h2{font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;margin:0;}
-    .lp-body{display:flex;flex:1;overflow:hidden;}
-    .lp-left{width:320px;min-width:280px;border-right:1px solid #eee;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
-    .lp-right{flex:1;padding:20px;overflow-y:auto;background:#f4f4f4;display:flex;flex-direction:column;align-items:center;gap:16px;}
-    .lp-section-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;}
-    .lp-input{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:'Sarabun',sans-serif;}
-    .lp-input:focus{outline:none;border-color:var(--g1);}
-    .lp-textarea{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:12px;font-family:'Sarabun',sans-serif;resize:vertical;min-height:56px;}
-    .lp-textarea:focus{outline:none;border-color:var(--g1);}
-    .lp-select{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;}
-    .lp-row{display:flex;gap:8px;}
-    .lp-row .lp-input,.lp-row .lp-select{flex:1;}
-    .lp-footer{padding:14px 24px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end;background:#fff;}
-    /* ── Label Preview Card ── */
-    .label-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
-    .label-card{background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:0;overflow:hidden;position:relative;box-sizing:border-box;}
-    .label-inner{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;padding:12px 10px 8px;box-sizing:border-box;gap:4px;}
-    .label-name{font-weight:800;text-align:center;line-height:1.2;color:#111;}
-    .label-name-en{font-size:.75em;color:#555;text-align:center;font-style:italic;}
-    .label-divider{width:80%;height:1px;background:#ccc;margin:3px 0;}
-    .label-indication{text-align:center;color:#333;line-height:1.5;}
-    .label-usage{text-align:center;color:#222;font-weight:600;line-height:1.5;}
-    .label-warning{text-align:center;color:#8B0000;font-weight:700;line-height:1.4;}
-    .label-footer-box{width:100%;background:#f0f0f0;padding:5px 8px;box-sizing:border-box;border-top:1px solid #ddd;}
-    .label-clinic{text-align:center;color:#444;line-height:1.5;}
-    .lp-preview-size{font-size:11px;color:#999;text-align:center;}
-    /* ── Print Media ── */
-    @media print {
-      body > *:not(#lp-print-area) { display:none !important; }
-      #lp-print-area { display:block !important; }
-      .label-card { box-shadow:none !important; break-inside:avoid; }
-      @page { margin:8mm; }
-    }
-    #lp-print-area { display:none; }
+
   </style>
     <form id="form-add-appt" onsubmit="submitAddAppt(event)" style="display:flex;flex-direction:column;gap:14px;">
       <div class="form-group" style="position:relative;">
