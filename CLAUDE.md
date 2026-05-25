@@ -295,3 +295,19 @@ callApi('settings','update',{ key:'herb_stock_value', value: String(Math.round(v
 | 2026-05-22 | v58 | Thai name fix (data-* events), loading spinner, acKeyNav utility |
 | 2026-05-23 | v59 | Custom Date Picker (↑▼ วัน/เดือน/ปี), Appt View/Edit modal, Herb Stock Value auto-save |
 | 2026-05-23 | v60 | SearchX convention, ปุ่มแก้ไขใน appt-card, แก้ delete bug, treat-search → SearchX |
+| 2026-05-25 | v61 | Face Recognition (face-api.js), Feature Toggles ON/OFF, ปุ่มออกใบรับรองแพทย์ |
+| 2026-05-25 | v62 | ระบบพิมพ์ฉลากยา (Label Printer) — modal, preview, ขนาด, จำนวน, พิมพ์จริง |
+
+---
+
+## 16. สถานะพร้อม Push
+
+✅ **แก้ไขเสร็จแล้ว — รัน `push-now.bat` ได้เลย**
+
+```
+C:\Users\acer\Desktop\Claude\superclinic\push-now.bat
+```
+
+ไฟล์ที่อัพเดทแล้ว:
+- `thai-clinic.html` — Label Printer, Face Recognition, Feature Toggles, CHANGELOG v4
+- `CLAUDE.md` — changelog และ section นี้
