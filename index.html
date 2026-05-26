@@ -1346,7 +1346,50 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
           <div class="setting-row"><div><div class="setting-label">แจ้งเตือนนัดหมายล่วงหน้า</div><div class="setting-sub">ส่ง SMS ก่อนนัด 24 ชั่วโมง</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
           <div class="setting-row"><div><div class="setting-label">แจ้งเตือนสต็อกใกล้หมด</div><div class="setting-sub">แจ้งเตือนเมื่อสต็อกต่ำกว่าจุดสั่งซื้อ</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
           <div class="setting-row"><div><div class="setting-label">สรุปรายวันอัตโนมัติ</div><div class="setting-sub">ส่งสรุปประจำวันทุกเวลา 18:00 น.</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
-          <div class="setting-row"><div><div class="setting-label">แจ้งเตือนผ่าน LINE</div><div class="setting-sub">เชื่อมต่อ LINE Notify</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <!-- LINE Notify row -->
+          <div class="setting-row" style="flex-wrap:wrap;gap:8px;">
+            <div style="flex:1;min-width:180px;">
+              <div class="setting-label" style="display:flex;align-items:center;gap:6px;">
+                <i class="ti ti-brand-line" style="color:#06C755;font-size:16px;"></i>แจ้งเตือนผ่าน LINE Notify
+              </div>
+              <div class="setting-sub">รับแจ้งเตือนนัดหมาย/สต็อกใกล้หมดผ่าน LINE</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button id="toggle-line-notify" class="toggle" onclick="toggleLineNotifyUI()"></button>
+              <button class="btn btn-outline btn-sm" onclick="toggleLineNotifyUI(true)" style="white-space:nowrap;">
+                <i class="ti ti-key"></i> ตั้งค่า Token
+              </button>
+            </div>
+          </div>
+          <!-- LINE Notify token panel (ซ่อนเริ่มต้น) -->
+          <div id="line-notify-ui" style="display:none;background:rgba(6,199,85,0.04);border:1px solid rgba(6,199,85,0.2);border-radius:12px;padding:14px;margin-top:4px;">
+            <div class="form-group" style="margin-bottom:10px;">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px;">
+                <i class="ti ti-brand-line" style="color:#06C755;"></i> LINE Notify Token
+              </label>
+              <div style="display:flex;gap:8px;">
+                <input id="line-token-input" type="password" class="form-input"
+                  placeholder="วาง Token จาก notify.line.me"
+                  style="font-family:monospace;font-size:12px;flex:1;letter-spacing:1px;">
+                <button class="btn btn-outline btn-sm" onclick="toggleShowToken()" title="แสดง/ซ่อน">
+                  <i class="ti ti-eye" id="eye-icon"></i>
+                </button>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button class="btn btn-green btn-sm" onclick="saveLineToken()">
+                <i class="ti ti-device-floppy"></i>บันทึก
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="testLineNotify()">
+                <i class="ti ti-send"></i>ทดสอบส่ง
+              </button>
+              <a href="https://notify-bot.line.me/my/" target="_blank"
+                 class="btn btn-outline btn-sm" style="text-decoration:none;color:var(--g1);">
+                <i class="ti ti-external-link"></i>ขอ Token
+              </a>
+            </div>
+            <div id="line-notify-status" style="margin-top:8px;font-size:12px;color:#888;min-height:16px;"></div>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -3302,6 +3345,7 @@ async function submitAddAppt(e){
 
   try {
     await callApi('appointments','create',data);
+    notifyNewAppointment(data);
     closeModal();
     showToast('✅ สร้างนัดหมายสำเร็จ');
     selApptDate = date;
@@ -4673,6 +4717,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v25', date:'26/05/2569', items:['update'] },
   { ver:'v24', date:'26/05/2569', items:['update'] },
   { ver:'v23', date:'26/05/2569', items:['update'] },
   { ver:'v4', date:'25/05/2569', items:['ระบบพิมพ์ฉลากยา (Label Printer) พร้อม Preview','ตั้งค่าฟังก์ชัน ON/OFF (Face Recognition, ID Card)','ปุ่มออกใบรับรองแพทย์ในข้อมูลผู้ป่วย'] },
@@ -6048,6 +6093,116 @@ function mcPrint(){
       : 'ti ti-menu-2';
   });
 })();
+</script>
+<script>
+/* ══ LINE NOTIFY ══ */
+const LINE_TOKEN_KEY = 'sc_line_notify_token';
+
+function initLineNotifyUI() {
+  const saved = localStorage.getItem(LINE_TOKEN_KEY) || '';
+  const inp = document.getElementById('line-token-input');
+  const tog = document.getElementById('toggle-line-notify');
+  if (inp) inp.value = saved;
+  if (tog) { if (saved) tog.classList.add('on'); else tog.classList.remove('on'); }
+  updateLineStatus(saved ? '✅ มี Token บันทึกอยู่แล้ว' : '');
+}
+
+function toggleLineNotifyUI(forceOpen) {
+  const tog = document.getElementById('toggle-line-notify');
+  const ui  = document.getElementById('line-notify-ui');
+  if (!ui) return;
+  const willOpen = forceOpen || (ui.style.display === 'none');
+  ui.style.display = willOpen ? 'block' : 'none';
+  if (tog) {
+    // toggle ON เฉพาะเมื่อมี token บันทึกแล้ว
+    const saved = localStorage.getItem(LINE_TOKEN_KEY);
+    if (saved) tog.classList.add('on'); else tog.classList.remove('on');
+  }
+}
+
+function toggleShowToken() {
+  const inp = document.getElementById('line-token-input');
+  const icon = document.getElementById('eye-icon');
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  if (icon) icon.className = show ? 'ti ti-eye-off' : 'ti ti-eye';
+}
+
+function updateLineStatus(msg, isError) {
+  const el = document.getElementById('line-notify-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? '#C0392B' : (msg.startsWith('✅') ? '#27AE60' : '#888');
+}
+
+async function saveLineToken() {
+  const inp = document.getElementById('line-token-input');
+  if (!inp) return;
+  const token = inp.value.trim();
+  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
+  updateLineStatus('⏳ กำลังบันทึก...');
+  try {
+    await callApi('settings', 'update', { key: 'line_notify_token', value: token, description: 'LINE Notify Token' });
+    localStorage.setItem(LINE_TOKEN_KEY, token);
+    const tog = document.getElementById('toggle-line-notify');
+    if (tog) tog.classList.add('on');
+    updateLineStatus('✅ บันทึก Token เรียบร้อยแล้ว');
+    showToast('✅ บันทึก LINE Notify Token แล้ว');
+  } catch (err) {
+    updateLineStatus('❌ บันทึกไม่สำเร็จ: ' + err.message, true);
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+async function testLineNotify() {
+  const inp = document.getElementById('line-token-input');
+  const token = (inp ? inp.value.trim() : '') || localStorage.getItem(LINE_TOKEN_KEY) || '';
+  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
+  updateLineStatus('⏳ กำลังส่งข้อความทดสอบ...');
+  try {
+    await sendLineNotify('🌿 ทดสอบแจ้งเตือนจาก Superclinic\nระบบ LINE Notify พร้อมใช้งาน ✅', token);
+    updateLineStatus('✅ ส่งสำเร็จ — เช็ค LINE ของคุณได้เลย');
+    showToast('✅ ส่ง LINE Notify สำเร็จ');
+  } catch (err) {
+    updateLineStatus('❌ ' + err.message, true);
+    showToast('❌ LINE: ' + err.message, 'error');
+  }
+}
+
+async function sendLineNotify(message, token) {
+  const body = { message };
+  if (token) body.token = token;
+  const url = `${API_URL}?sheet=settings&action=notify&token=${encodeURIComponent(API_TOKEN)}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body)
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'LINE Notify failed');
+  return json.data;
+}
+
+async function notifyNewAppointment(data) {
+  const token = localStorage.getItem(LINE_TOKEN_KEY);
+  if (!token) return;
+  const tog = document.getElementById('toggle-line-notify');
+  if (tog && !tog.classList.contains('on')) return;
+  const msg = `📅 นัดหมายใหม่\nผู้ป่วย: ${data.patient_name||''}\nวันที่: ${data.date||''} เวลา ${data.time_start||''}\nประเภท: ${data.treatment_type||''}\n— Superclinic`;
+  try { await sendLineNotify(msg); } catch (e) {}
+}
+
+async function notifyLowStock(herbName, qty, minQty) {
+  const token = localStorage.getItem(LINE_TOKEN_KEY);
+  if (!token) return;
+  const tog = document.getElementById('toggle-line-notify');
+  if (tog && !tog.classList.contains('on')) return;
+  const msg = `⚠️ สต็อกใกล้หมด\nชื่อ: ${herbName}\nคงเหลือ: ${qty} (ต่ำสุด: ${minQty})\n— Superclinic`;
+  try { await sendLineNotify(msg); } catch (e) {}
+}
+
+document.addEventListener('DOMContentLoaded', initLineNotifyUI);
 </script>
 </body>
 </html>
