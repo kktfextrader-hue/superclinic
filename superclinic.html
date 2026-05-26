@@ -1387,6 +1387,9 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
                  class="btn btn-outline btn-sm" style="text-decoration:none;color:var(--g1);">
                 <i class="ti ti-external-link"></i>ขอ Token
               </a>
+              <button class="btn btn-outline btn-sm" onclick="document.getElementById('line-notify-ui').style.display='none'" style="color:#888;">
+                <i class="ti ti-x"></i>ยกเลิก
+              </button>
             </div>
             <div id="line-notify-status" style="margin-top:8px;font-size:12px;color:#888;min-height:16px;"></div>
           </div>
@@ -4719,6 +4722,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v32', date:'26/05/2569', items:['update'] },
   { ver:'v31', date:'26/05/2569', items:['cd C:\Users\acer\Desktop\Claude\superclinic'] },
   { ver:'v30', date:'26/05/2569', items:['update'] },
   { ver:'v29', date:'26/05/2569', items:['[System.Environment]::SetEnvironmentVariable(PYTHONUTF8, 1, User)'] },
