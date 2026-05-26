@@ -1355,10 +1355,10 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
               <div class="setting-sub">รับแจ้งเตือนนัดหมาย/สต็อกใกล้หมดผ่าน LINE</div>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <button id="toggle-line-notify" class="toggle" onclick="toggleLineNotifyUI()"></button>
               <button class="btn btn-outline btn-sm" onclick="toggleLineNotifyUI(true)" style="white-space:nowrap;">
                 <i class="ti ti-key"></i> ตั้งค่า Token
               </button>
+              <button id="toggle-line-notify" class="toggle" onclick="toggleLineNotifyUI()"></button>
             </div>
           </div>
           <!-- LINE Notify token panel (ซ่อนเริ่มต้น) -->
@@ -1706,6 +1706,7 @@ function showPage(name, clickedEl) {
   }
   document.getElementById('topbar-title').textContent = titles[name]||'';
   document.querySelector('.main').scrollTop = 0;
+  location.hash = name;
   // init body map ในหน้าลงทะเบียน ทุกครั้งที่เปิดหน้า
   if(name === 'register'){
     setTimeout(()=>{
@@ -4717,6 +4718,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v26', date:'26/05/2569', items:['update'] },
   { ver:'v25', date:'26/05/2569', items:['update'] },
   { ver:'v24', date:'26/05/2569', items:['update'] },
   { ver:'v23', date:'26/05/2569', items:['update'] },
@@ -4779,6 +4781,11 @@ function submitClearLog(){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  // restore หน้าจาก URL hash เมื่อ refresh
+  const hash = location.hash.replace('#','');
+  const validPages = ['dashboard','appointments','patients','register','treatments','herbs','stock','reports','finance','settings'];
+  if(hash && validPages.includes(hash)) showPage(hash, null);
+
   // Patient search
   const ps = document.querySelector('#page-patients .search-input');
   if(ps) ps.addEventListener('input', e=>{ patPage=1; renderPatients(e.target.value); });
