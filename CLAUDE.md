@@ -323,11 +323,14 @@ cd C:\Users\acer\Desktop\Claude\superclinic
 python patch_example.py
 ```
 
-**แก้ภาษาไทยใน PowerShell (รันครั้งเดียวถาวร):**
+**Terminal ที่ใช้:** Windows Terminal (`wt`) — รองรับภาษาไทยได้ปกติ ไม่ต้องแก้ font
+- เปิดด้วย: กด Windows key พิมพ์ `wt` หรือรัน `wt` ใน PowerShell เดิม
+- **ห้ามใช้ PowerShell เดิม** — แสดงภาษาไทยเป็นสี่เหลี่ยม
+
+**แก้ภาษาไทยใน PowerShell เดิม (ถ้าจำเป็น):**
 ```
-New-ItemProperty -Path "HKCU:\Console" -Name "CodePage" -Value 65001 -PropertyType DWORD -Force
+chcp 65001
 ```
-หรือรันทุกครั้งที่เปิด session ใหม่: `chcp 65001`
 
 ---
 

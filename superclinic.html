@@ -4719,6 +4719,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v28', date:'26/05/2569', items:['update'] },
   { ver:'v26', date:'26/05/2569', items:['update'] },
   { ver:'v27', date:'26/05/2569', items:['update'] },
   { ver:'v26', date:'26/05/2569', items:['update'] },
@@ -4784,11 +4785,6 @@ function submitClearLog(){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  // restore หน้าจาก URL hash เมื่อ refresh
-  const hash = location.hash.replace('#','');
-  const validPages = ['dashboard','appointments','patients','register','treatments','herbs','stock','reports','finance','settings'];
-  if(hash && validPages.includes(hash)) showPage(hash, null);
-
   // restore หน้าจาก URL hash เมื่อ refresh
   const hash = location.hash.replace('#','');
   const validPages = ['dashboard','appointments','patients','register','treatments','herbs','stock','reports','finance','settings'];
