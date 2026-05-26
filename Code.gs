@@ -130,6 +130,7 @@ function handleRequest(e, method) {
       case 'create': result = createRow_(sheet, body);                        break;
       case 'update': result = updateRow_(sheet, body.id || params.id, body);  break;
       case 'delete': result = deleteRow_(sheet, body.id || params.id);        break;
+      case 'notify': result = handleLineNotify_(body);                        break;
       default:
         return jsonResponse_({ ok: false, error: 'Unknown action: ' + action }, 400);
     }
@@ -424,6 +425,67 @@ function jsonResponse_(payload, status) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  LINE NOTIFY
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * ดึง LINE Notify Token จาก settings sheet
+ * key: line_notify_token
+ */
+function getLineToken_() {
+  try {
+    const data = readSheet_('settings');
+    const row  = data.rows.find(r => String(r.key).trim() === 'line_notify_token');
+    if (row && row.value) return String(row.value).trim();
+  } catch (e) {}
+  return '';
+}
+
+/**
+ * ส่งข้อความผ่าน LINE Notify
+ * body: { message, token(optional) }
+ */
+function handleLineNotify_(body) {
+  const token = body.token || getLineToken_();
+  if (!token) throw new Error('ไม่พบ LINE Notify Token — กรุณาตั้งค่าใน หน้าตั้งค่าระบบ');
+
+  const msg = body.message || '📢 แจ้งเตือนจาก Superclinic';
+  return sendLineNotify_(token, msg);
+}
+
+/**
+ * เรียก LINE Notify API จริง (server-side เพื่อหลีกเลี่ยง CORS)
+ */
+function sendLineNotify_(token, message) {
+  const url = 'https://notify-api.line.me/api/notify';
+  const options = {
+    method:  'post',
+    headers: { 'Authorization': 'Bearer ' + token },
+    payload: 'message=' + encodeURIComponent(message),
+    muteHttpExceptions: true
+  };
+  const res  = UrlFetchApp.fetch(url, options);
+  const code = res.getResponseCode();
+  const body = res.getContentText();
+
+  if (code !== 200) {
+    throw new Error('LINE Notify error ' + code + ': ' + body);
+  }
+  return { sent: true, status: code, message: message };
+}
+
+/**
+ * Test function — รันใน Apps Script editor
+ */
+function test_lineNotify() {
+  const token = getLineToken_();
+  if (!token) { Logger.log('❌ ไม่มี token'); return; }
+  const r = sendLineNotify_(token, '🌿 ทดสอบ LINE Notify จาก Superclinic');
+  Logger.log(JSON.stringify(r));
 }
 
 
