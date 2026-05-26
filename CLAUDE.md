@@ -307,7 +307,48 @@ callApi('settings','update',{ key:'herb_stock_value', value: String(Math.round(v
 
 ---
 
-## 16. สถานะพร้อม Push
+## 16. PowerShell & Command Convention
+
+**Working directory:**
+```
+C:\Users\acer\Desktop\Claude\superclinic
+```
+
+**กฎการเขียนคำสั่ง:**
+- รวม `cd` และคำสั่งไว้ใน **code block เดียวกันเสมอ** เพื่อ copy ได้ทีเดียว
+- ห้ามแยก code block — PowerShell จะรันทีละบรรทัดอัตโนมัติ
+
+```
+cd C:\Users\acer\Desktop\Claude\superclinic
+python patch_example.py
+```
+
+**แก้ภาษาไทยใน PowerShell (รันครั้งเดียวถาวร):**
+```
+New-ItemProperty -Path "HKCU:\Console" -Name "CodePage" -Value 65001 -PropertyType DWORD -Force
+```
+หรือรันทุกครั้งที่เปิด session ใหม่: `chcp 65001`
+
+---
+
+## 17. Features ที่เพิ่มใน Session นี้ (v22–v25)
+
+| Feature | วิธีทำงาน | ไฟล์ที่เกี่ยวข้อง |
+|---|---|---|
+| Responsive sidebar + Hamburger menu | CSS media query ≤768px, sidebar fixed + overlay | superclinic.html |
+| Changelog แสดง version จริง | `update_version.py` รันก่อน push, แทรก CHANGELOG | update_version.py, push-now.bat |
+| push-now.bat prompt commit message | `set /p COMMIT_MSG=` ก่อน push | push-now.bat |
+| LINE Notify UI + Token | toggle + panel กรอก token, ส่งผ่าน Apps Script | superclinic.html, Code.gs |
+| Hash navigation (#page) | `location.hash = name` ใน showPage, restore ตอน load | superclinic.html |
+
+**Hash navigation** — refresh แล้วกลับมาหน้าเดิม:
+- URL เปลี่ยนเป็น `...superclinic/#settings` เมื่อเปลี่ยนหน้า
+- ตอน load อ่าน hash กลับมา restore หน้าอัตโนมัติ
+- validPages: `dashboard, appointments, patients, register, treatments, herbs, stock, reports, finance, settings`
+
+---
+
+## 18. สถานะพร้อม Push
 
 ✅ **แก้ไขเสร็จแล้ว — รัน `push-now.bat` ได้เลย**
 

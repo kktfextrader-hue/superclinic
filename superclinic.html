@@ -1707,6 +1707,7 @@ function showPage(name, clickedEl) {
   document.getElementById('topbar-title').textContent = titles[name]||'';
   document.querySelector('.main').scrollTop = 0;
   location.hash = name;
+  location.hash = name;
   // init body map ในหน้าลงทะเบียน ทุกครั้งที่เปิดหน้า
   if(name === 'register'){
     setTimeout(()=>{
@@ -4718,6 +4719,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v27', date:'26/05/2569', items:['update'] },
   { ver:'v26', date:'26/05/2569', items:['update'] },
   { ver:'v25', date:'26/05/2569', items:['update'] },
   { ver:'v24', date:'26/05/2569', items:['update'] },
@@ -4781,6 +4783,11 @@ function submitClearLog(){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  // restore หน้าจาก URL hash เมื่อ refresh
+  const hash = location.hash.replace('#','');
+  const validPages = ['dashboard','appointments','patients','register','treatments','herbs','stock','reports','finance','settings'];
+  if(hash && validPages.includes(hash)) showPage(hash, null);
+
   // restore หน้าจาก URL hash เมื่อ refresh
   const hash = location.hash.replace('#','');
   const validPages = ['dashboard','appointments','patients','register','treatments','herbs','stock','reports','finance','settings'];
