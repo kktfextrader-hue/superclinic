@@ -42,7 +42,7 @@
 .badge-treating{background:var(--grad-gold);color:#5c3d00;font-weight:700;border-radius:20px;font-size:12px;padding:4px 12px;animation:blinkGold 1.4s ease-in-out infinite;display:inline-flex;align-items:center;gap:5px;}
 /* ── BODY MAP ── */
 .body-map-wrap{background:#f9f6f0;border-radius:16px;padding:16px;border:1px solid rgba(200,169,107,0.2);}
-.body-map-wrap.body-map-collapsed{padding:10px 16px;}
+.body-map-wrap.body-map-collapsed{padding:10px 16px;}.body-map-wrap.body-map-collapsed .body-map-content{display:none;}
 .body-map-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .body-map-views{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:flex-start;}
 .body-map-view{position:relative;flex-shrink:0;text-align:center;}
@@ -1507,6 +1507,7 @@ function bodyMapHTML(uid, initialData){
     <span class="bmap-hint" style="font-size:10px;font-weight:400;color:#aaa;display:none;">(คลิกบนร่างกายเพื่อ mark • คลิกจุดเพื่อลบ)</span>
     <button type="button" id="bmap-togbtn-${uid}" onclick="event.stopPropagation();bmToggle('${uid}')" style="margin-left:auto;background:none;border:1px solid var(--go);color:var(--go);border-radius:8px;padding:2px 10px;font-size:11px;cursor:pointer;">▼ ขยาย</button>
   </div>
+  <div class="body-map-content">
   <div class="body-map-controls">
     <span style="font-size:11px;color:#888;font-weight:600;">ระดับ:</span>
     <button type="button" class="pain-btn p1 active" onclick="bmSetLevel('${uid}',1)">1 เล็กน้อย</button>
@@ -1559,6 +1560,7 @@ function bodyMapHTML(uid, initialData){
     </div>
   </div>
   <input type="hidden" id="bmap-data-${uid}" name="body_map" value='${JSON.stringify(data)}'>
+  </div><!-- /body-map-content -->
 </div>`;
 }
 
@@ -5174,7 +5176,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v44', date:'28/05/2569', items:['update'] },
+  { ver:'v45', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
   { ver:'v33', date:'26/05/2569', items:['update'] },
