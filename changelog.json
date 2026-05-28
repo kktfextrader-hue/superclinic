@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v59",
+    "date": "28/05/2569",
+    "items": [
+      "fix face modal center popup inline style"
+    ]
+  },
+  {
     "ver": "v58",
     "date": "28/05/2569",
     "items": [
