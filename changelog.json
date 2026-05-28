@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v60",
+    "date": "28/05/2569",
+    "items": [
+      "fix face modal layout + ลบกรอบ bounding box"
+    ]
+  },
+  {
     "ver": "v59",
     "date": "28/05/2569",
     "items": [

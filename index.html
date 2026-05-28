@@ -3001,7 +3001,7 @@ function openAddAppt(){
     .face-modal-box{background:#1a1a2e;border-radius:20px;padding:20px;width:500px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5);border:1px solid rgba(200,169,107,.2);display:flex;flex-direction:column;gap:0;}
     .face-modal-box h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:#C8A96B;margin-bottom:2px;text-align:center;}
     .face-modal-box p{font-size:11px;color:#888;text-align:center;margin-bottom:10px;}
-    .face-video-wrap{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;max-height:42vh;}
+    .face-video-wrap{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;max-height:38vh;}
     .face-video-wrap video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
     .face-video-wrap canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
     .face-status-bar{margin-top:10px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;transition:all .3s;}
@@ -5190,7 +5190,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v59', date:'28/05/2569', items:['fix face modal center popup inline style'] },
+  { ver:'v60', date:'28/05/2569', items:['fix face modal layout + ลบกรอบ bounding box'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
@@ -5375,7 +5375,7 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
   overlay.id = 'face-modal-overlay';
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;';
   overlay.innerHTML = `
-    <div style="background:#1a1a2e;border-radius:20px;padding:20px;width:500px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6);border:1px solid rgba(200,169,107,.25);display:flex;flex-direction:column;box-sizing:border-box;">
+    <div style="background:#1a1a2e;border-radius:20px;padding:20px;width:480px;max-width:94vw;max-height:86vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6);border:1px solid rgba(200,169,107,.25);display:flex;flex-direction:column;gap:10px;box-sizing:border-box;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <h3 style="margin:0;">${title}</h3>
         <button onclick="closeFaceModal()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
@@ -5410,14 +5410,13 @@ async function startFaceWebcam() {
 
 /* ── Draw detections on canvas ───────────────────────────── */
 function drawDetections(detections) {
-  const video = document.getElementById('face-video');
+  // ไม่วาด bounding box — แค่แสดง dot indicator ใน status bar แทน
+  // (กรอบสีน้ำเงินรกเกินไป)
   const canvas = document.getElementById('face-canvas');
-  if (!canvas || !video) return;
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  faceapi.draw.drawDetections(canvas, detections);
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
 }
 
 /* ── Internal capture trigger (called from onclick) ──────── */
