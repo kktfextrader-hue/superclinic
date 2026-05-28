@@ -1431,6 +1431,13 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
           </div>
           <button id="toggle-idcard" class="toggle" onclick="toggleFeature('idcard')"></button>
         </div>
+        <div class="setting-row" style="padding:12px 0;border-top:1px solid rgba(0,0,0,0.07);">
+          <div style="flex:1;">
+            <div class="setting-label" style="font-size:13px;color:#888;"><i class="ti ti-refresh" style="margin-right:6px;"></i>รีเซ็ตการตั้งค่าฟังก์ชัน</div>
+            <div class="setting-sub">เปิดใช้งานฟังก์ชันทั้งหมดใหม่ (กรณีปุ่มหาย)</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="resetFeatures()" style="white-space:nowrap;color:var(--er);border-color:var(--er);">รีเซ็ต</button>
+        </div>
       </div>
     </div>
   </div>
@@ -5183,7 +5190,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v54', date:'28/05/2569', items:['update'] },
+  { ver:'v55', date:'28/05/2569', items:['update'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
@@ -5377,7 +5384,7 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
       </div>
       <div id="face-status" class="face-status-bar detecting">⏳ กำลังโหลดโมเดล…</div>
       ${showMatchList ? '<div id="face-match-list" class="face-match-list"></div>' : ''}
-      ${!showMatchList ? '<div class="face-strip-hint">📸 ระบบจะเก็บภาพที่ดีที่สุดอัตโนมัติ — กด "บันทึก" เมื่อพอใจ</div><div id="face-preview-strip" class="face-preview-strip"><span style="color:#555;font-size:12px;">รอตรวจจับใบหน้า…</span></div>' : ''}
+      ${!showMatchList ? '<div class="face-strip-hint">📸 ระบบเก็บภาพที่ดีที่สุดอัตโนมัติ — กด "บันทึก" เมื่อพอใจ</div><div id="face-preview-strip" class="face-preview-strip"><span style="color:#555;font-size:12px;">รอตรวจจับใบหน้า…</span></div>' : ''}
       <div class="face-btn-row">
         <button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()">${captureLabel}</button>
         <button class="face-capture-btn secondary" onclick="closeFaceModal();${onCancel ? onCancel + '()' : ''}">ยกเลิก</button>
@@ -5424,13 +5431,11 @@ function _faceCaptureTrigger() {
 async function openFaceCapture(mode) {
   _faceCaptureMode = mode;
 
-  // ── Best-frame collector ────────────────────────────────────────────────
-  // เก็บสูงสุด MAX_FRAMES frame ที่ confidence ดีที่สุด ใน buffer
   const MAX_FRAMES = 6;
-  let frameBuffer = [];  // [{score, descriptor, dataUrl}]
-  let bestFrame   = null; // frame ที่ score สูงสุด
+  let frameBuffer   = [];
+  let bestFrame     = null;
   let lastSampleTime = 0;
-  const SAMPLE_INTERVAL = 800; // ms — เก็บ frame ทุก 0.8 วิ
+  const SAMPLE_INTERVAL = 800;
 
   buildFaceModal({
     title: '📷 บันทึกใบหน้า',
@@ -5452,7 +5457,6 @@ async function openFaceCapture(mode) {
     if (btn) btn.disabled = !ok;
   };
 
-  // ── วาด thumbnail strip ────────────────────────────────────────────────
   const renderStrip = () => {
     const strip = document.getElementById('face-preview-strip');
     if (!strip) return;
@@ -5460,10 +5464,9 @@ async function openFaceCapture(mode) {
       strip.innerHTML = '<span style="color:#555;font-size:12px;">รอตรวจจับใบหน้า…</span>';
       return;
     }
-    // เรียงจาก score สูงสุด → ต่ำสุด แสดง MAX_FRAMES ล่าสุด
-    strip.innerHTML = frameBuffer.map((f, i) => {
+    strip.innerHTML = frameBuffer.map(f => {
       const isBest = (f === bestFrame);
-      return '<div class="fp-item' + (isBest ? ' best' : '') + '" title="score ' + (f.score*100).toFixed(0) + '%">' +
+      return '<div class="fp-item' + (isBest ? ' best' : '') + '">' +
         '<img src="' + f.dataUrl + '">' +
         '<div class="fp-score">' + (f.score*100).toFixed(0) + '%</div>' +
         (isBest ? '<div class="fp-best-label">✦</div>' : '') +
@@ -5471,7 +5474,6 @@ async function openFaceCapture(mode) {
     }).join('');
   };
 
-  // ── ฟังก์ชัน capture frame ────────────────────────────────────────────
   const captureFrame = (video, descriptor, score) => {
     const thumb = document.createElement('canvas');
     thumb.width = 112; thumb.height = 112;
@@ -5484,24 +5486,19 @@ async function openFaceCapture(mode) {
     return { score, descriptor, dataUrl: thumb.toDataURL('image/jpeg', 0.85) };
   };
 
-  // ── Confirm & save callback ───────────────────────────────────────────
   _faceCaptureCallback = async () => {
     if (!bestFrame) { showToast('ยังไม่มีภาพ — รอตรวจจับใบหน้าก่อน', 'error'); return; }
-
     const descriptorJson = JSON.stringify(Array.from(bestFrame.descriptor));
-
     if (mode === 'addpatient') {
       const descEl  = document.getElementById('addpat-face-descriptor');
       const preview = document.getElementById('addpat-face-preview');
       const thumbImg= document.getElementById('addpat-face-thumb');
-      if (descEl)   descEl.value            = descriptorJson;
-      if (preview)  preview.style.display   = 'flex';
-      if (thumbImg) thumbImg.src            = bestFrame.dataUrl;
+      if (descEl)   descEl.value          = descriptorJson;
+      if (preview)  preview.style.display = 'flex';
+      if (thumbImg) thumbImg.src          = bestFrame.dataUrl;
     }
-
-    // ล้าง buffer (ลบ VDO จำลองทิ้ง — เหลือแต่ภาพเดียวที่ดีสุด)
     frameBuffer = [];
-    showToast('✅ บันทึกใบหน้าสำเร็จ (score ' + (bestFrame.score*100).toFixed(0) + '%)');
+    showToast('✅ บันทึกใบหน้าสำเร็จ (' + (bestFrame.score*100).toFixed(0) + '%)');
     closeFaceModal();
   };
 
@@ -5526,29 +5523,21 @@ async function openFaceCapture(mode) {
       if (det) {
         const score = det.detection.score;
         drawDetections([det.detection]);
-
-        // auto-sample ทุก SAMPLE_INTERVAL ms
         const now = Date.now();
         if (now - lastSampleTime > SAMPLE_INTERVAL) {
           lastSampleTime = now;
           const frame = captureFrame(video, det.descriptor, score);
           frameBuffer.push(frame);
-          // เก็บแค่ MAX_FRAMES ล่าสุด
           if (frameBuffer.length > MAX_FRAMES) frameBuffer.shift();
-          // หา bestFrame จาก score สูงสุด
-          bestFrame = frameBuffer.reduce((a, b) => b.score > a.score ? b : a, frameBuffer[0]);
+          bestFrame = frameBuffer.reduce((a,b) => b.score > a.score ? b : a, frameBuffer[0]);
           renderStrip();
           setCaptureBtnEnabled(true);
         }
-
-        const pct = (score * 100).toFixed(0);
-        setStatus('found', '✅ ตรวจพบใบหน้า ' + pct + '% — กด "บันทึก" เมื่อพอใจ');
+        setStatus('found', '✅ ตรวจพบใบหน้า ' + (score*100).toFixed(0) + '% — กด "บันทึก" เมื่อพอใจ');
       } else {
-        drawDetections([]);
         const canvas = document.getElementById('face-canvas');
         if (canvas) { const ctx2 = canvas.getContext('2d'); ctx2.clearRect(0,0,canvas.width,canvas.height); }
         setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
-        // ไม่ disable ปุ่ม — ยังให้กด save ได้ถ้ามีภาพใน buffer แล้ว
       }
 
       _faceAnimFrame = requestAnimationFrame(loop);
@@ -5784,6 +5773,12 @@ function toggleFeature(key) {
   showToast(f[key] ? '✅ เปิดใช้งานแล้ว' : '⛔ ปิดการใช้งานแล้ว');
 }
 
+function resetFeatures() {
+  try { localStorage.removeItem(FEAT_KEY); } catch(_) {}
+  syncFeatureButtons();
+  showToast('✅ รีเซ็ตแล้ว — เปิดใช้งานทุกฟังก์ชัน');
+}
+
 function applyFeatureUI(key) {
   const on = isFeatureOn(key);
   const toggle = document.getElementById('toggle-' + key);
@@ -5816,6 +5811,12 @@ function syncFeatureButtons() {
 
 // เรียกตอน DOMContentLoaded (เพิ่มใน boot)
 function initFeatures() {
+  // ถ้ายังไม่เคย set ค่า ให้ force-save default true ทั้งคู่
+  const f = getFeatures();
+  let changed = false;
+  if (f.face === undefined)   { f.face   = true; changed = true; }
+  if (f.idcard === undefined) { f.idcard = true; changed = true; }
+  if (changed) saveFeatures(f);
   syncFeatureButtons();
 }
 </script>
