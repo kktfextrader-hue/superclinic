@@ -5192,6 +5192,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v63', date:'29/05/2569', items:['update'] },
   { ver:'v62', date:'28/05/2569', items:['face modal spectrum bar + video margin'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
@@ -5387,11 +5388,8 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
         <video id="face-video" autoplay playsinline muted></video>
         <canvas id="face-canvas"></canvas>
       </div>
-      <div class="face-spectrum-wrap" id="face-spectrum">
-        ${Array.from({length:24},(_,i)=>`<div class="face-spectrum-bar" id="fsb-${i}" style="height:4px;background:hsl(${150+i*3},70%,55%);"></div>`).join('')}
-      </div>
       ${showMatchList ? '<div id="face-match-list" class="face-match-list"></div>' : ''}
-      <div style="display:flex;align-items:center;gap:10px;margin-top:0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
         <div id="face-status" class="face-status-bar detecting" style="flex:1;font-size:13px;font-weight:600;color:#fff;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.08);">⏳ กำลังโหลดโมเดล…</div>
         ${!showMatchList ? `<button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()" style="white-space:nowrap;padding:8px 18px;border-radius:8px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;border:none;cursor:pointer;">${captureLabel}</button>` : ''}
       </div>
