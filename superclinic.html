@@ -5190,7 +5190,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v60', date:'28/05/2569', items:['fix face modal layout + ลบกรอบ bounding box'] },
+  { ver:'v61', date:'28/05/2569', items:['face modal UI redesign - white text, status+save row, no strip'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
@@ -5375,7 +5375,7 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
   overlay.id = 'face-modal-overlay';
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;';
   overlay.innerHTML = `
-    <div style="background:#1a1a2e;border-radius:20px;padding:20px;width:480px;max-width:94vw;max-height:86vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6);border:1px solid rgba(200,169,107,.25);display:flex;flex-direction:column;gap:10px;box-sizing:border-box;">
+    <div style="background:#1a1a2e;border-radius:20px;padding:20px;width:480px;max-width:94vw;max-height:86vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6);border:1px solid rgba(200,169,107,.25);display:flex;flex-direction:column;gap:10px;box-sizing:border-box;color:#fff;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <h3 style="margin:0;">${title}</h3>
         <button onclick="closeFaceModal()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
@@ -5385,13 +5385,13 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
         <video id="face-video" autoplay playsinline muted></video>
         <canvas id="face-canvas"></canvas>
       </div>
-      <div id="face-status" class="face-status-bar detecting">⏳ กำลังโหลดโมเดล…</div>
       ${showMatchList ? '<div id="face-match-list" class="face-match-list"></div>' : ''}
-      ${!showMatchList ? `<div class="face-strip-hint">📸 ระบบเก็บภาพที่ดีที่สุดอัตโนมัติ</div><div id="face-preview-strip" class="face-preview-strip"><span style="color:#555;font-size:11px;">รอตรวจจับใบหน้า…</span></div>` : ''}
-      <div class="face-btn-row" style="margin-top:10px;">
-        <button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()">${captureLabel}</button>
-        <button class="face-capture-btn secondary" onclick="closeFaceModal();${onCancel ? onCancel + '()' : ''}">ยกเลิก</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+        <div id="face-status" class="face-status-bar detecting" style="flex:1;font-size:13px;font-weight:600;color:#fff;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.08);">⏳ กำลังโหลดโมเดล…</div>
+        ${!showMatchList ? `<button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()" style="white-space:nowrap;padding:8px 18px;border-radius:8px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;border:none;cursor:pointer;">${captureLabel}</button>` : ''}
       </div>
+      ${showMatchList ? `<div class="face-btn-row"><button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()">${captureLabel}</button><button class="face-capture-btn secondary" onclick="closeFaceModal();${onCancel ? onCancel + '()' : ''}">ยกเลิก</button></div>` : ''}
+      <button class="face-capture-btn secondary" onclick="closeFaceModal();${onCancel ? onCancel + '()' : ''}" style="width:100%;padding:8px;border-radius:8px;background:rgba(255,255,255,.06);color:#aaa;border:1px solid rgba(255,255,255,.1);cursor:pointer;font-size:13px;">ยกเลิก</button>
     </div>`;
   document.body.appendChild(overlay);
   return overlay;
@@ -5410,13 +5410,8 @@ async function startFaceWebcam() {
 
 /* ── Draw detections on canvas ───────────────────────────── */
 function drawDetections(detections) {
-  // ไม่วาด bounding box — แค่แสดง dot indicator ใน status bar แทน
-  // (กรอบสีน้ำเงินรกเกินไป)
   const canvas = document.getElementById('face-canvas');
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
+  if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
 }
 
 /* ── Internal capture trigger (called from onclick) ──────── */
@@ -5450,26 +5445,16 @@ async function openFaceCapture(mode) {
   const setStatus = (cls, msg) => {
     const el = document.getElementById('face-status');
     if (!el) return;
-    el.className = 'face-status-bar ' + cls;
     el.textContent = msg;
+    if (cls === 'found')    { el.style.color = '#6EE7B7'; el.style.background = 'rgba(110,231,183,.12)'; }
+    else if (cls === 'error') { el.style.color = '#FCA5A5'; el.style.background = 'rgba(252,165,165,.12)'; }
+    else                    { el.style.color = '#fff';    el.style.background = 'rgba(255,255,255,.08)'; }
   };
   const setCaptureBtnEnabled = (ok) => {
     const btn = document.getElementById('face-capture-btn');
-    if (btn) btn.disabled = !ok;
+    if (btn) { btn.disabled = !ok; btn.style.opacity = ok ? '1' : '0.45'; }
   };
-  const renderStrip = () => {
-    const strip = document.getElementById('face-preview-strip');
-    if (!strip) return;
-    if (!frameBuffer.length) { strip.innerHTML = '<span style="color:#555;font-size:11px;">รอตรวจจับใบหน้า…</span>'; return; }
-    strip.innerHTML = frameBuffer.map(f => {
-      const isBest = (f === bestFrame);
-      return '<div class="fp-item' + (isBest?' best':'') + '">' +
-        '<img src="' + f.dataUrl + '">' +
-        '<div class="fp-score">' + (f.score*100).toFixed(0) + '%</div>' +
-        (isBest ? '<div class="fp-best-label">✦</div>' : '') +
-        '</div>';
-    }).join('');
-  };
+  const renderStrip = () => { /* ไม่แสดง strip แล้ว */ };
   const captureFrame = (video, descriptor, score) => {
     const c = document.createElement('canvas');
     c.width = 96; c.height = 96;

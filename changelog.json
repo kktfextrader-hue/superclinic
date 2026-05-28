@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v61",
+    "date": "28/05/2569",
+    "items": [
+      "face modal UI redesign - white text, status+save row, no strip"
+    ]
+  },
+  {
     "ver": "v60",
     "date": "28/05/2569",
     "items": [
