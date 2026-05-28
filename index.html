@@ -2997,11 +2997,11 @@ function openAddAppt(){
     #idcard-hidden-input{position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;}
 
     /* ── Face Recognition ─────────────────────────────────────────── */
-    .face-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:center;justify-content:center;}
-    .face-modal-box{background:#1a1a2e;border-radius:20px;padding:24px;width:520px;max-width:96vw;box-shadow:0 24px 80px rgba(0,0,0,.5);border:1px solid rgba(200,169,107,.2);}
-    .face-modal-box h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:#C8A96B;margin-bottom:4px;text-align:center;}
-    .face-modal-box p{font-size:12px;color:#888;text-align:center;margin-bottom:14px;}
-    .face-video-wrap{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;}
+    .face-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10000;display:flex;align-items:center;justify-content:center;padding:12px;}
+    .face-modal-box{background:#1a1a2e;border-radius:20px;padding:20px;width:500px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5);border:1px solid rgba(200,169,107,.2);display:flex;flex-direction:column;gap:0;}
+    .face-modal-box h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:#C8A96B;margin-bottom:2px;text-align:center;}
+    .face-modal-box p{font-size:11px;color:#888;text-align:center;margin-bottom:10px;}
+    .face-video-wrap{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;max-height:42vh;}
     .face-video-wrap video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
     .face-video-wrap canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
     .face-status-bar{margin-top:10px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;transition:all .3s;}
@@ -3020,13 +3020,13 @@ function openAddAppt(){
     .face-capture-btn.primary{background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;}
     .face-capture-btn.primary:disabled{background:#444;color:#888;cursor:not-allowed;}
     .face-capture-btn.secondary{background:rgba(255,255,255,.08);color:#aaa;border:1px solid rgba(255,255,255,.12);}
-    .face-preview-strip{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:10px 0 4px;min-height:80px;align-items:center;}
+    .face-preview-strip{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0 2px;min-height:72px;align-items:center;}
     .face-preview-strip .fp-item{position:relative;cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid transparent;transition:border-color .2s;}
     .face-preview-strip .fp-item.best{border-color:#C8A96B;}
-    .face-preview-strip .fp-item img{width:72px;height:72px;object-fit:cover;display:block;}
+    .face-preview-strip .fp-item img{width:64px;height:64px;object-fit:cover;display:block;}
     .face-preview-strip .fp-score{position:absolute;bottom:0;left:0;right:0;font-size:9px;text-align:center;background:rgba(0,0,0,.6);color:#C8A96B;padding:1px 0;}
     .face-preview-strip .fp-best-label{position:absolute;top:2px;right:2px;font-size:8px;background:#C8A96B;color:#1a1a2e;border-radius:3px;padding:0 3px;font-weight:700;}
-    .face-strip-hint{font-size:11px;color:#888;text-align:center;margin-bottom:6px;}
+    .face-strip-hint{font-size:10px;color:#666;text-align:center;margin:6px 0 2px;}
     .face-preview-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid rgba(200,169,107,.4);flex-shrink:0;}
 
   </style>
@@ -5190,8 +5190,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v56', date:'28/05/2569', items:['update'] },
-  { ver:'v55', date:'28/05/2569', items:['update'] },
+  { ver:'v57', date:'28/05/2569', items:['update'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
@@ -5377,7 +5376,10 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
   overlay.className = 'face-modal-overlay';
   overlay.innerHTML = `
     <div class="face-modal-box">
-      <h3>${title}</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h3 style="margin:0;">${title}</h3>
+        <button onclick="closeFaceModal()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
+      </div>
       <p>${subtitle}</p>
       <div class="face-video-wrap">
         <video id="face-video" autoplay playsinline muted></video>
@@ -5385,8 +5387,8 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
       </div>
       <div id="face-status" class="face-status-bar detecting">⏳ กำลังโหลดโมเดล…</div>
       ${showMatchList ? '<div id="face-match-list" class="face-match-list"></div>' : ''}
-      ${!showMatchList ? '<div class="face-strip-hint">📸 ระบบเก็บภาพที่ดีที่สุดอัตโนมัติ — กด "บันทึก" เมื่อพอใจ</div><div id="face-preview-strip" class="face-preview-strip"><span style="color:#555;font-size:12px;">รอตรวจจับใบหน้า…</span></div>' : ''}
-      <div class="face-btn-row">
+      ${!showMatchList ? `<div class="face-strip-hint">📸 ระบบเก็บภาพที่ดีที่สุดอัตโนมัติ</div><div id="face-preview-strip" class="face-preview-strip"><span style="color:#555;font-size:11px;">รอตรวจจับใบหน้า…</span></div>` : ''}
+      <div class="face-btn-row" style="margin-top:10px;">
         <button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()">${captureLabel}</button>
         <button class="face-capture-btn secondary" onclick="closeFaceModal();${onCancel ? onCancel + '()' : ''}">ยกเลิก</button>
       </div>
@@ -5452,43 +5454,35 @@ async function openFaceCapture(mode) {
     el.className = 'face-status-bar ' + cls;
     el.textContent = msg;
   };
-
   const setCaptureBtnEnabled = (ok) => {
     const btn = document.getElementById('face-capture-btn');
     if (btn) btn.disabled = !ok;
   };
-
   const renderStrip = () => {
     const strip = document.getElementById('face-preview-strip');
     if (!strip) return;
-    if (!frameBuffer.length) {
-      strip.innerHTML = '<span style="color:#555;font-size:12px;">รอตรวจจับใบหน้า…</span>';
-      return;
-    }
+    if (!frameBuffer.length) { strip.innerHTML = '<span style="color:#555;font-size:11px;">รอตรวจจับใบหน้า…</span>'; return; }
     strip.innerHTML = frameBuffer.map(f => {
       const isBest = (f === bestFrame);
-      return '<div class="fp-item' + (isBest ? ' best' : '') + '">' +
+      return '<div class="fp-item' + (isBest?' best':'') + '">' +
         '<img src="' + f.dataUrl + '">' +
         '<div class="fp-score">' + (f.score*100).toFixed(0) + '%</div>' +
         (isBest ? '<div class="fp-best-label">✦</div>' : '') +
         '</div>';
     }).join('');
   };
-
   const captureFrame = (video, descriptor, score) => {
-    const thumb = document.createElement('canvas');
-    thumb.width = 112; thumb.height = 112;
-    const ctx = thumb.getContext('2d');
-    ctx.translate(112, 0); ctx.scale(-1, 1);
-    const vw = video.videoWidth, vh = video.videoHeight;
-    const side = Math.min(vw, vh);
-    const sx = (vw - side) / 2, sy = (vh - side) / 2;
-    ctx.drawImage(video, sx, sy, side, side, 0, 0, 112, 112);
-    return { score, descriptor, dataUrl: thumb.toDataURL('image/jpeg', 0.85) };
+    const c = document.createElement('canvas');
+    c.width = 96; c.height = 96;
+    const ctx = c.getContext('2d');
+    ctx.translate(96,0); ctx.scale(-1,1);
+    const vw=video.videoWidth, vh=video.videoHeight, side=Math.min(vw,vh);
+    ctx.drawImage(video,(vw-side)/2,(vh-side)/2,side,side,0,0,96,96);
+    return { score, descriptor, dataUrl: c.toDataURL('image/jpeg',0.85) };
   };
 
   _faceCaptureCallback = async () => {
-    if (!bestFrame) { showToast('ยังไม่มีภาพ — รอตรวจจับใบหน้าก่อน', 'error'); return; }
+    if (!bestFrame) { showToast('ยังไม่มีภาพ — รอตรวจจับใบหน้าก่อน','error'); return; }
     const descriptorJson = JSON.stringify(Array.from(bestFrame.descriptor));
     if (mode === 'addpatient') {
       const descEl  = document.getElementById('addpat-face-descriptor');
@@ -5508,19 +5502,12 @@ async function openFaceCapture(mode) {
     await loadFaceModels();
     await startFaceWebcam();
     setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
-
     const video = document.getElementById('face-video');
     const opts  = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 });
-
     const loop = async () => {
       if (!document.getElementById('face-modal-overlay')) return;
       if (!video || video.paused || video.ended) { _faceAnimFrame = requestAnimationFrame(loop); return; }
-
-      const det = await faceapi
-        .detectSingleFace(video, opts)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
+      const det = await faceapi.detectSingleFace(video,opts).withFaceLandmarks().withFaceDescriptor();
       if (det) {
         const score = det.detection.score;
         drawDetections([det.detection]);
@@ -5530,26 +5517,23 @@ async function openFaceCapture(mode) {
           const frame = captureFrame(video, det.descriptor, score);
           frameBuffer.push(frame);
           if (frameBuffer.length > MAX_FRAMES) frameBuffer.shift();
-          bestFrame = frameBuffer.reduce((a,b) => b.score > a.score ? b : a, frameBuffer[0]);
+          bestFrame = frameBuffer.reduce((a,b)=>b.score>a.score?b:a, frameBuffer[0]);
           renderStrip();
           setCaptureBtnEnabled(true);
         }
-        setStatus('found', '✅ ตรวจพบใบหน้า ' + (score*100).toFixed(0) + '% — กด "บันทึก" เมื่อพอใจ');
+        setStatus('found', '✅ ตรวจพบใบหน้า ' + (score*100).toFixed(0) + '% — กด "บันทึก"');
       } else {
         const canvas = document.getElementById('face-canvas');
-        if (canvas) { const ctx2 = canvas.getContext('2d'); ctx2.clearRect(0,0,canvas.width,canvas.height); }
+        if (canvas) { const ctx2=canvas.getContext('2d'); ctx2.clearRect(0,0,canvas.width,canvas.height); }
         setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
       }
-
       _faceAnimFrame = requestAnimationFrame(loop);
     };
-
     _faceAnimFrame = requestAnimationFrame(loop);
-
-  } catch (err) {
+  } catch(err) {
     const el = document.getElementById('face-status');
-    if (el) { el.className = 'face-status-bar error'; el.textContent = '❌ ' + (err.message || 'เกิดข้อผิดพลาด'); }
-    console.error('Face capture error:', err);
+    if (el) { el.className='face-status-bar error'; el.textContent='❌ '+(err.message||'เกิดข้อผิดพลาด'); }
+    console.error('Face capture error:',err);
   }
 }
 
@@ -5773,7 +5757,6 @@ function toggleFeature(key) {
   syncFeatureButtons();
   showToast(f[key] ? '✅ เปิดใช้งานแล้ว' : '⛔ ปิดการใช้งานแล้ว');
 }
-
 function resetFeatures() {
   try { localStorage.removeItem(FEAT_KEY); } catch(_) {}
   syncFeatureButtons();
@@ -5812,7 +5795,6 @@ function syncFeatureButtons() {
 
 // เรียกตอน DOMContentLoaded (เพิ่มใน boot)
 function initFeatures() {
-  // ถ้ายังไม่เคย set ค่า ให้ force-save default true ทั้งคู่
   const f = getFeatures();
   let changed = false;
   if (f.face === undefined)   { f.face   = true; changed = true; }
