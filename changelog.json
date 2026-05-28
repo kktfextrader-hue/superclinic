@@ -1,23 +1,36 @@
 [
   {
-    "ver": "v53",
+    "ver": "v54",
     "date": "28/05/2569",
     "items": [
       "update"
+    ]
+  },
+  {
+    "ver": "v53",
+    "date": "28/05/2569",
+    "items": [
+      "fix face-api weights URL ใช้งานได้จริง",
+      "changelog modal ดูทั้งหมด",
+      "logo 160px",
+      "bodymap collapsible"
     ]
   },
   {
     "ver": "v52",
     "date": "28/05/2569",
     "items": [
-      "update"
+      "fix bodymap collapsible + raw-NL SyntaxError",
+      "sidebar changelog แสดง 3 รายการล่าสุด"
     ]
   },
   {
     "ver": "v51",
     "date": "28/05/2569",
     "items": [
-      "update"
+      "fix SyntaxError openAddUserModal",
+      "medcert logo 160px",
+      "fix ESC/POS rawNL"
     ]
   },
   {
@@ -52,13 +65,6 @@
     "items": [
       "rebuild จาก v34 แก้ไฟล์ truncated",
       "integrity guard push-now.bat"
-    ]
-  },
-  {
-    "ver": "v34",
-    "date": "28/05/2569",
-    "items": [
-      "update"
     ]
   },
   {
