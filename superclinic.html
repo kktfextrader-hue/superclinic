@@ -5176,8 +5176,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v46', date:'28/05/2569', items:['update'] },
-  { ver:'v45', date:'28/05/2569', items:['update'] },
+  { ver:'v47', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
   { ver:'v33', date:'26/05/2569', items:['update'] },
@@ -5205,17 +5204,20 @@ function renderSidebarChangelog(){
   if(!el) return;
   if(!log.length){ el.style.display='none'; return; }
   el.style.display = '';
-  const show = log.slice(0,2); // แสดง 2 version ล่าสุด
+  const v = log[0];
   const entriesEl = document.getElementById('cl-entries');
   if(!entriesEl) return;
-  entriesEl.innerHTML = show.map((v,i)=>`
-    ${i>0 ? '<div class="cl-sep"></div>' : ''}
+  const items = (v.items||[]).filter(it=>it && it.toLowerCase()!=='update');
+  const itemsHtml = items.length
+    ? items.slice(0,3).map(it=>`<div>${it}</div>`).join('')
+    : '<div style="color:#aaa;font-size:11px;">อัพเดทระบบ</div>';
+  entriesEl.innerHTML = `
     <div class="cl-ver">
-      <span class="cl-badge" style="${i===0?'':'background:rgba(200,169,107,0.18);color:var(--go);'}">${v.ver}${i===0?' ✦':''}</span>
+      <span class="cl-badge">${v.ver} ✶</span>
       <span class="cl-date">${v.date}</span>
     </div>
-    <div class="cl-list">${v.items.slice(0,3).map(it=>`<div>${it}</div>`).join('')}</div>
-  `).join('');
+    <div class="cl-list">${itemsHtml}</div>
+  `;
 }
 
 function confirmClearLog(){
