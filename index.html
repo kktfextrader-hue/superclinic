@@ -4426,12 +4426,7 @@ async function loadUsers(){
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="badge ${roleColor[u.role]||'badge-wait'}">${u.role==='admin'?'Admin':u.role==='doctor'?'Doctor':u.role==='manager'?'Manager':'Staff'}</span>
-          <button onclick="deleteUser('${u.id}')" title="ลบผู้ใช้"
-            style="background:none;border:1px solid #eee;border-radius:6px;color:#ccc;cursor:pointer;padding:3px 6px;font-size:13px;"
-            onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'"
-            onmouseout="this.style.borderColor='#eee';this.style.color='#ccc'">
-            <i class="ti ti-trash"></i>
-          </button>
+          <button onclick="deleteUser('${u.id}')" title="ลบผู้ใช้" style="background:none;border:1px solid #eee;border-radius:6px;color:#ccc;cursor:pointer;padding:3px 6px;font-size:13px;" onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'" onmouseout="this.style.borderColor='#eee';this.style.color='#ccc'"><i class="ti ti-trash"></i></button>
         </div>
       </div>`).join('');
   } catch(e){
@@ -4444,34 +4439,17 @@ async function loadUsers(){
    USER MANAGEMENT
 ════════════════════════════════════════════════════════ */
 function openAddUserModal(){
-  openModal('👤 เพิ่มผู้ใช้งานใหม่',`
-    <form id="fp-add-user" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" onsubmit="submitAddUser(event)">
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">ชื่อ-นามสกุล *</label>
-        <input class="form-input" name="name" required placeholder="เช่น Dr. Wong">
-      </div>
-      <div class="form-group">
-        <label class="form-label">อีเมล</label>
-        <input class="form-input" name="email" type="email" placeholder="email@clinic.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">บทบาท</label>
-        <select class="form-select" name="role">
-          <option value="doctor">แพทย์</option>
-          <option value="receptionist">เจ้าหน้าที่ต้อนรับ</option>
-          <option value="manager">ผู้จัดการ</option>
-          <option value="admin">ผู้ดูแลระบบ</option>
-        </select>
-      </div>
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">หมายเหตุ / ตำแหน่ง</label>
-        <input class="form-input" name="note" placeholder="เช่น แพทย์แผนไทย">
-      </div>
-    </form>`,
-    \`<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn btn-primary" onclick="document.getElementById('fp-add-user').requestSubmit()"><i class="ti ti-user-plus"></i>เพิ่มผู้ใช้</button>\`
-  );
+  var body='<form id="fp-add-user" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" onsubmit="submitAddUser(event)">'
+    +'<div class="form-group" style="grid-column:1/-1;"><label class="form-label">ชื่อ-นามสกุล *</label><input class="form-input" name="name" placeholder="ชื่อ-นามสกุล" required></div>'
+    +'<div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" name="email" type="email" placeholder="email@example.com"></div>'
+    +'<div class="form-group"><label class="form-label">บทบาท</label><select class="form-select" name="role"><option value="doctor">แพทย์</option><option value="receptionist">เจ้าหน้าที่ต้อนรับ</option><option value="manager">ผู้จัดการ</option><option value="admin">ผู้ดูแลระบบ</option></select></div>'
+    +'<div class="form-group" style="grid-column:1/-1;"><label class="form-label">หมายเหตุ / ตำแหน่ง</label><input class="form-input" name="note" placeholder="เช่น แพทย์เวร, ผู้ช่วย"></div>'
+    +'</form>';
+  var foot='<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>'
+    +'<button class="btn btn-primary" onclick="document.getElementById(\'fp-add-user\').requestSubmit()"><i class="ti ti-user-plus"></i>เพิ่มผู้ใช้</button>';
+  openModal('👤 เพิ่มผู้ใช้งานใหม่', body, foot);
 }
+
 async function submitAddUser(e){
   e.preventDefault();
   const _done=showLoading(e.submitter);
@@ -4653,19 +4631,13 @@ async function submitFinanceEntry(e, type){
 ════════════════════════════════════════════════════════ */
 
 // ── treatment types ──
-const RCPT_TYPES = [
-  {label:'นวดแผนไทย 60 นาที', price:300},
-  {label:'นวดแผนไทย 90 นาที', price:450},
-  {label:'นวดแผนไทย 120 นาที', price:600},
-  {label:'ประคบสมุนไพร', price:300},
-  {label:'อบสมุนไพร', price:200},
-  {label:'ฝังเข็ม', price:500},
-  {label:'ครอบแก้ว', price:250},
-  {label:'นวด + ประคบ', price:550},
-  {label:'ปรึกษาแพทย์', price:200},
-  {label:'จ่ายยาสมุนไพร', price:150},
+const RCPT_TYPES=[
+  {label:'นวดแผนไทย 60 นาที',price:300},{label:'นวดแผนไทย 90 นาที',price:450},
+  {label:'นวดแผนไทย 120 นาที',price:600},{label:'ประคบสมุนไพร',price:300},
+  {label:'อบสมุนไพร',price:200},{label:'ฝังเข็ม',price:500},
+  {label:'ครอบแก้ว',price:250},{label:'นวด + ประคบ',price:550},
+  {label:'ปรึกษาแพทย์',price:200},{label:'จ่ายยาสมุนไพร',price:150},
 ];
-
 // ── state ──
 let _rcptData = {
   patName:'', patHN:'', patId:'',
@@ -4809,10 +4781,8 @@ function rcptRenderItems(){
   wrap.innerHTML=_rcptData.items.map((item,i)=>`
     <div style="margin-bottom:8px;">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
-        <select id="rcpt-sel-${i}" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;"
-          onchange="rcptTypeChange(${i},this)">
-          <option value="">— เลือกประเภทการรักษา —</option>
-          ${opts}
+        <select id="rcpt-sel-${i}" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;" onchange="rcptTypeChange(${i},this)">
+          <option value="">— เลือกประเภท —</option>${opts}
           <option value="__custom__">อื่นๆ (กรอกเอง)</option>
         </select>
         <input type="number" id="rcpt-price-${i}" placeholder="ราคา" value="${item.price}"
@@ -5208,7 +5178,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v41', date:'28/05/2569', items:['update'] },
+  { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
   { ver:'v33', date:'26/05/2569', items:['update'] },
   { ver:'v32', date:'26/05/2569', items:['update'] },
@@ -6337,15 +6307,13 @@ async function openMedCert(patientId) {
       <div class="lp-footer" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:#888;">ขนาดอักษร:</span>
-          <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="mcFontAdj(-1)">−</button>
-          <span id="mc-font-val" style="font-size:13px;min-width:28px;text-align:center;">14</span>
-          <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="mcFontAdj(1)">+</button>
+          <button class="btn btn-outline" style="padding:4px 10px;" onclick="mcFontAdj(-1)">−</button>
+          <span id="mc-font-val" style="min-width:24px;text-align:center;">14</span>
+          <button class="btn btn-outline" style="padding:4px 10px;" onclick="mcFontAdj(1)">+</button>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-outline" onclick="closeMedCert()">ปิด</button>
-          <button class="btn btn-primary" onclick="mcPrint()">
-            <i class="ti ti-printer"></i> พิมพ์ผ่าน Windows Driver
-          </button>
+          <button class="btn btn-primary" onclick="mcPrint()"><i class="ti ti-printer"></i> พิมพ์ผ่าน Windows Driver</button>
         </div>
       </div>
     </div>`;
@@ -6558,23 +6526,21 @@ function mcRender(){
 
 // ── Print A4 ──
 function mcPrint(){
-  const a4=document.getElementById('mc-a4');
+  const a4 = document.getElementById('mc-a4');
   if(!a4){ showToast('ไม่พบ Preview','error'); return; }
-  const pa=document.getElementById('lp-print-area');
+  const pa = document.getElementById('lp-print-area');
   if(!pa){ showToast('ไม่พบ print area','error'); return; }
-  pa.innerHTML=a4.outerHTML;
-  pa.style.display='block';
+  pa.innerHTML = a4.outerHTML;
+  pa.style.display = 'block';
   window.print();
-  setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; },1500);
+  setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; }, 1500);
 }
 
 let _mcFontSize=14;
 function mcFontAdj(d){
   _mcFontSize=Math.max(9,Math.min(18,_mcFontSize+d));
-  const el=document.getElementById('mc-font-val');
-  if(el) el.textContent=_mcFontSize;
-  const a4=document.getElementById('mc-a4');
-  if(a4) a4.style.fontSize=_mcFontSize+'pt';
+  const el=document.getElementById('mc-font-val'); if(el) el.textContent=_mcFontSize;
+  const a4=document.getElementById('mc-a4'); if(a4) a4.style.fontSize=_mcFontSize+'pt';
 }
 </script>
 
