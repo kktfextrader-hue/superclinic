@@ -172,7 +172,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 .sidebar-changelog .cl-ver{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .sidebar-changelog .cl-badge{background:var(--go);color:#2F5D50;font-weight:700;font-size:10px;padding:2px 8px;border-radius:20px;}
 .sidebar-changelog .cl-date{color:rgba(229,211,163,0.5);font-size:10px;}
-.sidebar-changelog .cl-list{color:rgba(255,255,255,0.6);line-height:1.7;max-height:80px;overflow-y:auto;}
+.sidebar-changelog .cl-list{color:rgba(255,255,255,0.6);line-height:1.7;max-height:120px;overflow-y:auto;}
 .sidebar-changelog .cl-list div{padding:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sidebar-changelog .cl-list div::before{content:"•  ";}
 .sidebar-divider{height:1px;background:rgba(200,169,107,0.18);margin:10px 10px 12px;}
@@ -287,8 +287,8 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 /* Input / Select */
 .form-group{display:flex;flex-direction:column;gap:6px;}
 .form-label{font-size:12px;font-weight:600;color:var(--g1);letter-spacing:0.04em;}
-.form-input,.form-select,.form-textarea{padding:10px 14px;border-radius:12px;border:1px solid rgba(200,169,107,0.3);background:var(--wh);font-family:'Sarabun',sans-serif;font-size:13.5px;color:var(--dt);outline:none;transition:all 0.15s;width:100%;}
-.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--go);box-shadow:0 0 0 3px rgba(200,169,107,0.12);}
+.form-input,.form-select,.form-textarea,.form-control{padding:10px 14px;border-radius:12px;border:1px solid rgba(200,169,107,0.3);background:var(--wh);font-family:'Sarabun',sans-serif;font-size:13.5px;color:var(--dt);outline:none;transition:all 0.15s;width:100%;}
+.form-input:focus,.form-select:focus,.form-textarea:focus,.form-control:focus{border-color:var(--go);box-shadow:0 0 0 3px rgba(200,169,107,0.12);}
 .form-textarea{resize:vertical;min-height:90px;}
 
 /* Progress bar */
@@ -5213,9 +5213,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v37', date:'28/05/2569', items:['update'] },
-  { ver:'v36', date:'28/05/2569', items:['update'] },
-  { ver:'v35', date:'28/05/2569', items:['update'] },
+  { ver:'v38', date:'28/05/2569', items:['update'] },
   { ver:'v35', date:'28/05/2569', items:['Thermal Receipt Modal — ESC/POS + OS Driver, pulldown ประเภทการรักษา, font size, body map collapsible'] },
   { ver:'v34', date:'28/05/2569', items:['Thermal Receipt Modal — พิมพ์โดยตรง (ESC/POS) + ผ่าน OS Driver'] },
   { ver:'v65', date:'25/05/2569', items:['เปลี่ยนชื่อไฟล์หลัก thai-clinic.html → superclinic.html'] },
