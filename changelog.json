@@ -1,0 +1,134 @@
+[
+  {
+    "ver": "v50",
+    "date": "28/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v42",
+    "date": "28/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v34",
+    "date": "28/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v33",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v32",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v31",
+    "date": "26/05/2569",
+    "items": [
+      "cd C:\\Users\\acer\\Desktop\\Claude\\superclinic"
+    ]
+  },
+  {
+    "ver": "v30",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v28",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v26",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v27",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v26",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v25",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v24",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v23",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v4",
+    "date": "25/05/2569",
+    "items": [
+      "ระบบพิมพ์ฉลากยา (Label Printer) พร้อม Preview",
+      "ตั้งค่าฟังก์ชัน ON/OFF (Face Recognition",
+      "ID Card)",
+      "ปุ่มออกใบรับรองแพทย์ในข้อมูลผู้ป่วย"
+    ]
+  },
+  {
+    "ver": "v3",
+    "date": "25/05/2569",
+    "items": [
+      "Face Recognition ผ่าน Webcam (face-api.js)",
+      "บันทึกใบหน้า + ค้นหาผู้ป่วยจากใบหน้า Top-3"
+    ]
+  },
+  {
+    "ver": "v2",
+    "date": "25/05/2569",
+    "items": [
+      "วันที่ auto-detect พ.ศ./ค.ศ. แสดงผล พ.ศ. ทุกที่",
+      "ID Card Reader (USB HID) ปุ่มทางเลือก"
+    ]
+  },
+  {
+    "ver": "v1",
+    "date": "25/05/2569",
+    "items": [
+      "เตือนนัดซ้ำใน Dashboard ภาพรวม",
+      "backup superclinic-vXX อัตโนมัติทุก push"
+    ]
+  }
+]
