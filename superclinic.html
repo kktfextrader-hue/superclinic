@@ -43,12 +43,7 @@
 /* ── BODY MAP ── */
 .body-map-wrap{background:#f9f6f0;border-radius:16px;padding:16px;border:1px solid rgba(200,169,107,0.2);}
 .body-map-wrap.body-map-collapsed{padding:10px 16px;}
-.body-map-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);margin-bottom:10px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
-.body-map-title:hover{opacity:0.8;}
-.bmap-toggle-btn{margin-left:auto;background:none;border:1px solid rgba(47,93,80,0.25);border-radius:6px;color:var(--g1);cursor:pointer;font-size:11px;padding:2px 8px;font-weight:600;transition:transform .2s;}
-.body-map-collapsed .body-map-controls,.body-map-collapsed .body-map-views,.body-map-collapsed .body-map-legend{display:none !important;}
-.body-map-collapsed .body-map-title{margin-bottom:0;}
-.body-map-collapsed .bmap-hint{display:none;}
+.body-map-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .body-map-views{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:flex-start;}
 .body-map-view{position:relative;flex-shrink:0;text-align:center;}
 .body-map-view label{font-size:10px;color:#888;display:block;text-align:center;margin-bottom:4px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
@@ -172,7 +167,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 .sidebar-changelog .cl-ver{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .sidebar-changelog .cl-badge{background:var(--go);color:#2F5D50;font-weight:700;font-size:10px;padding:2px 8px;border-radius:20px;}
 .sidebar-changelog .cl-date{color:rgba(229,211,163,0.5);font-size:10px;}
-.sidebar-changelog .cl-list{color:rgba(255,255,255,0.6);line-height:1.7;max-height:120px;overflow-y:auto;}
+.sidebar-changelog .cl-list{color:rgba(255,255,255,0.6);line-height:1.7;max-height:80px;overflow-y:auto;}
 .sidebar-changelog .cl-list div{padding:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sidebar-changelog .cl-list div::before{content:"•  ";}
 .sidebar-divider{height:1px;background:rgba(200,169,107,0.18);margin:10px 10px 12px;}
@@ -1507,10 +1502,10 @@ function bodyMapHTML(uid, initialData){
   const data = initialData || {front:[], back:[], side:[], head:[]};
   return `
 <div class="body-map-wrap body-map-collapsed" id="bmap-${uid}">
-  <div class="body-map-title" onclick="bmToggle('${uid}')">
+  <div class="body-map-title" onclick="bmToggle('${uid}')" style="cursor:pointer;">
     <i class="ti ti-body-scan"></i>แผนที่จุดเจ็บปวด
-    <span class="bmap-hint" style="font-size:10px;font-weight:400;color:#aaa;">(คลิกบนร่างกายเพื่อ mark • คลิกจุดเพื่อลบ)</span>
-    <button type="button" class="bmap-toggle-btn" id="bmap-togbtn-${uid}" onclick="event.stopPropagation();bmToggle('${uid}')">▼ ขยาย</button>
+    <span class="bmap-hint" style="font-size:10px;font-weight:400;color:#aaa;display:none;">(คลิกบนร่างกายเพื่อ mark • คลิกจุดเพื่อลบ)</span>
+    <button type="button" class="bmap-toggle-btn" id="bmap-togbtn-${uid}" onclick="event.stopPropagation();bmToggle('${uid}')" style="margin-left:auto;background:none;border:1px solid var(--go);color:var(--go);border-radius:8px;padding:2px 10px;font-size:11px;cursor:pointer;">▼ ขยาย</button>
   </div>
   <div class="body-map-controls">
     <span style="font-size:11px;color:#888;font-weight:600;">ระดับ:</span>
@@ -1687,6 +1682,16 @@ function bmRemoveDot(e, uid, side, idx){
   if(_bmData[uid]?.[side]) _bmData[uid][side].splice(idx,1);
   bmRenderDots(uid, side);
   bmSaveHidden(uid);
+}
+
+function bmToggle(uid){
+  const wrap = document.getElementById('bmap-'+uid);
+  if(!wrap) return;
+  const collapsed = wrap.classList.toggle('body-map-collapsed');
+  const btn = document.getElementById('bmap-togbtn-'+uid);
+  if(btn) btn.textContent = collapsed ? '▼ ขยาย' : '▲ ย่อ';
+  const hint = wrap.querySelector('.bmap-hint');
+  if(hint) hint.style.display = collapsed ? 'none' : '';
 }
 
 function bmClear(uid){
@@ -4654,22 +4659,22 @@ async function submitFinanceEntry(e, type){
 ════════════════════════════════════════════════════════ */
 
 // ── state ──
-const RCPT_TYPES = [
-  { label:'นวดแผนไทย',     price:400 },
-  { label:'ประคบสมุนไพร',  price:250 },
-  { label:'อบสมุนไพร',     price:200 },
-  { label:'ฝังเข็ม',       price:600 },
-  { label:'ครอบแก้ว',      price:300 },
-  { label:'นวด + ประคบ',   price:600 },
-  { label:'ปรึกษาแพทย์',  price:200 },
-  { label:'จ่ายยาสมุนไพร', price:0   },
-  { label:'อื่นๆ',         price:0   },
+let const RCPT_TYPES = [
+  {label:'นวดแผนไทย 60 นาที', price:300},
+  {label:'นวดแผนไทย 90 นาที', price:450},
+  {label:'นวดแผนไทย 120 นาที', price:600},
+  {label:'ประคบสมุนไพร', price:300},
+  {label:'อบสมุนไพร', price:200},
+  {label:'ฝังเข็ม', price:500},
+  {label:'ครอบแก้ว', price:250},
+  {label:'นวด + ประคบ', price:550},
+  {label:'ปรึกษาแพทย์', price:200},
+  {label:'จ่ายยาสมุนไพร', price:150},
 ];
 
-let _rcptFontSize = 10; // px สำหรับ preview และ print
-let _rcptData = {
+_rcptData = {
   patName:'', patHN:'', patId:'',
-  items:[{ name:'นวดแผนไทย', price:'400' }],
+  items:[{ name:'', price:'' }],
   note:'', payMethod:'cash',
   clinicName:'Superclinic',
   clinicAddr:'123 ถ.สุขุมวิท กทม. 10110',
@@ -4771,14 +4776,7 @@ function openReceiptModal(){
 
         <!-- RIGHT: Preview -->
         <div style="width:280px;flex-shrink:0;background:#f5f5f0;display:flex;flex-direction:column;align-items:center;padding:16px 12px;overflow-y:auto;">
-          <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:8px;letter-spacing:0.5px;">PREVIEW (8 cm)</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:#eee;border-radius:8px;padding:5px 10px;">
-            <span style="font-size:11px;color:#666;">ขนาด Font</span>
-            <button onclick="rcptFontAdj(-1)" style="border:none;background:#fff;border-radius:4px;padding:1px 7px;cursor:pointer;font-size:14px;color:#555;">−</button>
-            <span id="rcpt-font-val" style="font-size:12px;font-weight:700;min-width:24px;text-align:center;">10</span>
-            <button onclick="rcptFontAdj(1)" style="border:none;background:#fff;border-radius:4px;padding:1px 7px;cursor:pointer;font-size:14px;color:#555;">+</button>
-            <span style="font-size:10px;color:#999;">px</span>
-          </div>
+          <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:10px;letter-spacing:0.5px;">PREVIEW (8 cm)</div>
           <div id="rcpt-preview-box" style="width:226px;background:#fff;border:1px solid #ccc;border-radius:4px;padding:10px 9px;font-family:'Courier New',Courier,monospace;font-size:10px;color:#111;box-shadow:2px 2px 6px rgba(0,0,0,0.1);"></div>
         </div>
 
@@ -4812,58 +4810,67 @@ function closeReceiptModal(){
 function rcptRenderItems(){
   const wrap=document.getElementById('rcpt-items-wrap');
   if(!wrap) return;
-  const opts = RCPT_TYPES.map(t=>`<option value="${t.label}" data-price="${t.price}">${t.label}${t.price?'  ('+t.price+')':''}</option>`).join('');
+  const opts = RCPT_TYPES.map(t=>`<option value="${t.label}" data-price="${t.price}">${t.label} (${t.price} บาท)</option>`).join('');
   wrap.innerHTML=_rcptData.items.map((item,i)=>`
-    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
-      <select style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;background:#fff;"
-        onchange="rcptTypeChange(${i},this)">
-        ${RCPT_TYPES.map(t=>`<option value="${t.label}" data-price="${t.price}" ${item.name===t.label?'selected':''}>${t.label}</option>`).join('')}
-        <option value="__custom__" ${!RCPT_TYPES.find(t=>t.label===item.name)?'selected':''}>กรอกเอง...</option>
-      </select>
-      ${!RCPT_TYPES.find(t=>t.label===item.name) ? `
-      <input placeholder="ชื่อรายการ" value="${_escRcpt(item.name==='__custom__'?'':item.name)}"
-        style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;"
-        oninput="_rcptData.items[${i}].name=this.value;rcptRenderPreview()">` : ''}
-      <input type="number" placeholder="ราคา" value="${item.price}"
-        style="width:72px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;text-align:right;"
-        oninput="_rcptData.items[${i}].price=this.value;rcptRenderPreview()">
-      <span style="font-size:10px;color:#aaa;">บาท</span>
-      ${_rcptData.items.length>1
-        ? `<button onclick="rcptRemoveItem(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0 2px;">×</button>`
-        : '<span style="width:20px;"></span>'}
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+        <select id="rcpt-sel-${i}"
+          style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;"
+          onchange="rcptTypeChange(${i},this)">
+          <option value="">— เลือกประเภทการรักษา —</option>
+          ${opts}
+          <option value="__custom__">อื่นๆ (กรอกเอง)</option>
+        </select>
+        <input type="number" id="rcpt-price-${i}" placeholder="ราคา" value="${item.price}"
+          style="width:80px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;text-align:right;"
+          oninput="_rcptData.items[${i}].price=this.value;rcptRenderPreview()">
+        <span style="font-size:11px;color:#888;">บาท</span>
+        ${_rcptData.items.length>1
+          ? `<button onclick="rcptRemoveItem(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;">×</button>`
+          : '<span style="width:24px;"></span>'}
+      </div>
+      <div id="rcpt-custom-${i}" style="display:${item.isCustom?'block':'none'};">
+        <input placeholder="ระบุรายการ..." value="${_escRcpt(item.name)}"
+          style="width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;box-sizing:border-box;"
+          oninput="_rcptData.items[${i}].name=this.value;rcptRenderPreview()">
+      </div>
     </div>`).join('');
+  // restore selected value
+  _rcptData.items.forEach((item,i)=>{
+    const sel=document.getElementById('rcpt-sel-'+i);
+    if(!sel) return;
+    if(item.isCustom) sel.value='__custom__';
+    else if(item.name) sel.value=item.name;
+  });
 }
 
 function rcptTypeChange(i, sel){
-  const val = sel.value;
-  if(val==='__custom__'){
+  if(sel.value==='__custom__'){
+    _rcptData.items[i].isCustom=true;
     _rcptData.items[i].name='';
-    _rcptData.items[i].price='';
+    document.getElementById('rcpt-custom-'+i).style.display='block';
   } else {
-    const found = RCPT_TYPES.find(t=>t.label===val);
-    _rcptData.items[i].name = val;
-    _rcptData.items[i].price = found && found.price ? String(found.price) : _rcptData.items[i].price;
+    _rcptData.items[i].isCustom=false;
+    _rcptData.items[i].name=sel.value;
+    document.getElementById('rcpt-custom-'+i).style.display='none';
+    const t=RCPT_TYPES.find(t=>t.label===sel.value);
+    if(t){
+      _rcptData.items[i].price=t.price;
+      const pinp=document.getElementById('rcpt-price-'+i);
+      if(pinp) pinp.value=t.price;
+    }
   }
-  rcptRenderItems();
   rcptRenderPreview();
 }
 
 function rcptAddItem(){
-  _rcptData.items.push({name:'นวดแผนไทย', price:'400'});
+  _rcptData.items.push({name:'',price:''});
   rcptRenderItems();
-  rcptRenderPreview();
 }
 
 function rcptRemoveItem(i){
   _rcptData.items.splice(i,1);
   rcptRenderItems();
-  rcptRenderPreview();
-}
-
-function rcptFontAdj(d){
-  _rcptFontSize = Math.min(16, Math.max(7, _rcptFontSize + d));
-  const el = document.getElementById('rcpt-font-val');
-  if(el) el.textContent = _rcptFontSize;
   rcptRenderPreview();
 }
 
@@ -4887,11 +4894,9 @@ function rcptRenderPreview(){
       <span>${it.price?Number(it.price).toLocaleString():''}</span>
     </div>`).join('') || '<div style="color:#aaa;font-size:9px;">ยังไม่มีรายการ</div>';
 
-  const fs = _rcptFontSize;
-  box.style.fontSize = fs+'px';
   box.innerHTML=`
-    <div style="text-align:center;font-size:${fs+4}px;font-weight:700;letter-spacing:0.3px;margin-bottom:2px;">${_escRcpt(d.clinicName)||'Superclinic'}</div>
-    <div style="text-align:center;font-size:${fs-1}px;color:#555;line-height:1.5;margin-bottom:5px;">
+    <div style="text-align:center;font-size:14px;font-weight:700;letter-spacing:0.3px;margin-bottom:2px;">${_escRcpt(d.clinicName)||'Superclinic'}</div>
+    <div style="text-align:center;font-size:9px;color:#555;line-height:1.5;margin-bottom:5px;">
       ${_escRcpt(d.clinicAddr)}<br>โทร ${_escRcpt(d.clinicPhone)}
     </div>
     <hr style="border:none;border-top:1px solid #888;margin:4px 0;">
@@ -4972,13 +4977,12 @@ function _rcptBuildPrintHtml(){
   const payLabels={cash:'เงินสด',transfer:'โอนเงิน',insurance:'ประกัน'};
   const itemRows=d.items.filter(it=>it.name||it.price).map(it=>`
     <tr><td style="padding:1px 0;">${it.name||'—'}</td><td style="text-align:right;padding:1px 0;">${it.price?Number(it.price).toLocaleString():''}</td></tr>`).join('');
-  const fps = _rcptFontSize;
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     @page { margin:0; size: 80mm auto; }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Courier New',Courier,monospace; font-size:${fps}px; color:#000; width:80mm; padding:6mm 4mm; }
-    .clinic-name { text-align:center; font-size:${fps+5}px; font-weight:700; margin-bottom:2px; }
+    body { font-family:'Courier New',Courier,monospace; font-size:11px; color:#000; width:80mm; padding:6mm 4mm; }
+    .clinic-name { text-align:center; font-size:16px; font-weight:700; margin-bottom:2px; }
     .clinic-sub { text-align:center; font-size:10px; color:#444; line-height:1.5; margin-bottom:6px; }
     hr { border:none; border-top:1px dashed #666; margin:5px 0; }
     hr.solid { border-top:1px solid #444; }
@@ -5038,13 +5042,16 @@ async function rcptPrintDirect(){
   const b=(...bytes)=>lines.push(new Uint8Array(bytes));
   const t=(str,size=0)=>{
     if(size) b(ESC,0x21,size);
-    lines.push(enc.encode(str+'\n'));
+    lines.push(enc.encode(str+'
+'));
     if(size) b(ESC,0x21,0);
   };
-  const hr=()=>lines.push(enc.encode('-'.repeat(32)+'\n'));
+  const hr=()=>lines.push(enc.encode('-'.repeat(32)+'
+'));
   const row=(l,r)=>{
     const pad2=32-l.length-r.length;
-    lines.push(enc.encode(l+' '.repeat(Math.max(1,pad2))+r+'\n'));
+    lines.push(enc.encode(l+' '.repeat(Math.max(1,pad2))+r+'
+'));
   };
 
   b(ESC,0x40);            // init
@@ -5068,7 +5075,8 @@ async function rcptPrintDirect(){
   b(ESC,0x21,0x10);       // double height for total
   row('รวมทั้งหมด', total.toLocaleString()+' บาท');
   b(ESC,0x21,0x00);
-  if(d.note){ hr(); t('หมายเหตุ'); lines.push(enc.encode(d.note+'\n')); }
+  if(d.note){ hr(); t('หมายเหตุ'); lines.push(enc.encode(d.note+'
+')); }
   hr();
   b(ESC,0x61,0x01);       // center
   t('ขอบคุณที่ใช้บริการ');
@@ -5213,28 +5221,34 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v39', date:'28/05/2569', items:['update'] },
-  { ver:'v38', date:'28/05/2569', items:['update'] },
-  { ver:'v35', date:'28/05/2569', items:['Thermal Receipt Modal — ESC/POS + OS Driver, pulldown ประเภทการรักษา, font size, body map collapsible'] },
-  { ver:'v34', date:'28/05/2569', items:['Thermal Receipt Modal — พิมพ์โดยตรง (ESC/POS) + ผ่าน OS Driver'] },
-  { ver:'v65', date:'25/05/2569', items:['เปลี่ยนชื่อไฟล์หลัก thai-clinic.html → superclinic.html'] },
-  { ver:'v64', date:'25/05/2569', items:['ใบรับรองแพทย์แผนไทยประยุกต์ — modal A4, live preview, พิมพ์จริง'] },
-  { ver:'v63', date:'25/05/2569', items:['Label Printer v2 — font size inputs, live preview, autocomplete'] },
-  { ver:'v62', date:'25/05/2569', items:['ระบบพิมพ์ฉลากยา (Label Printer) — modal, preview, ขนาด, จำนวน'] },
-  { ver:'v61', date:'25/05/2569', items:['Face Recognition (face-api.js), Feature Toggles ON/OFF'] },
-  { ver:'v60', date:'23/05/2569', items:['SearchX convention, ปุ่มแก้ไขใน appt-card, treat-search'] },
-  { ver:'v59', date:'23/05/2569', items:['Custom Date Picker, Appt View/Edit modal, Herb Stock Value auto-save'] },
-  { ver:'v58', date:'22/05/2569', items:['Thai name fix (data-*), loading spinner, acKeyNav utility'] },
-  { ver:'v57', date:'22/05/2569', items:['ลงทะเบียน: สร้างผู้ป่วยใหม่ inline + pre-fill + auto-select'] },
+  { ver:'v40', date:'28/05/2569', items:['update'] },
+  { ver:'v34', date:'28/05/2569', items:['update'] },
+  { ver:'v33', date:'26/05/2569', items:['update'] },
+  { ver:'v32', date:'26/05/2569', items:['update'] },
+  { ver:'v31', date:'26/05/2569', items:['cd C:\Users\acer\Desktop\Claude\superclinic'] },
+  { ver:'v30', date:'26/05/2569', items:['update'] },
+  { ver:'v29', date:'26/05/2569', items:['[System.Environment]::SetEnvironmentVariable(PYTHONUTF8, 1, User)'] },
+  { ver:'v28', date:'26/05/2569', items:['update'] },
+  { ver:'v26', date:'26/05/2569', items:['update'] },
+  { ver:'v27', date:'26/05/2569', items:['update'] },
+  { ver:'v26', date:'26/05/2569', items:['update'] },
+  { ver:'v25', date:'26/05/2569', items:['update'] },
+  { ver:'v24', date:'26/05/2569', items:['update'] },
+  { ver:'v23', date:'26/05/2569', items:['update'] },
+  { ver:'v4', date:'25/05/2569', items:['ระบบพิมพ์ฉลากยา (Label Printer) พร้อม Preview','ตั้งค่าฟังก์ชัน ON/OFF (Face Recognition, ID Card)','ปุ่มออกใบรับรองแพทย์ในข้อมูลผู้ป่วย'] },
+  { ver:'v3', date:'25/05/2569', items:['Face Recognition ผ่าน Webcam (face-api.js)','บันทึกใบหน้า + ค้นหาผู้ป่วยจากใบหน้า Top-3'] },
+  { ver:'v2', date:'25/05/2569', items:['วันที่ auto-detect พ.ศ./ค.ศ. แสดงผล พ.ศ. ทุกที่','ID Card Reader (USB HID) ปุ่มทางเลือก'] },
+  { ver:'v1', date:'25/05/2569', items:['เตือนนัดซ้ำใน Dashboard ภาพรวม','backup superclinic-vXX อัตโนมัติทุก push'] },
 ];
 
 function renderSidebarChangelog(){
-  const log = CHANGELOG; // ใช้ CHANGELOG จากโค้ดตรงๆ ไม่ cache localStorage
+  const stored = JSON.parse(localStorage.getItem(CL_KEY)||'null');
+  const log = stored || CHANGELOG;
   const el = document.getElementById('sidebar-changelog');
   if(!el) return;
   if(!log.length){ el.style.display='none'; return; }
   el.style.display = '';
-  const show = log.slice(0,1); // แสดง 1 version ล่าสุด
+  const show = log.slice(0,2); // แสดง 2 version ล่าสุด
   const entriesEl = document.getElementById('cl-entries');
   if(!entriesEl) return;
   entriesEl.innerHTML = show.map((v,i)=>`
@@ -6003,17 +6017,6 @@ async function openLabelPrinter(herbId) {
 
 function _escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function bmToggle(uid){
-  const wrap = document.getElementById('bmap-'+uid);
-  if(!wrap) return;
-  const collapsed = wrap.classList.toggle('body-map-collapsed');
-  const btn = document.getElementById('bmap-togbtn-'+uid);
-  if(btn) btn.textContent = collapsed ? '▼ ขยาย' : '▲ ย่อ';
-  // แสดง hint เฉพาะตอนขยาย
-  const hint = wrap.querySelector('.bmap-hint');
-  if(hint) hint.style.display = collapsed ? 'none' : '';
-}
-
 function closeLabelPrinter(){
   const el=document.getElementById('lp-overlay');
   if(el) el.remove();
@@ -6331,4 +6334,416 @@ async function openMedCert(patientId) {
             <textarea class="lp-textarea" id="mc-clinicAddr" oninput="_mc.clinicAddr=this.value;mcRender()">${_escHtml(_mc.clinicAddr)}</textarea>
           </div>
           <div style="margin-bottom:8px;">
-            <l
+            <label style="font-size:11px;color:#666;font-weight:600;">เบอร์โทร</label>
+            <input class="lp-input" id="mc-clinicTel" value="${_escHtml(_mc.clinicTel)}" oninput="_mc.clinicTel=this.value;mcRender()">
+          </div>
+        </div>
+
+        <!-- RIGHT: Preview A4 -->
+        <div class="lp-right" style="flex:1;min-width:0;">
+          <div class="lp-section-title" style="text-align:center;">👁 Preview (A4)</div>
+          <div id="mc-preview-wrap" style="overflow:auto;max-height:72vh;border:1px solid #ddd;border-radius:8px;background:#e8e8e8;padding:12px;display:flex;justify-content:center;">
+            <div id="mc-preview"></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="lp-footer" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:#888;">ขนาดอักษร:</span>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="mcFontAdj(-1)">−</button>
+          <span id="mc-font-val" style="font-size:13px;min-width:28px;text-align:center;">14</span>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:13px;" onclick="mcFontAdj(1)">+</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline" onclick="closeMedCert()">ปิด</button>
+          <button class="btn btn-primary" onclick="mcPrint()">
+            <i class="ti ti-printer"></i> พิมพ์ผ่าน Windows Driver
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  // ผูก _mc เข้า window เพื่อให้ oninput เข้าถึงได้
+  window._mc = _mc;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeMedCert(); });
+  mcRender();
+}
+
+// ── Search modal สำหรับเลือกผู้ป่วยก่อนออกใบรับรอง ──
+function openMedCertSearch(){
+  // โหลด allPatients ถ้ายังไม่มี
+  const doOpen = () => {
+    const overlay = document.createElement('div');
+    overlay.id = 'mcs-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9700;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;width:520px;max-width:94vw;padding:0;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.22);">
+        <div style="background:linear-gradient(135deg,var(--g1),var(--g2));padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+          <h3 style="margin:0;color:#fff;font-size:16px;"><i class="ti ti-certificate" style="margin-right:8px;"></i>ออกใบรับรองแพทย์ — เลือกผู้ป่วย</h3>
+          <button onclick="document.getElementById('mcs-overlay').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <div style="padding:20px;">
+          <div style="position:relative;margin-bottom:8px;">
+            <input id="mcs-input" class="form-control" placeholder="พิมพ์ชื่อ, HN, เบอร์โทร..."
+              style="width:100%;box-sizing:border-box;padding:10px 14px;font-size:14px;"
+              oninput="mcsSearch(this.value)"
+              onkeydown="acKeyNav(event,'mcs-dd',el=>el.click())"
+              onblur="setTimeout(()=>{const d=document.getElementById('mcs-dd');if(d)d.style.display='none'},200)"
+              autocomplete="off">
+            <div id="mcs-dd" style="display:none;position:absolute;left:0;right:0;z-index:9999;max-height:280px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;margin-top:4px;background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.12);"></div>
+          </div>
+          <div id="mcs-result" style="max-height:300px;overflow-y:auto;"></div>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px;">
+            <button class="btn btn-outline" onclick="document.getElementById('mcs-overlay').remove()">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="(async()=>{document.getElementById('mcs-overlay').remove();await openMedCert(null);})()">
+              <i class="ti ti-file-plus"></i> ออกใบโดยไม่เลือกผู้ป่วย
+            </button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+    // focus input
+    setTimeout(()=>{ const inp=document.getElementById('mcs-input'); if(inp) inp.focus(); }, 80);
+    // แสดงรายชื่อ 10 คนแรกทันที
+    mcsSearch('');
+  };
+
+  // โหลด patients ถ้ายังว่าง
+  if(typeof allPatients !== 'undefined' && allPatients.length) {
+    doOpen();
+  } else {
+    callApi('patients','list').then(r=>{
+      if(typeof allPatients !== 'undefined') allPatients = r.data?.rows || [];
+      doOpen();
+    }).catch(()=>doOpen());
+  }
+}
+
+function mcsSearch(q){
+  const dd = document.getElementById('mcs-dd');
+  const res_el = document.getElementById('mcs-result');
+  const patients = (typeof allPatients !== 'undefined') ? allPatients : [];
+  const ql = q.toLowerCase();
+  const matches = q
+    ? patients.filter(p=>
+        (p.first_name||'').includes(q)||
+        (p.last_name||'').includes(q)||
+        (p.hn||'').toLowerCase().includes(ql)||
+        (p.phone||'').includes(q)
+      ).slice(0,12)
+    : patients.filter(p=>p.is_active!=='FALSE').slice(0,10);
+
+  const rowHtml = matches.map(p=>`
+    <div class="ac-item" data-hn="${p.hn||p.id}"
+      style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;"
+      onmouseover="this.classList.add('ac-focused')"
+      onmouseout="this.classList.remove('ac-focused')"
+      onclick="(async()=>{document.getElementById('mcs-overlay').remove();await openMedCert('${(p.hn||p.id).replace(/'/g,"\'")}');})()">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--g1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">
+        ${(p.first_name||'?')[0]}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:14px;">${p.prefix||''}${p.first_name||''} ${p.last_name||''}</div>
+        <div style="font-size:12px;color:#888;">${p.hn||''} ${p.phone?'• '+p.phone:''}</div>
+      </div>
+      <i class="ti ti-chevron-right" style="color:#ccc;"></i>
+    </div>`).join('');
+
+  // ถ้า q ว่าง แสดงใน result แทน dropdown
+  if(!q){
+    if(dd) dd.style.display='none';
+    if(res_el) res_el.innerHTML = matches.length
+      ? `<div style="font-size:12px;color:#aaa;margin-bottom:6px;">ผู้ป่วยล่าสุด</div>${rowHtml}`
+      : '<div style="color:#aaa;text-align:center;padding:20px;">ไม่พบข้อมูลผู้ป่วย</div>';
+  } else {
+    if(res_el) res_el.innerHTML='';
+    if(!dd) return;
+    if(!matches.length){ dd.style.display='none'; return; }
+    dd.innerHTML = rowHtml;
+    dd.style.display='block';
+  }
+}
+
+
+function closeMedCert(){
+  const el = document.getElementById('mc-overlay');
+  if(el) el.remove();
+}
+
+// ── Render preview A4 ──
+function mcRender(){
+  const m = window._mc; if(!m) return;
+  const el = document.getElementById('mc-preview'); if(!el) return;
+
+  const restLine = m.restDays
+    ? `<tr><td style="padding:4px 0;color:#555;width:200px;">ให้หยุดพักงาน/เรียน</td><td style="padding:4px 0;"><strong>${m.restDays} วัน</strong></td></tr>`
+    : '';
+  const diagLine = m.diagnosis
+    ? `<tr><td style="padding:4px 0;color:#555;">การวินิจฉัย</td><td style="padding:4px 0;">${_escHtml(m.diagnosis)}</td></tr>`
+    : '';
+  const noteLine = m.note
+    ? `<tr><td style="padding:4px 0;color:#555;vertical-align:top;">หมายเหตุ</td><td style="padding:4px 0;">${_escHtml(m.note)}</td></tr>`
+    : '';
+
+  el.innerHTML = `
+  <div id="mc-a4" style="
+    width:210mm; min-height:297mm; background:#fff;
+    padding:18mm 20mm 16mm; box-sizing:border-box;
+    font-family:'Sarabun',sans-serif; font-size:14pt; color:#1a1a1a;
+    box-shadow:0 2px 16px rgba(0,0,0,.18); position:relative;
+  ">
+    <!-- หัวกระดาษ -->
+    <div style="text-align:center;border-bottom:3px double #2F5D50;padding-bottom:12px;margin-bottom:18px;">
+      <div style="font-size:11pt;color:#2F5D50;letter-spacing:1px;">คลินิก</div>
+      <div style="font-size:18pt;font-weight:700;color:#2F5D50;font-family:'Cormorant Garamond',serif;letter-spacing:2px;">${_escHtml(m.clinicName)}</div>
+      <div style="font-size:10pt;color:#666;margin-top:4px;">${_escHtml(m.clinicAddr)}</div>
+      <div style="font-size:10pt;color:#666;">โทร. ${_escHtml(m.clinicTel)}</div>
+    </div>
+
+    <!-- ชื่อเอกสาร -->
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:20pt;font-weight:700;letter-spacing:1px;">ใบรับรองแพทย์แผนไทยประยุกต์</div>
+      <div style="font-size:10pt;color:#888;margin-top:2px;">TRADITIONAL APPLIED MEDICAL CERTIFICATE</div>
+      <div style="display:flex;justify-content:flex-end;gap:16px;margin-top:8px;font-size:10pt;color:#555;">
+        <span>เลขที่ <strong>${_escHtml(m.certNo)}</strong></span>
+        <span>วันที่ <strong>${_escHtml(m.date)}</strong></span>
+      </div>
+    </div>
+
+    <!-- ข้อความนำ -->
+    <div style="margin-bottom:16px;font-size:13pt;line-height:2;">
+      ข้าพเจ้า <strong>${_escHtml(m.doctorName)}</strong>
+      แพทย์แผนไทยประยุกต์ ใบอนุญาต ${_escHtml(m.doctorLicense)}
+      ได้ทำการตรวจร่างกายผู้มารับบริการ ณ ${_escHtml(m.clinicName)} ขอรับรองว่า
+    </div>
+
+    <!-- ข้อมูลผู้ป่วย -->
+    <div style="background:#f8f5ef;border-radius:8px;padding:14px 18px;margin-bottom:16px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13pt;">
+        <tr>
+          <td style="padding:4px 0;color:#555;width:200px;">ชื่อ-นามสกุล</td>
+          <td style="padding:4px 0;"><strong>${_escHtml(m.patName)||'............................................'}</strong></td>
+          <td style="padding:4px 0;color:#555;width:80px;">อายุ</td>
+          <td style="padding:4px 0;"><strong>${_escHtml(m.patAge)||'.........'}</strong></td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;color:#555;">เลขบัตรประชาชน</td>
+          <td colspan="3" style="padding:4px 0;">${m.patId ? `<strong>${_escHtml(m.patId)}</strong>` : '............................................'}</td>
+        </tr>
+        ${m.patAddr ? `<tr><td style="padding:4px 0;color:#555;vertical-align:top;">ที่อยู่</td><td colspan="3" style="padding:4px 0;">${_escHtml(m.patAddr)}</td></tr>` : ''}
+      </table>
+    </div>
+
+    <!-- ผลการตรวจ -->
+    <div style="margin-bottom:16px;">
+      <div style="font-weight:700;font-size:13pt;margin-bottom:8px;color:#2F5D50;">ผลการตรวจและความเห็นแพทย์</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13pt;">
+        ${diagLine}
+        <tr>
+          <td style="padding:6px 0;color:#555;vertical-align:top;width:200px;">ความเห็นแพทย์</td>
+          <td style="padding:6px 0;">${_escHtml(m.opinion)}</td>
+        </tr>
+        ${restLine}
+        ${noteLine}
+      </table>
+    </div>
+
+    <!-- ลายเซ็น -->
+    <div style="margin-top:32px;display:flex;justify-content:flex-end;">
+      <div style="text-align:center;min-width:220px;">
+        <div style="border-bottom:1px solid #333;height:48px;margin-bottom:6px;"></div>
+        <div style="font-size:12pt;font-weight:600;">(${_escHtml(m.doctorName)})</div>
+        <div style="font-size:10pt;color:#555;">แพทย์แผนไทยประยุกต์</div>
+        <div style="font-size:10pt;color:#555;">${_escHtml(m.doctorLicense)}</div>
+        <div style="font-size:10pt;color:#888;margin-top:4px;">วันที่ ${_escHtml(m.date)}</div>
+      </div>
+    </div>
+
+    <!-- หมายเหตุล่าง -->
+    <div style="position:absolute;bottom:14mm;left:20mm;right:20mm;border-top:1px solid #ddd;padding-top:8px;font-size:9pt;color:#aaa;text-align:center;">
+      ใบรับรองแพทย์ฉบับนี้ออกโดย ${_escHtml(m.clinicName)} • เลขที่ ${_escHtml(m.certNo)} • วันที่ ${_escHtml(m.date)}
+    </div>
+  </div>`;
+}
+
+// ── Print A4 ──
+function mcPrint(){
+  const a4 = document.getElementById('mc-a4');
+  if(!a4){ showToast('ไม่พบ Preview','error'); return; }
+  const pa = document.getElementById('lp-print-area');
+  if(!pa){ showToast('ไม่พบ print area','error'); return; }
+  pa.innerHTML = a4.outerHTML;
+  pa.style.display = 'block';
+  window.print();
+  setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; }, 1500);
+}
+
+let _mcFontSize = 14;
+function mcFontAdj(d){
+  _mcFontSize = Math.max(9, Math.min(18, _mcFontSize + d));
+  const el = document.getElementById('mc-font-val');
+  if(el) el.textContent = _mcFontSize;
+  const a4 = document.getElementById('mc-a4');
+  if(a4) a4.style.fontSize = _mcFontSize + 'pt';
+}
+</script>
+
+<script>
+/* ── Mobile Sidebar Toggle ── */
+(function(){
+  const btn      = document.getElementById('hamburger-btn');
+  const sidebar  = document.getElementById('main-sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (!btn || !sidebar || !backdrop) return;
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  btn.addEventListener('click', function(){
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+
+  // ปิด sidebar เมื่อคลิก backdrop
+  backdrop.addEventListener('click', closeSidebar);
+
+  // ปิด sidebar เมื่อเลือก nav item บน mobile
+  sidebar.querySelectorAll('.nav-item').forEach(function(item){
+    item.addEventListener('click', function(){
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // อัปเดต icon hamburger ตาม state
+  sidebar.addEventListener('transitionend', function(){
+    const icon = btn.querySelector('i');
+    if (!icon) return;
+    icon.className = sidebar.classList.contains('open')
+      ? 'ti ti-x'
+      : 'ti ti-menu-2';
+  });
+})();
+</script>
+<script>
+/* ══ LINE NOTIFY ══ */
+const LINE_TOKEN_KEY = 'sc_line_notify_token';
+
+function initLineNotifyUI() {
+  const saved = localStorage.getItem(LINE_TOKEN_KEY) || '';
+  const inp = document.getElementById('line-token-input');
+  const tog = document.getElementById('toggle-line-notify');
+  if (inp) inp.value = saved;
+  if (tog) { if (saved) tog.classList.add('on'); else tog.classList.remove('on'); }
+  updateLineStatus(saved ? '✅ มี Token บันทึกอยู่แล้ว' : '');
+}
+
+function toggleLineNotifyUI(forceOpen) {
+  const tog = document.getElementById('toggle-line-notify');
+  const ui  = document.getElementById('line-notify-ui');
+  if (!ui) return;
+  const willOpen = forceOpen || (ui.style.display === 'none');
+  ui.style.display = willOpen ? 'block' : 'none';
+  if (tog) {
+    // toggle ON เฉพาะเมื่อมี token บันทึกแล้ว
+    const saved = localStorage.getItem(LINE_TOKEN_KEY);
+    if (saved) tog.classList.add('on'); else tog.classList.remove('on');
+  }
+}
+
+function toggleShowToken() {
+  const inp = document.getElementById('line-token-input');
+  const icon = document.getElementById('eye-icon');
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  if (icon) icon.className = show ? 'ti ti-eye-off' : 'ti ti-eye';
+}
+
+function updateLineStatus(msg, isError) {
+  const el = document.getElementById('line-notify-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? '#C0392B' : (msg.startsWith('✅') ? '#27AE60' : '#888');
+}
+
+async function saveLineToken() {
+  const inp = document.getElementById('line-token-input');
+  if (!inp) return;
+  const token = inp.value.trim();
+  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
+  updateLineStatus('⏳ กำลังบันทึก...');
+  try {
+    await callApi('settings', 'update', { key: 'line_notify_token', value: token, description: 'LINE Notify Token' });
+    localStorage.setItem(LINE_TOKEN_KEY, token);
+    const tog = document.getElementById('toggle-line-notify');
+    if (tog) tog.classList.add('on');
+    updateLineStatus('✅ บันทึก Token เรียบร้อยแล้ว');
+    showToast('✅ บันทึก LINE Notify Token แล้ว');
+  } catch (err) {
+    updateLineStatus('❌ บันทึกไม่สำเร็จ: ' + err.message, true);
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+async function testLineNotify() {
+  const inp = document.getElementById('line-token-input');
+  const token = (inp ? inp.value.trim() : '') || localStorage.getItem(LINE_TOKEN_KEY) || '';
+  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
+  updateLineStatus('⏳ กำลังส่งข้อความทดสอบ...');
+  try {
+    await sendLineNotify('🌿 ทดสอบแจ้งเตือนจาก Superclinic\nระบบ LINE Notify พร้อมใช้งาน ✅', token);
+    updateLineStatus('✅ ส่งสำเร็จ — เช็ค LINE ของคุณได้เลย');
+    showToast('✅ ส่ง LINE Notify สำเร็จ');
+  } catch (err) {
+    updateLineStatus('❌ ' + err.message, true);
+    showToast('❌ LINE: ' + err.message, 'error');
+  }
+}
+
+async function sendLineNotify(message, token) {
+  const body = { message };
+  if (token) body.token = token;
+  const url = `${API_URL}?sheet=settings&action=notify&token=${encodeURIComponent(API_TOKEN)}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body)
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'LINE Notify failed');
+  return json.data;
+}
+
+async function notifyNewAppointment(data) {
+  const token = localStorage.getItem(LINE_TOKEN_KEY);
+  if (!token) return;
+  const tog = document.getElementById('toggle-line-notify');
+  if (tog && !tog.classList.contains('on')) return;
+  const msg = `📅 นัดหมายใหม่\nผู้ป่วย: ${data.patient_name||''}\nวันที่: ${data.date||''} เวลา ${data.time_start||''}\nประเภท: ${data.treatment_type||''}\n— Superclinic`;
+  try { await sendLineNotify(msg); } catch (e) {}
+}
+
+async function notifyLowStock(herbName, qty, minQty) {
+  const token = localStorage.getItem(LINE_TOKEN_KEY);
+  if (!token) return;
+  const tog = document.getElementById('toggle-line-notify');
+  if (tog && !tog.classList.contains('on')) return;
+  const msg = `⚠️ สต็อกใกล้หมด\nชื่อ: ${herbName}\nคงเหลือ: ${qty} (ต่ำสุด: ${minQty})\n— Superclinic`;
+  try { await sendLineNotify(msg); } catch (e) {}
+}
+
+document.addEventListener('DOMContentLoaded', initLineNotifyUI);
+</script>
+</body>
+</html>
