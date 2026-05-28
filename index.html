@@ -1299,10 +1299,10 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
     <div class="card">
       <div class="card-head"><div class="card-title"><i class="ti ti-arrow-down-circle" style="color:var(--g2);"></i>รายรับล่าสุด</div><button class="btn btn-outline btn-sm" onclick="showFinanceAll('income')">ดูทั้งหมด</button></div>
       <div id="fin-income-list" class="card-body">
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Anthony Stark — นวดเส้นประสาท</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0247</div></div></div><strong style="color:var(--g2);">+800 บาท</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-needle"></i></div><div><div style="font-size:13px;font-weight:500;">Steven Rogers — ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0246</div></div></div><strong style="color:var(--g2);">+1,200 บาท</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Wanda Maximoff — อบสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0245</div></div></div><strong style="color:var(--g2);">+650 บาท</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-pill"></i></div><div><div style="font-size:13px;font-weight:500;">Thor Odinson — ยาสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0244</div></div></div><strong style="color:var(--g2);">+350 บาท</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Anthony Stark — นวดเส้นประสาท</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0247</div></div></div><strong style="color:var(--g2);">+฿800</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-needle"></i></div><div><div style="font-size:13px;font-weight:500;">Steven Rogers — ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0246</div></div></div><strong style="color:var(--g2);">+฿1,200</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Wanda Maximoff — อบสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0245</div></div></div><strong style="color:var(--g2);">+฿650</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-pill"></i></div><div><div style="font-size:13px;font-weight:500;">Thor Odinson — ยาสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0244</div></div></div><strong style="color:var(--g2);">+฿350</strong></div>
       </div>
     </div>
     <div class="card">
@@ -1502,10 +1502,10 @@ function bodyMapHTML(uid, initialData){
   const data = initialData || {front:[], back:[], side:[], head:[]};
   return `
 <div class="body-map-wrap body-map-collapsed" id="bmap-${uid}">
-  <div class="body-map-title" onclick="bmToggle('${uid}')" style="cursor:pointer;">
+  <div class="body-map-title" onclick="bmToggle('${uid}')" style="cursor:pointer;display:flex;align-items:center;gap:8px;">
     <i class="ti ti-body-scan"></i>แผนที่จุดเจ็บปวด
     <span class="bmap-hint" style="font-size:10px;font-weight:400;color:#aaa;display:none;">(คลิกบนร่างกายเพื่อ mark • คลิกจุดเพื่อลบ)</span>
-    <button type="button" class="bmap-toggle-btn" id="bmap-togbtn-${uid}" onclick="event.stopPropagation();bmToggle('${uid}')" style="margin-left:auto;background:none;border:1px solid var(--go);color:var(--go);border-radius:8px;padding:2px 10px;font-size:11px;cursor:pointer;">▼ ขยาย</button>
+    <button type="button" id="bmap-togbtn-${uid}" onclick="event.stopPropagation();bmToggle('${uid}')" style="margin-left:auto;background:none;border:1px solid var(--go);color:var(--go);border-radius:8px;padding:2px 10px;font-size:11px;cursor:pointer;">▼ ขยาย</button>
   </div>
   <div class="body-map-controls">
     <span style="font-size:11px;color:#888;font-weight:600;">ระดับ:</span>
@@ -1685,13 +1685,13 @@ function bmRemoveDot(e, uid, side, idx){
 }
 
 function bmToggle(uid){
-  const wrap = document.getElementById('bmap-'+uid);
+  const wrap=document.getElementById('bmap-'+uid);
   if(!wrap) return;
-  const collapsed = wrap.classList.toggle('body-map-collapsed');
-  const btn = document.getElementById('bmap-togbtn-'+uid);
-  if(btn) btn.textContent = collapsed ? '▼ ขยาย' : '▲ ย่อ';
-  const hint = wrap.querySelector('.bmap-hint');
-  if(hint) hint.style.display = collapsed ? 'none' : '';
+  const collapsed=wrap.classList.toggle('body-map-collapsed');
+  const btn=document.getElementById('bmap-togbtn-'+uid);
+  if(btn) btn.textContent=collapsed?'▼ ขยาย':'▲ ย่อ';
+  const hint=wrap.querySelector('.bmap-hint');
+  if(hint) hint.style.display=collapsed?'none':'';
 }
 
 function bmClear(uid){
@@ -4351,7 +4351,7 @@ async function loadFinance(){
             <div style="font-size:11px;color:#aaa;">${toThaiDisplay(f.date)}${f.receipt_no?' • '+f.receipt_no:''}</div>
           </div>
         </div>
-        <strong style="color:${type==='income'?'var(--g2)':'#A04040'};">${type==='income'?'+':'-'}${parseFloat(f.amount||0).toLocaleString()} บาท</strong>
+        <strong style="color:${type==='income'?'var(--g2)':'#A04040'};">${type==='income'?'+':'-'}${parseFloat(f.amount||0).toLocaleString()}</strong>
       </div>`).join('');
     };
     renderList('fin-income-list', inc, 'income');
@@ -4468,35 +4468,29 @@ function openAddUserModal(){
         <input class="form-input" name="note" placeholder="เช่น แพทย์แผนไทย">
       </div>
     </form>`,
-    `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn btn-primary" onclick="document.getElementById('fp-add-user').requestSubmit()"><i class="ti ti-user-plus"></i>เพิ่มผู้ใช้</button>`
+    \`<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn btn-primary" onclick="document.getElementById('fp-add-user').requestSubmit()"><i class="ti ti-user-plus"></i>เพิ่มผู้ใช้</button>\`
   );
 }
-
 async function submitAddUser(e){
   e.preventDefault();
-  const _done = showLoading(e.submitter);
-  const fd = new FormData(e.target);
-  const data = { is_active: 'TRUE' };
+  const _done=showLoading(e.submitter);
+  const fd=new FormData(e.target);
+  const data={is_active:'TRUE'};
   fd.forEach((v,k)=>{ if(v) data[k]=v; });
   if(!data.name){ showToast('กรุณากรอกชื่อ','error'); _done(); return; }
   try {
-    const res = await callApi('users','create', data);
+    const res=await callApi('users','create',data);
     if(!res.ok) throw new Error(res.error||'ไม่สำเร็จ');
-    _done();
-    closeModal();
-    showToast('✅ เพิ่มผู้ใช้ '+data.name+' แล้ว');
-    loadUsers();
+    _done(); closeModal(); showToast('✅ เพิ่มผู้ใช้ '+data.name+' แล้ว'); loadUsers();
   } catch(err){ _done(); showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
-
 async function deleteUser(id){
   if(!confirm('ยืนยันลบผู้ใช้นี้?')) return;
   try {
-    const res = await callApi('users','update',{ id, is_active:'FALSE' });
+    const res=await callApi('users','update',{id,is_active:'FALSE'});
     if(!res.ok) throw new Error(res.error||'ลบไม่สำเร็จ');
-    showToast('✅ ลบผู้ใช้แล้ว');
-    loadUsers();
+    showToast('✅ ลบผู้ใช้แล้ว'); loadUsers();
   } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
 
@@ -4658,8 +4652,8 @@ async function submitFinanceEntry(e, type){
    RECEIPT MODAL — ออกใบเสร็จรับเงิน (Thermal v1)
 ════════════════════════════════════════════════════════ */
 
-// ── state ──
-let const RCPT_TYPES = [
+// ── treatment types ──
+const RCPT_TYPES = [
   {label:'นวดแผนไทย 60 นาที', price:300},
   {label:'นวดแผนไทย 90 นาที', price:450},
   {label:'นวดแผนไทย 120 นาที', price:600},
@@ -4672,7 +4666,8 @@ let const RCPT_TYPES = [
   {label:'จ่ายยาสมุนไพร', price:150},
 ];
 
-_rcptData = {
+// ── state ──
+let _rcptData = {
   patName:'', patHN:'', patId:'',
   items:[{ name:'', price:'' }],
   note:'', payMethod:'cash',
@@ -4810,12 +4805,11 @@ function closeReceiptModal(){
 function rcptRenderItems(){
   const wrap=document.getElementById('rcpt-items-wrap');
   if(!wrap) return;
-  const opts = RCPT_TYPES.map(t=>`<option value="${t.label}" data-price="${t.price}">${t.label} (${t.price} บาท)</option>`).join('');
+  const opts=RCPT_TYPES.map(t=>`<option value="${t.label}" data-price="${t.price}">${t.label} (${t.price} บาท)</option>`).join('');
   wrap.innerHTML=_rcptData.items.map((item,i)=>`
     <div style="margin-bottom:8px;">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
-        <select id="rcpt-sel-${i}"
-          style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;"
+        <select id="rcpt-sel-${i}" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;"
           onchange="rcptTypeChange(${i},this)">
           <option value="">— เลือกประเภทการรักษา —</option>
           ${opts}
@@ -4826,7 +4820,7 @@ function rcptRenderItems(){
           oninput="_rcptData.items[${i}].price=this.value;rcptRenderPreview()">
         <span style="font-size:11px;color:#888;">บาท</span>
         ${_rcptData.items.length>1
-          ? `<button onclick="rcptRemoveItem(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;">×</button>`
+          ? `<button onclick="rcptRemoveItem(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:18px;padding:0 4px;">×</button>`
           : '<span style="width:24px;"></span>'}
       </div>
       <div id="rcpt-custom-${i}" style="display:${item.isCustom?'block':'none'};">
@@ -4835,7 +4829,6 @@ function rcptRenderItems(){
           oninput="_rcptData.items[${i}].name=this.value;rcptRenderPreview()">
       </div>
     </div>`).join('');
-  // restore selected value
   _rcptData.items.forEach((item,i)=>{
     const sel=document.getElementById('rcpt-sel-'+i);
     if(!sel) return;
@@ -4844,21 +4837,15 @@ function rcptRenderItems(){
   });
 }
 
-function rcptTypeChange(i, sel){
+function rcptTypeChange(i,sel){
   if(sel.value==='__custom__'){
-    _rcptData.items[i].isCustom=true;
-    _rcptData.items[i].name='';
+    _rcptData.items[i].isCustom=true; _rcptData.items[i].name='';
     document.getElementById('rcpt-custom-'+i).style.display='block';
   } else {
-    _rcptData.items[i].isCustom=false;
-    _rcptData.items[i].name=sel.value;
+    _rcptData.items[i].isCustom=false; _rcptData.items[i].name=sel.value;
     document.getElementById('rcpt-custom-'+i).style.display='none';
     const t=RCPT_TYPES.find(t=>t.label===sel.value);
-    if(t){
-      _rcptData.items[i].price=t.price;
-      const pinp=document.getElementById('rcpt-price-'+i);
-      if(pinp) pinp.value=t.price;
-    }
+    if(t){ _rcptData.items[i].price=t.price; const p=document.getElementById('rcpt-price-'+i); if(p) p.value=t.price; }
   }
   rcptRenderPreview();
 }
@@ -5182,10 +5169,10 @@ async function showFinanceAll(type){
         <td><span class="badge badge-green" style="font-size:11px;">${r.category||'—'}</span></td>
         <td style="font-size:13px;">${r.description||'—'}</td>
         <td style="font-size:12px;color:#999;">${r.payment_method||'—'}</td>
-        <td style="font-weight:700;color:${color};">${sign}${parseFloat(r.amount||0).toLocaleString()} บาท</td>
+        <td style="font-weight:700;color:${color};">${sign}${parseFloat(r.amount||0).toLocaleString()}</td>
       </tr>`).join('')}</tbody></table>
       <div style="padding:12px 16px;text-align:right;font-weight:700;color:${color};border-top:1px solid #f0ebe2;">
-        รวม: ${sign}${rows.reduce((s,r)=>s+parseFloat(r.amount||0),0).toLocaleString()} บาท
+        รวม: ${sign}${rows.reduce((s,r)=>s+parseFloat(r.amount||0),0).toLocaleString()}
       </div></div>`;
   } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
@@ -5221,7 +5208,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v40', date:'28/05/2569', items:['update'] },
+  { ver:'v41', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
   { ver:'v33', date:'26/05/2569', items:['update'] },
   { ver:'v32', date:'26/05/2569', items:['update'] },
@@ -5298,7 +5285,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const hash = location.hash.replace('#','');
   const validPages = ['dashboard','appointments','patients','register','treatments','herbs','stock','reports','finance','settings'];
   if(hash && validPages.includes(hash)) showPage(hash, null);
-  // render changelog หลัง DOM พร้อม
   setTimeout(renderSidebarChangelog, 100);
 
   // Patient search
@@ -6572,23 +6558,23 @@ function mcRender(){
 
 // ── Print A4 ──
 function mcPrint(){
-  const a4 = document.getElementById('mc-a4');
+  const a4=document.getElementById('mc-a4');
   if(!a4){ showToast('ไม่พบ Preview','error'); return; }
-  const pa = document.getElementById('lp-print-area');
+  const pa=document.getElementById('lp-print-area');
   if(!pa){ showToast('ไม่พบ print area','error'); return; }
-  pa.innerHTML = a4.outerHTML;
-  pa.style.display = 'block';
+  pa.innerHTML=a4.outerHTML;
+  pa.style.display='block';
   window.print();
-  setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; }, 1500);
+  setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; },1500);
 }
 
-let _mcFontSize = 14;
+let _mcFontSize=14;
 function mcFontAdj(d){
-  _mcFontSize = Math.max(9, Math.min(18, _mcFontSize + d));
-  const el = document.getElementById('mc-font-val');
-  if(el) el.textContent = _mcFontSize;
-  const a4 = document.getElementById('mc-a4');
-  if(a4) a4.style.fontSize = _mcFontSize + 'pt';
+  _mcFontSize=Math.max(9,Math.min(18,_mcFontSize+d));
+  const el=document.getElementById('mc-font-val');
+  if(el) el.textContent=_mcFontSize;
+  const a4=document.getElementById('mc-a4');
+  if(a4) a4.style.fontSize=_mcFontSize+'pt';
 }
 </script>
 
