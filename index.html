@@ -3027,6 +3027,8 @@ function openAddAppt(){
     .face-preview-strip .fp-score{position:absolute;bottom:0;left:0;right:0;font-size:9px;text-align:center;background:rgba(0,0,0,.6);color:#C8A96B;padding:1px 0;}
     .face-preview-strip .fp-best-label{position:absolute;top:2px;right:2px;font-size:8px;background:#C8A96B;color:#1a1a2e;border-radius:3px;padding:0 3px;font-weight:700;}
     .face-strip-hint{font-size:10px;color:#666;text-align:center;margin:6px 0 2px;}
+    .face-spectrum-wrap{width:100%;height:48px;display:flex;align-items:flex-end;gap:2px;padding:0 2px;box-sizing:border-box;background:rgba(255,255,255,.04);border-radius:10px;overflow:hidden;}
+    .face-spectrum-bar{flex:1;border-radius:3px 3px 0 0;transition:height .08s ease;min-height:3px;}
     .face-preview-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid rgba(200,169,107,.4);flex-shrink:0;}
 
   </style>
@@ -5190,7 +5192,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v61', date:'28/05/2569', items:['face modal UI redesign - white text, status+save row, no strip'] },
+  { ver:'v62', date:'28/05/2569', items:['face modal spectrum bar + video margin'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
@@ -5381,12 +5383,15 @@ function buildFaceModal({ title, subtitle, captureLabel, showMatchList, onCaptur
         <button onclick="closeFaceModal()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
       </div>
       <p>${subtitle}</p>
-      <div class="face-video-wrap">
+      <div class="face-video-wrap" style="margin-top:8px;">
         <video id="face-video" autoplay playsinline muted></video>
         <canvas id="face-canvas"></canvas>
       </div>
+      <div class="face-spectrum-wrap" id="face-spectrum">
+        ${Array.from({length:24},(_,i)=>`<div class="face-spectrum-bar" id="fsb-${i}" style="height:4px;background:hsl(${150+i*3},70%,55%);"></div>`).join('')}
+      </div>
       ${showMatchList ? '<div id="face-match-list" class="face-match-list"></div>' : ''}
-      <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-top:0;">
         <div id="face-status" class="face-status-bar detecting" style="flex:1;font-size:13px;font-weight:600;color:#fff;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.08);">⏳ กำลังโหลดโมเดล…</div>
         ${!showMatchList ? `<button id="face-capture-btn" class="face-capture-btn primary" disabled onclick="_faceCaptureTrigger()" style="white-space:nowrap;padding:8px 18px;border-radius:8px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;border:none;cursor:pointer;">${captureLabel}</button>` : ''}
       </div>
@@ -5465,6 +5470,36 @@ async function openFaceCapture(mode) {
     return { score, descriptor, dataUrl: c.toDataURL('image/jpeg',0.85) };
   };
 
+  // ── Motion spectrum — วัด pixel diff จาก video frame ──────────────────
+  const BARS = 24;
+  let _prevData = null;
+  const _specCanvas = document.createElement('canvas');
+  _specCanvas.width = BARS; _specCanvas.height = 1;
+  const _specCtx = _specCanvas.getContext('2d');
+
+  const updateSpectrum = (video) => {
+    if (!video || !video.videoWidth) return;
+    try {
+      _specCtx.drawImage(video, 0, 0, BARS, 1);
+      const cur = _specCtx.getImageData(0, 0, BARS, 1).data;
+      for (let i = 0; i < BARS; i++) {
+        const bar = document.getElementById('fsb-' + i);
+        if (!bar) continue;
+        let diff = 0;
+        if (_prevData) {
+          const r = Math.abs(cur[i*4]   - _prevData[i*4]);
+          const g = Math.abs(cur[i*4+1] - _prevData[i*4+1]);
+          const b = Math.abs(cur[i*4+2] - _prevData[i*4+2]);
+          diff = (r + g + b) / 3;
+        }
+        // base height 4px + motion up to 44px
+        const h = Math.min(48, 4 + diff * 0.6);
+        bar.style.height = h + 'px';
+      }
+      _prevData = cur.slice();
+    } catch(_) {}
+  };
+
   _faceCaptureCallback = async () => {
     if (!bestFrame) { showToast('ยังไม่มีภาพ — รอตรวจจับใบหน้าก่อน','error'); return; }
     const descriptorJson = JSON.stringify(Array.from(bestFrame.descriptor));
@@ -5492,6 +5527,7 @@ async function openFaceCapture(mode) {
       if (!document.getElementById('face-modal-overlay')) return;
       if (!video || video.paused || video.ended) { _faceAnimFrame = requestAnimationFrame(loop); return; }
       const det = await faceapi.detectSingleFace(video,opts).withFaceLandmarks().withFaceDescriptor();
+      updateSpectrum(video);
       if (det) {
         const score = det.detection.score;
         drawDetections([det.detection]);
