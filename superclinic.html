@@ -4999,16 +4999,13 @@ async function rcptPrintDirect(){
   const b=(...bytes)=>lines.push(new Uint8Array(bytes));
   const t=(str,size=0)=>{
     if(size) b(ESC,0x21,size);
-    lines.push(enc.encode(str+'
-'));
+    lines.push(enc.encode(str+'\n'));
     if(size) b(ESC,0x21,0);
   };
-  const hr=()=>lines.push(enc.encode('-'.repeat(32)+'
-'));
+  const hr=()=>lines.push(enc.encode('-'.repeat(32)+'\n'));
   const row=(l,r)=>{
     const pad2=32-l.length-r.length;
-    lines.push(enc.encode(l+' '.repeat(Math.max(1,pad2))+r+'
-'));
+    lines.push(enc.encode(l+' '.repeat(Math.max(1,pad2))+r+'\n'));
   };
 
   b(ESC,0x40);            // init
@@ -5032,8 +5029,7 @@ async function rcptPrintDirect(){
   b(ESC,0x21,0x10);       // double height for total
   row('รวมทั้งหมด', total.toLocaleString()+' บาท');
   b(ESC,0x21,0x00);
-  if(d.note){ hr(); t('หมายเหตุ'); lines.push(enc.encode(d.note+'
-')); }
+  if(d.note){ hr(); t('หมายเหตุ'); lines.push(enc.encode(d.note+'\n')); }
   hr();
   b(ESC,0x61,0x01);       // center
   t('ขอบคุณที่ใช้บริการ');
@@ -5178,6 +5174,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v43', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
   { ver:'v34', date:'28/05/2569', items:['update'] },
   { ver:'v33', date:'26/05/2569', items:['update'] },
