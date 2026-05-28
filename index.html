@@ -42,7 +42,11 @@
 .badge-treating{background:var(--grad-gold);color:#5c3d00;font-weight:700;border-radius:20px;font-size:12px;padding:4px 12px;animation:blinkGold 1.4s ease-in-out infinite;display:inline-flex;align-items:center;gap:5px;}
 /* ── BODY MAP ── */
 .body-map-wrap{background:#f9f6f0;border-radius:16px;padding:16px;border:1px solid rgba(200,169,107,0.2);}
-.body-map-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.body-map-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);margin-bottom:10px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+.body-map-title:hover{opacity:0.8;}
+.bmap-toggle-btn{margin-left:auto;background:none;border:1px solid rgba(47,93,80,0.25);border-radius:6px;color:var(--g1);cursor:pointer;font-size:11px;padding:2px 8px;font-weight:600;transition:transform .2s;}
+.body-map-collapsed .body-map-controls,.body-map-collapsed .body-map-views,.body-map-collapsed .body-map-legend{display:none !important;}
+.body-map-collapsed .body-map-title{margin-bottom:0;}
 .body-map-views{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:flex-start;}
 .body-map-view{position:relative;flex-shrink:0;text-align:center;}
 .body-map-view label{font-size:10px;color:#888;display:block;text-align:center;margin-bottom:4px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
@@ -1293,19 +1297,19 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
     <div class="card">
       <div class="card-head"><div class="card-title"><i class="ti ti-arrow-down-circle" style="color:var(--g2);"></i>รายรับล่าสุด</div><button class="btn btn-outline btn-sm" onclick="showFinanceAll('income')">ดูทั้งหมด</button></div>
       <div id="fin-income-list" class="card-body">
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Anthony Stark — นวดเส้นประสาท</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0247</div></div></div><strong style="color:var(--g2);">+฿800</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-needle"></i></div><div><div style="font-size:13px;font-weight:500;">Steven Rogers — ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0246</div></div></div><strong style="color:var(--g2);">+฿1,200</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Wanda Maximoff — อบสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0245</div></div></div><strong style="color:var(--g2);">+฿650</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-pill"></i></div><div><div style="font-size:13px;font-weight:500;">Thor Odinson — ยาสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0244</div></div></div><strong style="color:var(--g2);">+฿350</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Anthony Stark — นวดเส้นประสาท</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0247</div></div></div><strong style="color:var(--g2);">+800 บาท</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-needle"></i></div><div><div style="font-size:13px;font-weight:500;">Steven Rogers — ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0246</div></div></div><strong style="color:var(--g2);">+1,200 บาท</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Wanda Maximoff — อบสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0245</div></div></div><strong style="color:var(--g2);">+650 บาท</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-pill"></i></div><div><div style="font-size:13px;font-weight:500;">Thor Odinson — ยาสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0244</div></div></div><strong style="color:var(--g2);">+350 บาท</strong></div>
       </div>
     </div>
     <div class="card">
       <div class="card-head"><div class="card-title"><i class="ti ti-arrow-up-circle" style="color:#A04040;"></i>รายจ่ายล่าสุด</div><button class="btn btn-outline btn-sm" onclick="showFinanceAll('expense')">ดูทั้งหมด</button></div>
       <div id="fin-expense-list" class="card-body">
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-leaf"></i></div><div><div style="font-size:13px;font-weight:500;">สั่งซื้อสมุนไพรสด</div><div style="font-size:11px;color:#aaa;">10/05/68 • ผู้จำหน่าย: เชียงใหม่เฮิร์บ</div></div></div><strong style="color:#A04040;">-฿4,800</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-building"></i></div><div><div style="font-size:13px;font-weight:500;">ค่าเช่าสถานที่</div><div style="font-size:11px;color:#aaa;">01/05/68 • รายเดือน</div></div></div><strong style="color:#A04040;">-฿8,000</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-package"></i></div><div><div style="font-size:13px;font-weight:500;">ซื้ออุปกรณ์ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">05/05/68 • Supplier: ThaiMedSupply</div></div></div><strong style="color:#A04040;">-฿2,400</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-bolt"></i></div><div><div style="font-size:13px;font-weight:500;">ค่าไฟฟ้า-น้ำ</div><div style="font-size:11px;color:#aaa;">07/05/68 • รายเดือน</div></div></div><strong style="color:#A04040;">-฿3,000</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-leaf"></i></div><div><div style="font-size:13px;font-weight:500;">สั่งซื้อสมุนไพรสด</div><div style="font-size:11px;color:#aaa;">10/05/68 • ผู้จำหน่าย: เชียงใหม่เฮิร์บ</div></div></div><strong style="color:#A04040;">-4,800 บาท</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-building"></i></div><div><div style="font-size:13px;font-weight:500;">ค่าเช่าสถานที่</div><div style="font-size:11px;color:#aaa;">01/05/68 • รายเดือน</div></div></div><strong style="color:#A04040;">-8,000 บาท</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-package"></i></div><div><div style="font-size:13px;font-weight:500;">ซื้ออุปกรณ์ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">05/05/68 • Supplier: ThaiMedSupply</div></div></div><strong style="color:#A04040;">-2,400 บาท</strong></div>
+        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-bolt"></i></div><div><div style="font-size:13px;font-weight:500;">ค่าไฟฟ้า-น้ำ</div><div style="font-size:11px;color:#aaa;">07/05/68 • รายเดือน</div></div></div><strong style="color:#A04040;">-3,000 บาท</strong></div>
       </div>
     </div>
   </div>
@@ -1396,7 +1400,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><div class="card-title"><i class="ti ti-users-group"></i>บัญชีผู้ใช้งาน</div><button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i>เพิ่มผู้ใช้</button></div>
+        <div class="card-head"><div class="card-title"><i class="ti ti-users-group"></i>บัญชีผู้ใช้งาน</div><button class="btn btn-primary btn-sm" onclick="openAddUserModal()"><i class="ti ti-plus"></i>เพิ่มผู้ใช้</button></div>
         <div class="card-body">
           <div id="users-list"><div class="setting-row"><div style="display:flex;align-items:center;gap:10px;"><div class="av">พ</div><div><div class="setting-label">Dr. Stephen Strange</div><div class="setting-sub">Master of Mystic Medicine • Admin</div></div></div><span class="badge badge-green">Active</span></div>
           <div class="setting-row"><div style="display:flex;align-items:center;gap:10px;"><div class="av">ส</div><div><div class="setting-label">สุมาลี วงศ์สว่าง</div><div class="setting-sub">พยาบาล • Staff</div></div></div><span class="badge badge-green">Active</span></div>
@@ -1496,7 +1500,11 @@ function bodyMapHTML(uid, initialData){
   const data = initialData || {front:[], back:[], side:[], head:[]};
   return `
 <div class="body-map-wrap" id="bmap-${uid}">
-  <div class="body-map-title"><i class="ti ti-body-scan"></i>แผนที่จุดเจ็บปวด <span style="font-size:10px;font-weight:400;color:#aaa;">(คลิกบนร่างกายเพื่อ mark • คลิกจุดเพื่อลบ)</span></div>
+  <div class="body-map-title" onclick="bmToggle('${uid}')">
+    <i class="ti ti-body-scan"></i>แผนที่จุดเจ็บปวด
+    <span style="font-size:10px;font-weight:400;color:#aaa;">(คลิกบนร่างกายเพื่อ mark • คลิกจุดเพื่อลบ)</span>
+    <button type="button" class="bmap-toggle-btn" id="bmap-togbtn-${uid}" onclick="event.stopPropagation();bmToggle('${uid}')">▲ ย่อ</button>
+  </div>
   <div class="body-map-controls">
     <span style="font-size:11px;color:#888;font-weight:600;">ระดับ:</span>
     <button type="button" class="pain-btn p1 active" onclick="bmSetLevel('${uid}',1)">1 เล็กน้อย</button>
@@ -4315,9 +4323,9 @@ async function loadFinance(){
     const tIn=inc.reduce((s,f)=>s+parseFloat(f.amount||0),0);
     const tEx=exp.reduce((s,f)=>s+parseFloat(f.amount||0),0);
     const sv=document.querySelectorAll('#page-finance .stat-val');
-    if(sv[0]) sv[0].textContent=`฿${tIn.toLocaleString()}`;
-    if(sv[1]) sv[1].textContent=`฿${tEx.toLocaleString()}`;
-    if(sv[2]) sv[2].textContent=`฿${(tIn-tEx).toLocaleString()}`;
+    if(sv[0]) sv[0].textContent=`${tIn.toLocaleString()} บาท`;
+    if(sv[1]) sv[1].textContent=`${tEx.toLocaleString()} บาท`;
+    if(sv[2]) sv[2].textContent=`${(tIn-tEx).toLocaleString()} บาท`;
     if(sv[3]) sv[3].textContent=inc.length;
     const renderList=(elId,list,type)=>{
       const el=document.getElementById(elId); if(!el) return;
@@ -4331,7 +4339,7 @@ async function loadFinance(){
             <div style="font-size:11px;color:#aaa;">${toThaiDisplay(f.date)}${f.receipt_no?' • '+f.receipt_no:''}</div>
           </div>
         </div>
-        <strong style="color:${type==='income'?'var(--g2)':'#A04040'};">${type==='income'?'+':'-'}฿${parseFloat(f.amount||0).toLocaleString()}</strong>
+        <strong style="color:${type==='income'?'var(--g2)':'#A04040'};">${type==='income'?'+':'-'}${parseFloat(f.amount||0).toLocaleString()} บาท</strong>
       </div>`).join('');
     };
     renderList('fin-income-list', inc, 'income');
@@ -4404,12 +4412,80 @@ async function loadUsers(){
             <div class="setting-sub">${u.email||''} • ${roleLabel[u.role]||u.role||'—'}</div>
           </div>
         </div>
-        <span class="badge ${roleColor[u.role]||'badge-wait'}">${u.role==='admin'?'Admin':u.role==='doctor'?'Doctor':u.role==='manager'?'Manager':'Staff'}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="badge ${roleColor[u.role]||'badge-wait'}">${u.role==='admin'?'Admin':u.role==='doctor'?'Doctor':u.role==='manager'?'Manager':'Staff'}</span>
+          <button onclick="deleteUser('${u.id}')" title="ลบผู้ใช้"
+            style="background:none;border:1px solid #eee;border-radius:6px;color:#ccc;cursor:pointer;padding:3px 6px;font-size:13px;"
+            onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'"
+            onmouseout="this.style.borderColor='#eee';this.style.color='#ccc'">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>
       </div>`).join('');
   } catch(e){
     // ถ้า API ไม่พร้อม ใช้ demo data เดิม
     console.warn('[Users] API ยังไม่พร้อม:', e.message);
   }
+}
+
+/* ════════════════════════════════════════════════════════
+   USER MANAGEMENT
+════════════════════════════════════════════════════════ */
+function openAddUserModal(){
+  openModal('👤 เพิ่มผู้ใช้งานใหม่',`
+    <form id="fp-add-user" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" onsubmit="submitAddUser(event)">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">ชื่อ-นามสกุล *</label>
+        <input class="form-input" name="name" required placeholder="เช่น Dr. Wong">
+      </div>
+      <div class="form-group">
+        <label class="form-label">อีเมล</label>
+        <input class="form-input" name="email" type="email" placeholder="email@clinic.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">บทบาท</label>
+        <select class="form-select" name="role">
+          <option value="doctor">แพทย์</option>
+          <option value="receptionist">เจ้าหน้าที่ต้อนรับ</option>
+          <option value="manager">ผู้จัดการ</option>
+          <option value="admin">ผู้ดูแลระบบ</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">หมายเหตุ / ตำแหน่ง</label>
+        <input class="form-input" name="note" placeholder="เช่น แพทย์แผนไทย">
+      </div>
+    </form>`,
+    `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn btn-primary" onclick="document.getElementById('fp-add-user').requestSubmit()"><i class="ti ti-user-plus"></i>เพิ่มผู้ใช้</button>`
+  );
+}
+
+async function submitAddUser(e){
+  e.preventDefault();
+  const _done = showLoading(e.submitter);
+  const fd = new FormData(e.target);
+  const data = { is_active: 'TRUE' };
+  fd.forEach((v,k)=>{ if(v) data[k]=v; });
+  if(!data.name){ showToast('กรุณากรอกชื่อ','error'); _done(); return; }
+  try {
+    const res = await callApi('users','create', data);
+    if(!res.ok) throw new Error(res.error||'ไม่สำเร็จ');
+    _done();
+    closeModal();
+    showToast('✅ เพิ่มผู้ใช้ '+data.name+' แล้ว');
+    loadUsers();
+  } catch(err){ _done(); showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
+}
+
+async function deleteUser(id){
+  if(!confirm('ยืนยันลบผู้ใช้นี้?')) return;
+  try {
+    const res = await callApi('users','update',{ id, is_active:'FALSE' });
+    if(!res.ok) throw new Error(res.error||'ลบไม่สำเร็จ');
+    showToast('✅ ลบผู้ใช้แล้ว');
+    loadUsers();
+  } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -4437,7 +4513,7 @@ async function loadReports(){
     const sv = document.querySelectorAll('#page-reports .stat-val');
     if(sv[0]) sv[0].textContent = patients.length;
     if(sv[1]) sv[1].textContent = monthAppts.length;
-    if(sv[2]) sv[2].textContent = totalIncome>=1000 ? `฿${Math.round(totalIncome/1000)}k` : `฿${totalIncome.toLocaleString()}`;
+    if(sv[2]) sv[2].textContent = totalIncome>=1000 ? `${Math.round(totalIncome/1000)}k บาท` : `${totalIncome.toLocaleString()} บาท`;
 
     // อัปเดต donut center text
     const donutText = document.querySelector('#page-reports text');
@@ -4561,52 +4637,480 @@ async function submitFinanceEntry(e, type){
     if(!res.ok) throw new Error(res.error||'บันทึกไม่สำเร็จ');
     closeModal();
     const label = type==='income' ? 'รายรับ' : 'รายจ่าย';
-    showToast('✅ บันทึก'+label+'สำเร็จ • ฿'+parseFloat(data.amount).toLocaleString());
+    showToast('✅ บันทึก'+label+'สำเร็จ • '+parseFloat(data.amount).toLocaleString()+' บาท');
     if(document.getElementById('page-finance').classList.contains('active')) loadFinance();
   } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
 
 /* ════════════════════════════════════════════════════════
-   RECEIPT MODAL — ออกใบเสร็จรับเงิน
+   RECEIPT MODAL — ออกใบเสร็จรับเงิน (Thermal v1)
 ════════════════════════════════════════════════════════ */
+
+// ── state ──
+const RCPT_TYPES = [
+  { label:'นวดแผนไทย',     price:400 },
+  { label:'ประคบสมุนไพร',  price:250 },
+  { label:'อบสมุนไพร',     price:200 },
+  { label:'ฝังเข็ม',       price:600 },
+  { label:'ครอบแก้ว',      price:300 },
+  { label:'นวด + ประคบ',   price:600 },
+  { label:'ปรึกษาแพทย์',  price:200 },
+  { label:'จ่ายยาสมุนไพร', price:0   },
+  { label:'อื่นๆ',         price:0   },
+];
+
+let _rcptFontSize = 10; // px สำหรับ preview และ print
+let _rcptData = {
+  patName:'', patHN:'', patId:'',
+  items:[{ name:'นวดแผนไทย', price:'400' }],
+  note:'', payMethod:'cash',
+  clinicName:'Superclinic',
+  clinicAddr:'123 ถ.สุขุมวิท กทม. 10110',
+  clinicPhone:'053-123-456',
+};
+
 function openReceiptModal(){
-  openModal('🧾 ออกใบเสร็จรับเงิน',`
-    <form id="fp-receipt" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" onsubmit="submitReceipt(event)">
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">ผู้ป่วย *</label>
-        <div style="position:relative;">
-          <input class="form-input" id="rcpt-pat-search" autocomplete="off"
-            placeholder="พิมพ์ชื่อ / HN เพื่อค้นหา..."
-            oninput="rcptPatSearch(this.value)"
-            onfocus="rcptPatSearch(this.value)"
-            onblur="setTimeout(()=>{const d=document.getElementById('rcpt-pat-dd');if(d)d.style.display='none';},200)"
-            onkeydown="acKeyNav(event,'rcpt-pat-dd',el=>{ el.dispatchEvent(new MouseEvent('mousedown')); })">
-          <input type="hidden" id="rcpt-pat-id" name="patient_id">
-          <input type="hidden" id="rcpt-pat-name">
-          <div id="rcpt-pat-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid rgba(200,169,107,0.3);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.1);z-index:9999;max-height:220px;overflow-y:auto;margin-top:4px;"></div>
-        </div>
-        <div style="font-size:11px;color:#aaa;margin-top:4px;"><i class="ti ti-info-circle"></i> หากไม่พบในระบบ พิมพ์ชื่อเต็มได้เลย</div>
-      </div>
-      <div class="form-group"><label class="form-label">วันที่ *</label><input class="form-input" type="date" name="date" value="${todayISO()}" required></div>
-      <div class="form-group"><label class="form-label">วิธีชำระเงิน</label>
-        <select class="form-select" name="payment_method">
-          <option value="cash">เงินสด</option><option value="transfer">โอนเงิน</option><option value="insurance">ประกัน</option>
-        </select></div>
-      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">รายการ / บริการ *</label><input class="form-input" name="description" required placeholder="เช่น: นวดแผนไทย 60 นาที"></div>
-      <div class="form-group"><label class="form-label">หมวดหมู่</label>
-        <select class="form-select" name="category">
-          <option>ค่ารักษา</option><option>ค่ายาสมุนไพร</option><option>ค่าปรึกษา</option><option>อื่นๆ</option>
-        </select></div>
-      <div class="form-group"><label class="form-label">จำนวนเงิน (บาท) *</label><input class="form-input" type="number" name="amount" required placeholder="0.00" step="0.01"></div>
-    </form>`,
-    `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn btn-primary" onclick="document.getElementById('fp-receipt').requestSubmit()"><i class="ti ti-receipt"></i>ออกใบเสร็จ</button>`
-  );
   if(!allPatients.length){
     callApi('patients','list').then(r=>{
       allPatients=(r.data?.rows||[]).filter(p=>p.is_active!=='FALSE'&&p.is_active!==false);
     });
   }
+  _rcptData = {
+    patName:'', patHN:'', patId:'',
+    items:[{ name:'', price:'' }],
+    note:'', payMethod:'cash',
+    clinicName:'Superclinic',
+    clinicAddr:'123 ถ.สุขุมวิท กทม. 10110',
+    clinicPhone:'053-123-456',
+  };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'rcpt-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:860px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.25);">
+
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <h2 style="margin:0;font-size:16px;font-weight:600;"><i class="ti ti-receipt" style="margin-right:8px;"></i>ออกใบเสร็จรับเงิน</h2>
+        <button onclick="closeReceiptModal()" style="background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:18px;">✕</button>
+      </div>
+
+      <!-- Body -->
+      <div style="display:flex;flex:1;overflow:hidden;">
+
+        <!-- LEFT: Form -->
+        <div style="flex:1;overflow-y:auto;padding:18px 16px;border-right:1px solid #eee;min-width:0;">
+
+          <!-- ผู้ป่วย -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">👤 ผู้ป่วย</label>
+            <div style="position:relative;">
+              <input id="rcpt-pat-search" autocomplete="off" placeholder="พิมพ์ชื่อ / HN..."
+                style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box;"
+                oninput="rcptPatSearch(this.value)"
+                onfocus="rcptPatSearch(this.value)"
+                onblur="setTimeout(()=>{const d=document.getElementById('rcpt-pat-dd');if(d)d.style.display='none';},200)"
+                onkeydown="acKeyNav(event,'rcpt-pat-dd',el=>{ el.dispatchEvent(new MouseEvent('mousedown')); })">
+              <input type="hidden" id="rcpt-pat-id">
+              <input type="hidden" id="rcpt-pat-name">
+              <div id="rcpt-pat-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid rgba(200,169,107,0.3);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.1);z-index:9999;max-height:200px;overflow-y:auto;margin-top:2px;"></div>
+            </div>
+          </div>
+
+          <!-- วิธีชำระ -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">💳 วิธีชำระเงิน</label>
+            <select id="rcpt-pay-method" onchange="_rcptData.payMethod=this.value;rcptRenderPreview()"
+              style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+              <option value="cash">เงินสด</option>
+              <option value="transfer">โอนเงิน</option>
+              <option value="insurance">ประกัน</option>
+            </select>
+          </div>
+
+          <!-- รายการรักษา -->
+          <div style="margin-bottom:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <label style="font-size:11px;font-weight:600;color:#555;">🩺 รายการรักษา</label>
+              <button onclick="rcptAddItem()" style="font-size:11px;padding:3px 10px;border:1px solid var(--g1);border-radius:6px;background:#fff;color:var(--g1);cursor:pointer;">+ เพิ่มรายการ</button>
+            </div>
+            <div id="rcpt-items-wrap"></div>
+          </div>
+
+          <!-- หมายเหตุ -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">📝 หมายเหตุ</label>
+            <textarea id="rcpt-note" rows="2" placeholder="นัดครั้งต่อไป, คำแนะนำ ฯลฯ"
+              style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"
+              oninput="_rcptData.note=this.value;rcptRenderPreview()"></textarea>
+          </div>
+
+          <!-- ข้อมูลคลินิก -->
+          <div style="border-top:1px solid #eee;padding-top:12px;">
+            <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:6px;">🏥 ข้อมูลคลินิก</label>
+            <input id="rcpt-clinic-name" placeholder="ชื่อคลินิค" value="Superclinic"
+              style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;margin-bottom:6px;box-sizing:border-box;"
+              oninput="_rcptData.clinicName=this.value;rcptRenderPreview()">
+            <input id="rcpt-clinic-addr" placeholder="ที่อยู่" value="123 ถ.สุขุมวิท กทม. 10110"
+              style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;margin-bottom:6px;box-sizing:border-box;"
+              oninput="_rcptData.clinicAddr=this.value;rcptRenderPreview()">
+            <input id="rcpt-clinic-phone" placeholder="เบอร์โทร" value="053-123-456"
+              style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;box-sizing:border-box;"
+              oninput="_rcptData.clinicPhone=this.value;rcptRenderPreview()">
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Preview -->
+        <div style="width:280px;flex-shrink:0;background:#f5f5f0;display:flex;flex-direction:column;align-items:center;padding:16px 12px;overflow-y:auto;">
+          <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:8px;letter-spacing:0.5px;">PREVIEW (8 cm)</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:#eee;border-radius:8px;padding:5px 10px;">
+            <span style="font-size:11px;color:#666;">ขนาด Font</span>
+            <button onclick="rcptFontAdj(-1)" style="border:none;background:#fff;border-radius:4px;padding:1px 7px;cursor:pointer;font-size:14px;color:#555;">−</button>
+            <span id="rcpt-font-val" style="font-size:12px;font-weight:700;min-width:24px;text-align:center;">10</span>
+            <button onclick="rcptFontAdj(1)" style="border:none;background:#fff;border-radius:4px;padding:1px 7px;cursor:pointer;font-size:14px;color:#555;">+</button>
+            <span style="font-size:10px;color:#999;">px</span>
+          </div>
+          <div id="rcpt-preview-box" style="width:226px;background:#fff;border:1px solid #ccc;border-radius:4px;padding:10px 9px;font-family:'Courier New',Courier,monospace;font-size:10px;color:#111;box-shadow:2px 2px 6px rgba(0,0,0,0.1);"></div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:12px 18px;background:#fafaf8;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;">
+        <button class="btn btn-outline" onclick="closeReceiptModal()">ยกเลิก</button>
+        <button class="btn btn-outline" onclick="rcptPrintOS()" style="border-color:var(--g1);color:var(--g1);">
+          <i class="ti ti-device-laptop"></i> พิมพ์ผ่าน OS Driver
+        </button>
+        <button class="btn btn-green" onclick="rcptPrintDirect()" style="background:var(--g1);color:#fff;">
+          <i class="ti ti-printer"></i> พิมพ์โดยตรง (ESC/POS)
+        </button>
+      </div>
+
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeReceiptModal(); });
+  rcptRenderItems();
+  rcptRenderPreview();
+}
+
+function closeReceiptModal(){
+  const el=document.getElementById('rcpt-overlay');
+  if(el) el.remove();
+}
+
+// ── render item rows ──
+function rcptRenderItems(){
+  const wrap=document.getElementById('rcpt-items-wrap');
+  if(!wrap) return;
+  const opts = RCPT_TYPES.map(t=>`<option value="${t.label}" data-price="${t.price}">${t.label}${t.price?'  ('+t.price+')':''}</option>`).join('');
+  wrap.innerHTML=_rcptData.items.map((item,i)=>`
+    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
+      <select style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;background:#fff;"
+        onchange="rcptTypeChange(${i},this)">
+        ${RCPT_TYPES.map(t=>`<option value="${t.label}" data-price="${t.price}" ${item.name===t.label?'selected':''}>${t.label}</option>`).join('')}
+        <option value="__custom__" ${!RCPT_TYPES.find(t=>t.label===item.name)?'selected':''}>กรอกเอง...</option>
+      </select>
+      ${!RCPT_TYPES.find(t=>t.label===item.name) ? `
+      <input placeholder="ชื่อรายการ" value="${_escRcpt(item.name==='__custom__'?'':item.name)}"
+        style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;"
+        oninput="_rcptData.items[${i}].name=this.value;rcptRenderPreview()">` : ''}
+      <input type="number" placeholder="ราคา" value="${item.price}"
+        style="width:72px;padding:6px 8px;border:1px solid #ddd;border-radius:8px;font-size:12px;text-align:right;"
+        oninput="_rcptData.items[${i}].price=this.value;rcptRenderPreview()">
+      <span style="font-size:10px;color:#aaa;">บาท</span>
+      ${_rcptData.items.length>1
+        ? `<button onclick="rcptRemoveItem(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0 2px;">×</button>`
+        : '<span style="width:20px;"></span>'}
+    </div>`).join('');
+}
+
+function rcptTypeChange(i, sel){
+  const val = sel.value;
+  if(val==='__custom__'){
+    _rcptData.items[i].name='';
+    _rcptData.items[i].price='';
+  } else {
+    const found = RCPT_TYPES.find(t=>t.label===val);
+    _rcptData.items[i].name = val;
+    _rcptData.items[i].price = found && found.price ? String(found.price) : _rcptData.items[i].price;
+  }
+  rcptRenderItems();
+  rcptRenderPreview();
+}
+
+function rcptAddItem(){
+  _rcptData.items.push({name:'นวดแผนไทย', price:'400'});
+  rcptRenderItems();
+  rcptRenderPreview();
+}
+
+function rcptRemoveItem(i){
+  _rcptData.items.splice(i,1);
+  rcptRenderItems();
+  rcptRenderPreview();
+}
+
+function rcptFontAdj(d){
+  _rcptFontSize = Math.min(16, Math.max(7, _rcptFontSize + d));
+  const el = document.getElementById('rcpt-font-val');
+  if(el) el.textContent = _rcptFontSize;
+  rcptRenderPreview();
+}
+
+function _escRcpt(s){ return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── preview renderer ──
+function rcptRenderPreview(){
+  const box=document.getElementById('rcpt-preview-box');
+  if(!box) return;
+  const d=_rcptData;
+  const now=new Date();
+  const be=now.getFullYear()+543;
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${pad(now.getDate())}/${pad(now.getMonth()+1)}/${be} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const total=d.items.reduce((s,it)=>s+(parseFloat(it.price)||0),0);
+  const payLabels={cash:'เงินสด',transfer:'โอนเงิน',insurance:'ประกัน'};
+
+  const itemRows=d.items.filter(it=>it.name||it.price).map(it=>`
+    <div style="display:flex;justify-content:space-between;margin-bottom:1px;">
+      <span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escRcpt(it.name)||'—'}</span>
+      <span>${it.price?Number(it.price).toLocaleString():''}</span>
+    </div>`).join('') || '<div style="color:#aaa;font-size:9px;">ยังไม่มีรายการ</div>';
+
+  const fs = _rcptFontSize;
+  box.style.fontSize = fs+'px';
+  box.innerHTML=`
+    <div style="text-align:center;font-size:${fs+4}px;font-weight:700;letter-spacing:0.3px;margin-bottom:2px;">${_escRcpt(d.clinicName)||'Superclinic'}</div>
+    <div style="text-align:center;font-size:${fs-1}px;color:#555;line-height:1.5;margin-bottom:5px;">
+      ${_escRcpt(d.clinicAddr)}<br>โทร ${_escRcpt(d.clinicPhone)}
+    </div>
+    <hr style="border:none;border-top:1px solid #888;margin:4px 0;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:1px;">
+      <span style="color:#777;font-size:9px;">วันที่พิมพ์</span>
+      <span style="font-size:9px;">${dateStr}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:1px;">
+      <span style="color:#777;font-size:9px;">ชำระโดย</span>
+      <span style="font-size:9px;">${payLabels[d.payMethod]||d.payMethod}</span>
+    </div>
+    <hr style="border:none;border-top:1px dashed #999;margin:4px 0;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+      <span style="color:#777;font-size:9px;">ผู้ป่วย</span>
+      <span style="font-size:9px;font-weight:700;">${_escRcpt(d.patName)||'—'}</span>
+    </div>
+    ${d.patHN?`<div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="color:#777;font-size:9px;">HN</span><span style="font-size:9px;">${d.patHN}</span></div>`:''}
+    <hr style="border:none;border-top:1px dashed #999;margin:4px 0;">
+    <div style="font-size:9px;font-weight:700;margin-bottom:3px;">รายการรักษา</div>
+    <div style="font-size:9px;">${itemRows}</div>
+    <hr style="border:none;border-top:1px dashed #999;margin:4px 0;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:2px;">
+      <span>รวมทั้งหมด</span>
+      <span>${total.toLocaleString()} บาท</span>
+    </div>
+    ${d.note?`<hr style="border:none;border-top:1px dashed #999;margin:4px 0;"><div style="font-size:9px;font-weight:700;margin-bottom:2px;">หมายเหตุ</div><div style="font-size:9px;color:#444;line-height:1.5;">${_escRcpt(d.note)}</div>`:''}
+    <hr style="border:none;border-top:1px dashed #999;margin:4px 0;">
+    <div style="text-align:center;font-size:9px;color:#777;">ขอบคุณที่ใช้บริการ<br>Dr. Stephen Strange</div>`;
+}
+
+// ── patient search (reuse existing logic) ──
+function rcptPatSearch(q){
+  const dd=document.getElementById('rcpt-pat-dd');
+  if(!dd) return;
+  _rcptData.patId=''; _rcptData.patName=q; _rcptData.patHN='';
+  document.getElementById('rcpt-pat-id').value='';
+  document.getElementById('rcpt-pat-name').value=q;
+  if(!q.trim()){ dd.style.display='none'; return; }
+  const matched=allPatients.filter(p=>{
+    const full=`${p.prefix||''}${p.first_name||''} ${p.last_name||''}`.toLowerCase();
+    return full.includes(q.toLowerCase())||String(p.hn||'').toLowerCase().includes(q.toLowerCase())||String(p.phone||'').includes(q);
+  }).slice(0,10);
+  if(!matched.length){
+    dd.innerHTML=`<div style="padding:10px 14px;font-size:12px;color:#aaa;">ไม่พบในระบบ — จะใช้ชื่อที่พิมพ์</div>`;
+    dd.style.display='block'; return;
+  }
+  dd.innerHTML=matched.map(p=>{
+    const name=`${p.prefix||''}${p.first_name||''} ${p.last_name||''}`.trim();
+    return `<div onmousedown="rcptPatSelect('${p.id}','${name.replace(/'/g,"\'")}','${p.hn||''}')"
+      style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(200,169,107,0.1);"
+      onmouseover="this.style.background='#f8f4ed'" onmouseout="this.style.background=''">
+      <div class="av" style="width:28px;height:28px;font-size:11px;flex-shrink:0;">${initials(name)}</div>
+      <div><div style="font-size:13px;font-weight:500;">${name}</div>
+      <div style="font-size:11px;color:#999;">${p.hn||''} • ${String(p.phone||'—')}</div></div>
+    </div>`;
+  }).join('');
+  dd.style.display='block';
+}
+
+function rcptPatSelect(id,name,hn){
+  document.getElementById('rcpt-pat-search').value=`${name}${hn?' ('+hn+')':''}`;
+  document.getElementById('rcpt-pat-id').value=id;
+  document.getElementById('rcpt-pat-name').value=name;
+  _rcptData.patId=id; _rcptData.patName=name; _rcptData.patHN=hn||'';
+  const dd=document.getElementById('rcpt-pat-dd');
+  if(dd) dd.style.display='none';
+  rcptRenderPreview();
+}
+
+// ── build receipt HTML for printing ──
+function _rcptBuildPrintHtml(){
+  const d=_rcptData;
+  const now=new Date();
+  const be=now.getFullYear()+543;
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${pad(now.getDate())}/${pad(now.getMonth()+1)}/${be} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const total=d.items.reduce((s,it)=>s+(parseFloat(it.price)||0),0);
+  const payLabels={cash:'เงินสด',transfer:'โอนเงิน',insurance:'ประกัน'};
+  const itemRows=d.items.filter(it=>it.name||it.price).map(it=>`
+    <tr><td style="padding:1px 0;">${it.name||'—'}</td><td style="text-align:right;padding:1px 0;">${it.price?Number(it.price).toLocaleString():''}</td></tr>`).join('');
+  const fps = _rcptFontSize;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    @page { margin:0; size: 80mm auto; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Courier New',Courier,monospace; font-size:${fps}px; color:#000; width:80mm; padding:6mm 4mm; }
+    .clinic-name { text-align:center; font-size:${fps+5}px; font-weight:700; margin-bottom:2px; }
+    .clinic-sub { text-align:center; font-size:10px; color:#444; line-height:1.5; margin-bottom:6px; }
+    hr { border:none; border-top:1px dashed #666; margin:5px 0; }
+    hr.solid { border-top:1px solid #444; }
+    .row { display:flex; justify-content:space-between; margin-bottom:2px; font-size:10px; }
+    .row .lbl { color:#555; }
+    .section-head { font-size:10px; font-weight:700; margin:3px 0 2px; }
+    table { width:100%; font-size:10px; border-collapse:collapse; }
+    .total-row { display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin:3px 0; }
+    .note-block { font-size:10px; color:#333; line-height:1.5; }
+    .footer { text-align:center; font-size:9px; color:#666; margin-top:6px; }
+  </style></head><body>
+  <div class="clinic-name">${d.clinicName||'Superclinic'}</div>
+  <div class="clinic-sub">${d.clinicAddr}<br>โทร ${d.clinicPhone}</div>
+  <hr class="solid">
+  <div class="row"><span class="lbl">วันที่พิมพ์</span><span>${dateStr}</span></div>
+  <div class="row"><span class="lbl">ชำระโดย</span><span>${payLabels[d.payMethod]||d.payMethod}</span></div>
+  <hr>
+  <div class="row"><span class="lbl">ผู้ป่วย</span><span style="font-weight:700;">${d.patName||'—'}</span></div>
+  ${d.patHN?`<div class="row"><span class="lbl">HN</span><span>${d.patHN}</span></div>`:''}
+  <hr>
+  <div class="section-head">รายการรักษา</div>
+  <table>${itemRows}</table>
+  <hr>
+  <div class="total-row"><span>รวมทั้งหมด</span><span>${total.toLocaleString()} บาท</span></div>
+  ${d.note?`<hr><div class="section-head">หมายเหตุ</div><div class="note-block">${d.note}</div>`:''}
+  <hr>
+  <div class="footer">ขอบคุณที่ใช้บริการ ${d.clinicName||'Superclinic'}<br>Dr. Stephen Strange</div>
+  </body></html>`;
+}
+
+// ── พิมพ์ผ่าน OS Driver (window.print) ──
+function rcptPrintOS(){
+  const w=window.open('','_blank','width=400,height=600');
+  if(!w){ showToast('กรุณาอนุญาต popup','error'); return; }
+  w.document.write(_rcptBuildPrintHtml());
+  w.document.close();
+  w.focus();
+  setTimeout(()=>{ w.print(); w.close(); }, 400);
+  _rcptSaveToSheets();
+}
+
+// ── พิมพ์โดยตรง ESC/POS ผ่าน Web Serial API ──
+async function rcptPrintDirect(){
+  if(!navigator.serial){ showToast('Browser นี้ไม่รองรับ Web Serial API — ใช้ Chrome/Edge','error'); return; }
+  const d=_rcptData;
+  const now=new Date();
+  const be=now.getFullYear()+543;
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${pad(now.getDate())}/${pad(now.getMonth()+1)}/${be} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const total=d.items.reduce((s,it)=>s+(parseFloat(it.price)||0),0);
+
+  const ESC=0x1B, GS=0x1D;
+  const enc=new TextEncoder();
+  const lines=[];
+
+  // helper push bytes
+  const b=(...bytes)=>lines.push(new Uint8Array(bytes));
+  const t=(str,size=0)=>{
+    if(size) b(ESC,0x21,size);
+    lines.push(enc.encode(str+'
+'));
+    if(size) b(ESC,0x21,0);
+  };
+  const hr=()=>lines.push(enc.encode('-'.repeat(32)+'
+'));
+  const row=(l,r)=>{
+    const pad2=32-l.length-r.length;
+    lines.push(enc.encode(l+' '.repeat(Math.max(1,pad2))+r+'
+'));
+  };
+
+  b(ESC,0x40);            // init
+  b(ESC,0x61,0x01);       // center align
+  t(d.clinicName||'Superclinic', 0x10);  // double height
+  t(d.clinicAddr);
+  t('โทร '+d.clinicPhone);
+  b(ESC,0x61,0x00);       // left align
+  hr();
+  row('วันที่พิมพ์', dateStr);
+  row('ชำระโดย', d.payMethod==='cash'?'เงินสด':d.payMethod==='transfer'?'โอนเงิน':'ประกัน');
+  hr();
+  row('ผู้ป่วย', d.patName||'—');
+  if(d.patHN) row('HN', d.patHN);
+  hr();
+  t('รายการรักษา');
+  d.items.filter(it=>it.name||it.price).forEach(it=>{
+    row(it.name||'—', it.price?Number(it.price).toLocaleString()+' B':'');
+  });
+  hr();
+  b(ESC,0x21,0x10);       // double height for total
+  row('รวมทั้งหมด', total.toLocaleString()+' บาท');
+  b(ESC,0x21,0x00);
+  if(d.note){ hr(); t('หมายเหตุ'); lines.push(enc.encode(d.note+'
+')); }
+  hr();
+  b(ESC,0x61,0x01);       // center
+  t('ขอบคุณที่ใช้บริการ');
+  t('Dr. Stephen Strange');
+  b(ESC,0x61,0x00);
+  b(GS,0x56,0x41,0x03);  // cut paper (partial cut)
+
+  try {
+    const port=await navigator.serial.requestPort();
+    await port.open({ baudRate:9600 });
+    const writer=port.writable.getWriter();
+    for(const chunk of lines) await writer.write(chunk);
+    writer.releaseLock();
+    await port.close();
+    showToast('✅ ส่งข้อมูลไปยัง printer แล้ว');
+    _rcptSaveToSheets();
+  } catch(err){
+    if(err.name!=='NotFoundError') showToast('Printer error: '+err.message,'error');
+  }
+}
+
+// ── บันทึกลง Google Sheets ──
+async function _rcptSaveToSheets(){
+  const d=_rcptData;
+  const patName=d.patName||document.getElementById('rcpt-pat-search')?.value||'';
+  if(!patName.trim()) return;
+  const total=d.items.reduce((s,it)=>s+(parseFloat(it.price)||0),0);
+  const desc=d.items.filter(it=>it.name).map(it=>it.name).join(', ')||'รักษา';
+  const data={
+    type:'income', category:'ค่ารักษา',
+    date:todayISO(),
+    description:`${desc} — ${patName}`,
+    amount:String(total),
+    payment_method:d.payMethod,
+    receipt_no:`RCP-${Date.now().toString().slice(-6)}`,
+    patient_id:d.patId||'',
+  };
+  try {
+    const res=await callApi('finance','create',data);
+    if(res.ok){
+      showToast(`✅ บันทึกใบเสร็จ ${data.receipt_no} • ฿${total.toLocaleString()}`);
+      closeReceiptModal();
+      if(document.getElementById('page-finance').classList.contains('active')) loadFinance();
+    }
+  } catch(err){ showToast('บันทึกลง Sheets ไม่สำเร็จ: '+err.message,'error'); }
 }
 
 function rcptPatSearch(q){
@@ -4644,23 +5148,7 @@ function rcptPatSelect(id,name,hn){
   if(dd) dd.style.display='none';
 }
 
-async function submitReceipt(e){
-  e.preventDefault();
-  const _done = showLoading(e.submitter);
-  const fd=new FormData(e.target), data={type:'income'};
-  fd.forEach((v,k)=>{ if(v) data[k]=v; });
-  const patName=document.getElementById('rcpt-pat-name')?.value||document.getElementById('rcpt-pat-search')?.value||'';
-  if(!patName.trim()){ showToast('กรุณาระบุชื่อผู้ป่วยก่อน','error'); return; }
-  if(patName) data.description=`${data.description||''} — ${patName}`.replace(/^ — /,'');
-  data.receipt_no=`RCP-${Date.now().toString().slice(-6)}`;
-  try {
-    const res=await callApi('finance','create',data);
-    if(!res.ok) throw new Error(res.error||'บันทึกไม่สำเร็จ');
-    closeModal();
-    showToast(`✅ ออกใบเสร็จ ${data.receipt_no} สำเร็จ • ฿${parseFloat(data.amount).toLocaleString()}`);
-    if(document.getElementById('page-finance').classList.contains('active')) loadFinance();
-  } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
-}
+/* submitReceipt ถูกแทนที่ด้วย _rcptSaveToSheets ใน Thermal Receipt system */
 
 /* ════════════════════════════════════════════════════════
    FINANCE — ดูทั้งหมด
@@ -4683,10 +5171,10 @@ async function showFinanceAll(type){
         <td><span class="badge badge-green" style="font-size:11px;">${r.category||'—'}</span></td>
         <td style="font-size:13px;">${r.description||'—'}</td>
         <td style="font-size:12px;color:#999;">${r.payment_method||'—'}</td>
-        <td style="font-weight:700;color:${color};">${sign}฿${parseFloat(r.amount||0).toLocaleString()}</td>
+        <td style="font-weight:700;color:${color};">${sign}${parseFloat(r.amount||0).toLocaleString()} บาท</td>
       </tr>`).join('')}</tbody></table>
       <div style="padding:12px 16px;text-align:right;font-weight:700;color:${color};border-top:1px solid #f0ebe2;">
-        รวม: ${sign}฿${rows.reduce((s,r)=>s+parseFloat(r.amount||0),0).toLocaleString()}
+        รวม: ${sign}${rows.reduce((s,r)=>s+parseFloat(r.amount||0),0).toLocaleString()} บาท
       </div></div>`;
   } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
@@ -4722,32 +5210,27 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v33', date:'26/05/2569', items:['update'] },
-  { ver:'v32', date:'26/05/2569', items:['update'] },
-  { ver:'v31', date:'26/05/2569', items:['cd C:\Users\acer\Desktop\Claude\superclinic'] },
-  { ver:'v30', date:'26/05/2569', items:['update'] },
-  { ver:'v29', date:'26/05/2569', items:['[System.Environment]::SetEnvironmentVariable(PYTHONUTF8, 1, User)'] },
-  { ver:'v28', date:'26/05/2569', items:['update'] },
-  { ver:'v26', date:'26/05/2569', items:['update'] },
-  { ver:'v27', date:'26/05/2569', items:['update'] },
-  { ver:'v26', date:'26/05/2569', items:['update'] },
-  { ver:'v25', date:'26/05/2569', items:['update'] },
-  { ver:'v24', date:'26/05/2569', items:['update'] },
-  { ver:'v23', date:'26/05/2569', items:['update'] },
-  { ver:'v4', date:'25/05/2569', items:['ระบบพิมพ์ฉลากยา (Label Printer) พร้อม Preview','ตั้งค่าฟังก์ชัน ON/OFF (Face Recognition, ID Card)','ปุ่มออกใบรับรองแพทย์ในข้อมูลผู้ป่วย'] },
-  { ver:'v3', date:'25/05/2569', items:['Face Recognition ผ่าน Webcam (face-api.js)','บันทึกใบหน้า + ค้นหาผู้ป่วยจากใบหน้า Top-3'] },
-  { ver:'v2', date:'25/05/2569', items:['วันที่ auto-detect พ.ศ./ค.ศ. แสดงผล พ.ศ. ทุกที่','ID Card Reader (USB HID) ปุ่มทางเลือก'] },
-  { ver:'v1', date:'25/05/2569', items:['เตือนนัดซ้ำใน Dashboard ภาพรวม','backup superclinic-vXX อัตโนมัติทุก push'] },
+  { ver:'v35', date:'28/05/2569', items:['update'] },
+  { ver:'v35', date:'28/05/2569', items:['Thermal Receipt Modal — ESC/POS + OS Driver, pulldown ประเภทการรักษา, font size, body map collapsible'] },
+  { ver:'v34', date:'28/05/2569', items:['Thermal Receipt Modal — พิมพ์โดยตรง (ESC/POS) + ผ่าน OS Driver'] },
+  { ver:'v65', date:'25/05/2569', items:['เปลี่ยนชื่อไฟล์หลัก thai-clinic.html → superclinic.html'] },
+  { ver:'v64', date:'25/05/2569', items:['ใบรับรองแพทย์แผนไทยประยุกต์ — modal A4, live preview, พิมพ์จริง'] },
+  { ver:'v63', date:'25/05/2569', items:['Label Printer v2 — font size inputs, live preview, autocomplete'] },
+  { ver:'v62', date:'25/05/2569', items:['ระบบพิมพ์ฉลากยา (Label Printer) — modal, preview, ขนาด, จำนวน'] },
+  { ver:'v61', date:'25/05/2569', items:['Face Recognition (face-api.js), Feature Toggles ON/OFF'] },
+  { ver:'v60', date:'23/05/2569', items:['SearchX convention, ปุ่มแก้ไขใน appt-card, treat-search'] },
+  { ver:'v59', date:'23/05/2569', items:['Custom Date Picker, Appt View/Edit modal, Herb Stock Value auto-save'] },
+  { ver:'v58', date:'22/05/2569', items:['Thai name fix (data-*), loading spinner, acKeyNav utility'] },
+  { ver:'v57', date:'22/05/2569', items:['ลงทะเบียน: สร้างผู้ป่วยใหม่ inline + pre-fill + auto-select'] },
 ];
 
 function renderSidebarChangelog(){
-  const stored = JSON.parse(localStorage.getItem(CL_KEY)||'null');
-  const log = stored || CHANGELOG;
+  const log = CHANGELOG; // ใช้ CHANGELOG จากโค้ดตรงๆ ไม่ cache localStorage
   const el = document.getElementById('sidebar-changelog');
   if(!el) return;
   if(!log.length){ el.style.display='none'; return; }
   el.style.display = '';
-  const show = log.slice(0,2); // แสดง 2 version ล่าสุด
+  const show = log.slice(0,1); // แสดง 1 version ล่าสุด
   const entriesEl = document.getElementById('cl-entries');
   if(!entriesEl) return;
   entriesEl.innerHTML = show.map((v,i)=>`
@@ -5514,6 +5997,14 @@ async function openLabelPrinter(herbId) {
 
 function _escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+function bmToggle(uid){
+  const wrap = document.getElementById('bmap-'+uid);
+  if(!wrap) return;
+  const collapsed = wrap.classList.toggle('body-map-collapsed');
+  const btn = document.getElementById('bmap-togbtn-'+uid);
+  if(btn) btn.textContent = collapsed ? '▼ ขยาย' : '▲ ย่อ';
+}
+
 function closeLabelPrinter(){
   const el=document.getElementById('lp-overlay');
   if(el) el.remove();
@@ -6063,165 +6554,3 @@ function mcPrint(){
   if(!a4){ showToast('ไม่พบ Preview','error'); return; }
   const pa = document.getElementById('lp-print-area');
   if(!pa){ showToast('ไม่พบ print area','error'); return; }
-  pa.innerHTML = a4.outerHTML;
-  pa.style.display = 'block';
-  window.print();
-  setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; }, 1500);
-}
-</script>
-
-<script>
-/* ── Mobile Sidebar Toggle ── */
-(function(){
-  const btn      = document.getElementById('hamburger-btn');
-  const sidebar  = document.getElementById('main-sidebar');
-  const backdrop = document.getElementById('sidebar-backdrop');
-  if (!btn || !sidebar || !backdrop) return;
-
-  function openSidebar() {
-    sidebar.classList.add('open');
-    backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeSidebar() {
-    sidebar.classList.remove('open');
-    backdrop.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  btn.addEventListener('click', function(){
-    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-  });
-
-  // ปิด sidebar เมื่อคลิก backdrop
-  backdrop.addEventListener('click', closeSidebar);
-
-  // ปิด sidebar เมื่อเลือก nav item บน mobile
-  sidebar.querySelectorAll('.nav-item').forEach(function(item){
-    item.addEventListener('click', function(){
-      if (window.innerWidth <= 768) closeSidebar();
-    });
-  });
-
-  // อัปเดต icon hamburger ตาม state
-  sidebar.addEventListener('transitionend', function(){
-    const icon = btn.querySelector('i');
-    if (!icon) return;
-    icon.className = sidebar.classList.contains('open')
-      ? 'ti ti-x'
-      : 'ti ti-menu-2';
-  });
-})();
-</script>
-<script>
-/* ══ LINE NOTIFY ══ */
-const LINE_TOKEN_KEY = 'sc_line_notify_token';
-
-function initLineNotifyUI() {
-  const saved = localStorage.getItem(LINE_TOKEN_KEY) || '';
-  const inp = document.getElementById('line-token-input');
-  const tog = document.getElementById('toggle-line-notify');
-  if (inp) inp.value = saved;
-  if (tog) { if (saved) tog.classList.add('on'); else tog.classList.remove('on'); }
-  updateLineStatus(saved ? '✅ มี Token บันทึกอยู่แล้ว' : '');
-}
-
-function toggleLineNotifyUI(forceOpen) {
-  const tog = document.getElementById('toggle-line-notify');
-  const ui  = document.getElementById('line-notify-ui');
-  if (!ui) return;
-  const willOpen = forceOpen || (ui.style.display === 'none');
-  ui.style.display = willOpen ? 'block' : 'none';
-  if (tog) {
-    // toggle ON เฉพาะเมื่อมี token บันทึกแล้ว
-    const saved = localStorage.getItem(LINE_TOKEN_KEY);
-    if (saved) tog.classList.add('on'); else tog.classList.remove('on');
-  }
-}
-
-function toggleShowToken() {
-  const inp = document.getElementById('line-token-input');
-  const icon = document.getElementById('eye-icon');
-  if (!inp) return;
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  if (icon) icon.className = show ? 'ti ti-eye-off' : 'ti ti-eye';
-}
-
-function updateLineStatus(msg, isError) {
-  const el = document.getElementById('line-notify-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.color = isError ? '#C0392B' : (msg.startsWith('✅') ? '#27AE60' : '#888');
-}
-
-async function saveLineToken() {
-  const inp = document.getElementById('line-token-input');
-  if (!inp) return;
-  const token = inp.value.trim();
-  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
-  updateLineStatus('⏳ กำลังบันทึก...');
-  try {
-    await callApi('settings', 'update', { key: 'line_notify_token', value: token, description: 'LINE Notify Token' });
-    localStorage.setItem(LINE_TOKEN_KEY, token);
-    const tog = document.getElementById('toggle-line-notify');
-    if (tog) tog.classList.add('on');
-    updateLineStatus('✅ บันทึก Token เรียบร้อยแล้ว');
-    showToast('✅ บันทึก LINE Notify Token แล้ว');
-  } catch (err) {
-    updateLineStatus('❌ บันทึกไม่สำเร็จ: ' + err.message, true);
-    showToast('❌ ' + err.message, 'error');
-  }
-}
-
-async function testLineNotify() {
-  const inp = document.getElementById('line-token-input');
-  const token = (inp ? inp.value.trim() : '') || localStorage.getItem(LINE_TOKEN_KEY) || '';
-  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
-  updateLineStatus('⏳ กำลังส่งข้อความทดสอบ...');
-  try {
-    await sendLineNotify('🌿 ทดสอบแจ้งเตือนจาก Superclinic\nระบบ LINE Notify พร้อมใช้งาน ✅', token);
-    updateLineStatus('✅ ส่งสำเร็จ — เช็ค LINE ของคุณได้เลย');
-    showToast('✅ ส่ง LINE Notify สำเร็จ');
-  } catch (err) {
-    updateLineStatus('❌ ' + err.message, true);
-    showToast('❌ LINE: ' + err.message, 'error');
-  }
-}
-
-async function sendLineNotify(message, token) {
-  const body = { message };
-  if (token) body.token = token;
-  const url = `${API_URL}?sheet=settings&action=notify&token=${encodeURIComponent(API_TOKEN)}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(body)
-  });
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error || 'LINE Notify failed');
-  return json.data;
-}
-
-async function notifyNewAppointment(data) {
-  const token = localStorage.getItem(LINE_TOKEN_KEY);
-  if (!token) return;
-  const tog = document.getElementById('toggle-line-notify');
-  if (tog && !tog.classList.contains('on')) return;
-  const msg = `📅 นัดหมายใหม่\nผู้ป่วย: ${data.patient_name||''}\nวันที่: ${data.date||''} เวลา ${data.time_start||''}\nประเภท: ${data.treatment_type||''}\n— Superclinic`;
-  try { await sendLineNotify(msg); } catch (e) {}
-}
-
-async function notifyLowStock(herbName, qty, minQty) {
-  const token = localStorage.getItem(LINE_TOKEN_KEY);
-  if (!token) return;
-  const tog = document.getElementById('toggle-line-notify');
-  if (tog && !tog.classList.contains('on')) return;
-  const msg = `⚠️ สต็อกใกล้หมด\nชื่อ: ${herbName}\nคงเหลือ: ${qty} (ต่ำสุด: ${minQty})\n— Superclinic`;
-  try { await sendLineNotify(msg); } catch (e) {}
-}
-
-document.addEventListener('DOMContentLoaded', initLineNotifyUI);
-</script>
-</body>
-</html>
