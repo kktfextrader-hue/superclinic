@@ -2254,7 +2254,6 @@ function renderPatients(filter){
       <td>${toThaiDisplay(p.updated_at||p.created_at)}</td>
       <td>${badgePatientType(p.patient_type,p.hn||p.id)}</td>
       <td style="white-space:nowrap;">
-        ${p.face_descriptor ? '<i class="ti ti-face-id" title="มีข้อมูลใบหน้าแล้ว" style="font-size:18px;color:#2F5D50;margin-right:6px;vertical-align:middle;background:rgba(47,93,80,.1);padding:3px 5px;border-radius:6px;"></i>' : ''}
         <button class="btn btn-outline btn-sm" onclick="viewPatient(this.closest('tr').dataset.pid)">ดูข้อมูล</button>
         <button class="btn btn-danger btn-sm pat-del-btn" style="margin-left:4px;" title="ลบ"><i class="ti ti-trash"></i></button>
       </td>
@@ -5241,17 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v97', date:'31/05/2569', items:['v94 camera first + no stop on search'] },
-  { ver:'v96', date:'31/05/2569', items:['v94 camera first + no stop search'] },
-  { ver:'v95', date:'31/05/2569', items:['v94 fix camera black + show camera first'] },
-  { ver:'v94', date:'31/05/2569', items:['v94 fix camera black on search'] },
-  { ver:'v93', date:'31/05/2569', items:['v93 keep camera on during face search'] },
-  { ver:'v92', date:'31/05/2569', items:['v92 fix face model URL + search bug + revert avatar'] },
-  { ver:'v91', date:'31/05/2569', items:['v90+v91 fix face search + revert avatar'] },
-  { ver:'v90', date:'31/05/2569', items:['v89 face icon in avatar + scan fix'] },
-  { ver:'v89', date:'30/05/2569', items:['v89 face icon replaces avatar in patient table'] },
-  { ver:'v88', date:'30/05/2569', items:['v88 refresh patient view after face save'] },
-  { ver:'v87', date:'30/05/2569', items:['v87 face save debug + success '] },
+  { ver:'v98', date:'31/05/2569', items:['v98 read mode auto-search'] },
   { ver:'v79', date:'30/05/2569', items:['debug yaw value'] },
   { ver:'v78', date:'30/05/2569', items:['fix face save - enable บันทึกเมื่อมี 1 ภาพ + hint ชัดขึ้น'] },
   { ver:'v77', date:'30/05/2569', items:['fix p is not defined - ใช้ allPatients แทน p ใน onclick'] },
@@ -5410,7 +5399,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
    Threshold 0.45, Top-3 match
    ============================================================ */
 
-const FACE_MODELS_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights';
+const FACE_MODELS_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
 let _faceModelsLoaded = false;
 let _faceStream = null;      // active MediaStream
 let _faceAnimFrame = null;   // requestAnimationFrame id
@@ -5853,6 +5842,7 @@ async function openFaceAdvanced(initialMode, context) {
       try {
         const updateRes = await callApi('patients','update',{ face_descriptor: descriptorJson }, ctx);
         console.log('[FAM] update result:', updateRes);
+        // ✅ update cache
         const cached = (window.allPatients||[]).find(p => p.hn === ctx);
         if (cached) cached.face_descriptor = descriptorJson;
         // ✅ success UI
@@ -5863,7 +5853,14 @@ async function openFaceAdvanced(initialMode, context) {
           btnEl.innerHTML = '<i class="ti ti-check" style="font-size:16px;"></i> <span>บันทึกเรียบร้อยแล้ว</span>';
         }
         showToast('✅ บันทึกใบหน้า ' + ctx + ' สำเร็จ');
-        setTimeout(() => closeFaceModal(), 1500);
+        setTimeout(() => {
+          closeFaceModal();
+          // refresh viewPatient ถ้าเปิดอยู่
+          const modal = document.getElementById('pat-modal');
+          if (modal && modal.style.display !== 'none') viewPatient(ctx);
+          // refresh patient table
+          if (typeof renderPatPag === 'function') renderPatPag();
+        }, 1200);
       } catch(e) {
         console.error('[FAM] save error:', e);
         showToast('❌ บันทึกไม่สำเร็จ: ' + e.message, 'error');
@@ -5880,13 +5877,14 @@ async function openFaceAdvanced(initialMode, context) {
     if (!lastDescriptor || searching) return;
     searching = true;
     setSaveBtn(false);
+    // ไม่หยุดกล้องระหว่าง search — หยุดเฉพาะตอน match แล้ว
     setStatus('detecting', '⏳ กำลังจับคู่ใบหน้า…');
     const matchList = document.getElementById('fam-match-list');
     if (matchList) matchList.innerHTML = '';
 
     try {
       const resp = await callApi('patients','list');
-      const patients = (resp && resp.rows ? resp.rows : []).filter(p =>
+      const patients = (resp && resp.data && resp.data.rows ? resp.data.rows : []).filter(p =>
         p.is_active !== 'FALSE' && p.is_active !== false && p.face_descriptor);
 
       if (!patients.length) { setStatus('error','❌ ยังไม่มีข้อมูลใบหน้าในระบบ'); searching=false; return; }
@@ -6001,6 +5999,7 @@ async function openFaceAdvanced(initialMode, context) {
 
   // ── detection loop ────────────────────────────────────────────
   try {
+    // เปิดกล้องก่อน เพื่อให้เห็นภาพทันที ไม่ต้องรอ model
     setStatus('detecting', '📷 กำลังเปิดกล้อง…');
     await startFaceWebcam();
     setStatus('detecting', '⏳ กำลังโหลดโมเดล AI…');
@@ -6082,8 +6081,15 @@ async function openFaceAdvanced(initialMode, context) {
         if ((mode === 'save' || mode === 'edit')) {
           setSaveBtn(anglesCaptured.some(Boolean) && anglesCaptured.filter(Boolean).length < 3);
         }
-        // read mode: enable action btn ทันทีที่เจอใบหน้า
-        if (mode === 'read') setSaveBtn(true);
+        // read mode: enable action btn + auto-search เมื่อหน้าตรง quality สูง
+        if (mode === 'read') {
+          setSaveBtn(true);
+          // auto-search เมื่อหน้าตรง (|yaw|<20) + quality>=65% + ไม่ได้ search อยู่
+          if (Math.abs(yaw) < 20 && score >= 0.65 && !searching && now - lastSampleTime > 1500) {
+            lastSampleTime = now;
+            _famDoSearch();
+          }
+        }
 
         const captured_labels = ['หน้าตรง','หันซ้าย','หันขวา'];
         const done = anglesCaptured.map((c,i) => c ? '● '+captured_labels[i] : '').filter(Boolean).join('  ');
