@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v92",
+    "date": "31/05/2569",
+    "items": [
+      "v92 fix face model URL + search bug + revert avatar"
+    ]
+  },
+  {
     "ver": "v91",
     "date": "31/05/2569",
     "items": [
