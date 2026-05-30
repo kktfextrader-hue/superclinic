@@ -5240,7 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v99', date:'31/05/2569', items:['v99 auto-open 52% with margin guard'] },
+  { ver:'v100', date:'31/05/2569', items:['v100 fix edit face mode - lock patient + load list'] },
   { ver:'v79', date:'30/05/2569', items:['debug yaw value'] },
   { ver:'v78', date:'30/05/2569', items:['fix face save - enable บันทึกเมื่อมี 1 ภาพ + hint ชัดขึ้น'] },
   { ver:'v77', date:'30/05/2569', items:['fix p is not defined - ใช้ allPatients แทน p ใน onclick'] },
@@ -5675,7 +5675,7 @@ async function openFaceAdvanced(initialMode, context) {
   };
 
   // ถ้า context เป็น HN-XXX → บังคับ edit mode + ล็อกผู้ป่วย
-  const _isHnCtx = ctx && /^HN-/i.test(ctx);
+  const _isHnCtx = ctx && ctx !== 'addpatient';
   if (_isHnCtx) {
     mode = 'edit';
     window._famPreselectHn = ctx;
@@ -5782,7 +5782,7 @@ async function openFaceAdvanced(initialMode, context) {
     sel.dataset.loaded = '1';
     try {
       const resp = await callApi('patients', 'list');
-      const patients = (resp && resp.rows ? resp.rows : []).filter(p => p.is_active !== 'FALSE');
+      const patients = (resp && resp.data && resp.data.rows ? resp.data.rows : []).filter(p => p.is_active !== 'FALSE');
       sel.innerHTML = '<option value="">— เลือกผู้ป่วย —</option>' +
         patients.map(p => {
           const name = (p.prefix||'') + (p.first_name||'') + ' ' + (p.last_name||'');

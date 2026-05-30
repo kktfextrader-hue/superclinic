@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v100",
+    "date": "31/05/2569",
+    "items": [
+      "v100 fix edit face mode - lock patient + load list"
+    ]
+  },
+  {
     "ver": "v99",
     "date": "31/05/2569",
     "items": [
