@@ -5239,6 +5239,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v79', date:'30/05/2569', items:['debug yaw value'] },
   { ver:'v78', date:'30/05/2569', items:['fix face save - enable บันทึกเมื่อมี 1 ภาพ + hint ชัดขึ้น'] },
   { ver:'v77', date:'30/05/2569', items:['fix p is not defined - ใช้ allPatients แทน p ใน onclick'] },
   { ver:'v76', date:'30/05/2569', items:['face v76 - fix quote bug + ชื่อผ้ป่วยใน modal + yaw threshold'] },
@@ -6031,7 +6032,7 @@ async function openFaceAdvanced(initialMode, context) {
 
         const captured_labels = ['หน้าตรง','หันซ้าย','หันขวา'];
         const done = anglesCaptured.map((c,i) => c ? '● '+captured_labels[i] : '').filter(Boolean).join('  ');
-        setStatus('found', '✅ ' + yawLabel + ' ' + (score*100).toFixed(0) + '%',
+        setStatus('found', '✅ ' + yawLabel + ' ' + (score*100).toFixed(0) + '% [yaw:' + yaw.toFixed(1) + ']',
           (mode==='save'||mode==='edit') ? yawHint : (done||null));
       } else {
         const qEl = document.getElementById('fam-quality');
