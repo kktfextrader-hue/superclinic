@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v77",
+    "date": "30/05/2569",
+    "items": [
+      "fix p is not defined - ใช้ allPatients แทน p ใน onclick"
+    ]
+  },
+  {
     "ver": "v76",
     "date": "30/05/2569",
     "items": [
