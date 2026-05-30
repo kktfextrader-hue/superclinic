@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v69",
+    "date": "30/05/2569",
+    "items": [
+      "face v69 - yaw detection 3 มุม + clearFaceCapture fix"
+    ]
+  },
+  {
     "ver": "v68",
     "date": "30/05/2569",
     "items": [

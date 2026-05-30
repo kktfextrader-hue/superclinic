@@ -2352,6 +2352,10 @@ function viewPatient(id){
         <div class="pat-detail-section-title" onclick="loadPatHistorySection('${id}')">🗒️ ประวัติเข้ารับการรักษา <span id="pat-hist-count-${id}" style="font-size:11px;color:#aaa;"></span></div>
         <div id="pat-hist-section-${id}" style="font-size:13px;color:#aaa;padding:8px 0;">คลิกหัวข้อเพื่อโหลดข้อมูล</div>
       </div>
+      <div class="pat-detail-section">
+        <div class="pat-detail-section-title" style="cursor:default;"><span>🤖 ข้อมูลใบหน้า</span>${p.face_descriptor?'<span style="font-size:11px;background:rgba(47,93,80,.1);color:#2F5D50;padding:2px 10px;border-radius:10px;margin-left:8px;">✅ บันทึกแล้ว</span>':'<span style="font-size:11px;background:rgba(192,57,43,.08);color:#C0392B;padding:2px 10px;border-radius:10px;margin-left:8px;">ยังไม่มี</span>'}</div>
+        <div style="font-size:12px;color:#888;padding:4px 0;">${p.face_descriptor?'บันทึกข้อมูลใบหน้าแล้ว — กด "แก้ไขใบหน้า" ในปุ่มด้านล่าง':'กด "+ เพิ่มใบหน้า" ด้านล่างเพื่อบันทึกใบหน้า'}</div>
+      </div>
       ${(p.surgery_history||p.accident_history)?`
       <div class="pat-detail-section">
         <div class="pat-detail-section-title">📝 ประวัติอื่นๆ</div>
@@ -2362,6 +2366,7 @@ function viewPatient(id){
       </div>`:''}
     </div>`,
     `<button class="btn btn-outline" onclick="closeModal()" style="margin-right:auto;">ปิด</button>
+     <button class="btn btn-outline" onclick="closeModal();openFaceAdvanced(p.face_descriptor?'edit':'save','addpatient')" style="border-color:#5F8D4E;color:#5F8D4E;gap:6px;"><i class="ti ti-face-id"></i>${p.face_descriptor ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
      <button class="btn btn-outline" onclick="closeMedCert();(async()=>openMedCert(\'${id}\'))();" style="border-color:var(--g1);color:var(--g1);gap:6px;"><i class="ti ti-certificate"></i>ออกใบรับรองแพทย์</button>
      <button class="btn btn-green" onclick="closeModal();goRegisterWithPatient('${id}')"><i class="ti ti-clipboard-list"></i>ลงทะเบียน</button>
      <button class="btn-edit" onclick="closeModal();openEditPatient('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>`
@@ -5231,6 +5236,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v69', date:'30/05/2569', items:['face v69 - yaw detection 3 มุม + clearFaceCapture fix'] },
   { ver:'v68', date:'30/05/2569', items:['face v68 - layout mockup: cards 3 มุม + ring + scanline ขาว'] },
   { ver:'v67', date:'30/05/2569', items:['fix face modal z-index popup center'] },
   { ver:'v66', date:'30/05/2569', items:['face advanced UI v66 - 3 mode read/save/edit + scanline'] },
@@ -5907,7 +5913,8 @@ async function openFaceAdvanced(initialMode, context) {
 
         const captured_labels = ['หน้าตรง','หันซ้าย','หันขวา'];
         const done = anglesCaptured.map((c,i) => c ? '● '+captured_labels[i] : '').filter(Boolean).join('  ');
-        setStatus('found', '✅ ตรวจพบใบหน้า ' + (score*100).toFixed(0) + '%', done || null);
+        setStatus('found', '✅ ' + yawLabel + ' ' + (score*100).toFixed(0) + '%',
+          (mode==='save'||mode==='edit') ? yawHint : (done||null));
       } else {
         const qEl = document.getElementById('fam-quality');
         if (qEl) qEl.textContent = '—';
@@ -5926,6 +5933,18 @@ async function openFaceAdvanced(initialMode, context) {
 }
 
 // compat: faceSelectPatient (เรียกจาก search result เดิม)
+window.clearFaceCapture = function(mode) {
+  if (mode === 'addpatient') {
+    const descEl  = document.getElementById('addpat-face-descriptor');
+    const preview = document.getElementById('addpat-face-preview');
+    const thumb   = document.getElementById('addpat-face-thumb');
+    if (descEl)  descEl.value = '';
+    if (preview) preview.style.display = 'none';
+    if (thumb)   thumb.src = '';
+    showToast('ลบข้อมูลใบหน้าแล้ว');
+  }
+};
+
 window.faceSelectPatient = function(el) {
   const hn   = el.dataset.hn;
   const name = el.dataset.name;
