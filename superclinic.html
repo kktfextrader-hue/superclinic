@@ -5239,6 +5239,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v78', date:'30/05/2569', items:['fix face save - enable บันทึกเมื่อมี 1 ภาพ + hint ชัดขึ้น'] },
   { ver:'v77', date:'30/05/2569', items:['fix p is not defined - ใช้ allPatients แทน p ใน onclick'] },
   { ver:'v76', date:'30/05/2569', items:['face v76 - fix quote bug + ชื่อผ้ป่วยใน modal + yaw threshold'] },
   { ver:'v75', date:'30/05/2569', items:['ลบปุ่มค้นหาด้วยใบหน้าออกจาก quick actions'] },
@@ -6004,9 +6005,12 @@ async function openFaceAdvanced(initialMode, context) {
         const YAW_THR = 15;
         const angleIdx = Math.abs(yaw) < YAW_THR ? 0 : (yaw > 0 ? 1 : 2);
         const yawLabel = ['หน้าตรง','หันซ้าย','หันขวา'][angleIdx];
+        const doneCount = anglesCaptured.filter(Boolean).length;
         const nextMissing = anglesCaptured.findIndex(c => !c);
         const hints = ['👉 มองตรงเข้ากล้อง','👉 หันซ้ายเล็กน้อย','👉 หันขวาเล็กน้อย'];
-        const yawHint = nextMissing >= 0 ? hints[nextMissing] : '✅ ครบทุกมุมแล้ว';
+        const yawHint = doneCount === 0 ? hints[0] :
+                        doneCount >= 3  ? '✅ ครบ 3 มุมแล้ว' :
+                        nextMissing >= 0 ? '✅ กด บันทึก ได้แล้ว หรือหัน ' + ['ตรง','ซ้าย','ขวา'][nextMissing] + 'ต่อ' : '✅ พร้อมบันทึก';
 
         // Auto-capture เฉพาะมุมที่ตรงกับ slot ที่ยังไม่มี (1.2 วิ debounce)
         if ((mode === 'save' || mode === 'edit') && now - lastSampleTime > 1200) {
@@ -6018,9 +6022,9 @@ async function openFaceAdvanced(initialMode, context) {
             updateAngles();
           }
         }
-        // ปุ่มบันทึก enable เฉพาะเมื่อครบ 3 มุม
+        // enable ปุ่มบันทึกเมื่อมีอย่างน้อย 1 ภาพ
         if ((mode === 'save' || mode === 'edit')) {
-          setSaveBtn(anglesCaptured.every(Boolean));
+          setSaveBtn(anglesCaptured.some(Boolean));
         }
         // read mode: enable action btn ทันทีที่เจอใบหน้า
         if (mode === 'read') setSaveBtn(true);
