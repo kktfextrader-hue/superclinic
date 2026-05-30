@@ -2254,6 +2254,7 @@ function renderPatients(filter){
       <td>${toThaiDisplay(p.updated_at||p.created_at)}</td>
       <td>${badgePatientType(p.patient_type,p.hn||p.id)}</td>
       <td style="white-space:nowrap;">
+        ${p.face_descriptor ? '<i class="ti ti-face-id" title="มีข้อมูลใบหน้าแล้ว" style="font-size:18px;color:#2F5D50;margin-right:6px;vertical-align:middle;background:rgba(47,93,80,.1);padding:3px 5px;border-radius:6px;"></i>' : ''}
         <button class="btn btn-outline btn-sm" onclick="viewPatient(this.closest('tr').dataset.pid)">ดูข้อมูล</button>
         <button class="btn btn-danger btn-sm pat-del-btn" style="margin-left:4px;" title="ลบ"><i class="ti ti-trash"></i></button>
       </td>
@@ -3044,10 +3045,11 @@ function openAddAppt(){
     .fam-header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;}
     .fam-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
     .fam-tabs{display:flex;gap:6px;}
-    .fam-tab{flex:1;padding:8px 4px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);}
-    .fam-tab.active-read{background:#1a3d2b;color:#4ade80;border:1px solid rgba(74,222,128,.3);}
-    .fam-tab.active-save{background:#1a2a3d;color:#60a5fa;border:1px solid rgba(96,165,250,.3);}
-    .fam-tab.active-edit{background:#3d1a1a;color:#f87171;border:1px solid rgba(248,113,113,.3);}
+    .fam-tab{flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.04);color:rgba(255,255,255,.55);display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2px;}
+    .fam-tab:hover{background:rgba(255,255,255,.09);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.2);}
+    .fam-tab.active-read{background:linear-gradient(135deg,#1a3d2b,#0f2818);color:#4ade80;border:1.5px solid #4ade80;box-shadow:0 0 12px rgba(74,222,128,.35),inset 0 0 8px rgba(74,222,128,.1);font-weight:700;}
+    .fam-tab.active-save{background:linear-gradient(135deg,#3d2a0f,#2a1a05);color:#C8A96B;border:1.5px solid #C8A96B;box-shadow:0 0 12px rgba(200,169,107,.4),inset 0 0 8px rgba(200,169,107,.12);font-weight:700;}
+    .fam-tab.active-edit{background:linear-gradient(135deg,#3d1a1a,#2a0f0f);color:#f87171;border:1.5px solid #f87171;box-shadow:0 0 12px rgba(248,113,113,.35),inset 0 0 8px rgba(248,113,113,.1);font-weight:700;}
     .fam-video-wrap{position:relative;width:100%;background:#000;overflow:hidden;flex-shrink:0;}
     .fam-video-wrap video{width:100%;display:block;transform:scaleX(-1);}
     .fam-video-wrap canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
@@ -5239,8 +5241,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v81', date:'30/05/2569', items:['update'] },
-  { ver:'v80', date:'30/05/2569', items:['update'] },
+  { ver:'v82', date:'30/05/2569', items:['update'] },
   { ver:'v79', date:'30/05/2569', items:['debug yaw value'] },
   { ver:'v78', date:'30/05/2569', items:['fix face save - enable บันทึกเมื่อมี 1 ภาพ + hint ชัดขึ้น'] },
   { ver:'v77', date:'30/05/2569', items:['fix p is not defined - ใช้ allPatients แทน p ใน onclick'] },
@@ -5649,7 +5650,17 @@ async function openFaceAdvanced(initialMode, context) {
     document.getElementById('fam-save-section').style.display = m === 'save' ? 'flex' : 'none';
     document.getElementById('fam-read-section').style.display = m === 'read' ? 'flex' : 'none';
     document.getElementById('fam-edit-section').style.display = m === 'edit' ? 'flex' : 'none';
-    const labels = { save:'บันทึกใหม่', read:'ค้นหาผู้ป่วย', edit:'อัพเดทใบหน้า' };
+    // ── เช็คว่ามี face_descriptor อยู่แล้วหรือยัง (เฉพาะ ctx HN) ──
+    let _hasExisting = false;
+    if (ctx && ctx.startsWith('HN-') && window.allPatients) {
+      const _p = window.allPatients.find(x => x.hn === ctx);
+      _hasExisting = !!(_p && _p.face_descriptor);
+    }
+    const labels = {
+      save: _hasExisting ? 'บันทึก' : 'บันทึกใหม่',
+      read: 'ค้นหาผู้ป่วย',
+      edit: 'อัพเดทใบหน้า'
+    };
     const icons  = { save:'ti-device-floppy', read:'ti-search', edit:'ti-refresh' };
     const lbl = document.getElementById('fam-action-label');
     const btn = document.getElementById('fam-action-btn');
@@ -5878,14 +5889,14 @@ async function openFaceAdvanced(initialMode, context) {
       const best = top[0];
       const conf = Math.max(0, Math.round((1-best.dist)*100));
 
-      // Auto-open if ≥90% confidence
-      if (conf >= 90) {
+      // Auto-open if ≥85% confidence (ลด threshold จาก 90 → 85)
+      if (conf >= 85) {
         setStatus('matched','✅ Match ' + conf + '% — เปิดข้อมูลผู้ป่วยทันที');
         setTimeout(() => _famSelectPatient(best.patient.hn, best.patient), 800);
         searching = false; return;
       }
 
-      setStatus('found','⚠️ พบผู้ป่วยที่ใกล้เคียง — เลือกเพื่อยืนยัน');
+      setStatus('found','⚠️ พบผู้ป่วยที่ใกล้เคียง — กดเลือกเพื่อยืนยัน');
 
       if (matchList) {
         matchList.innerHTML = top.map((r,i) => {
@@ -5940,18 +5951,32 @@ async function openFaceAdvanced(initialMode, context) {
   // ── select patient from match ─────────────────────────────────
   window._famSelectPatient = function(hn, pObj) {
     closeFaceModal();
+
+    // ── ค้นหาข้อมูลผู้ป่วยจาก allPatients หรือ pObj ──
+    const pt = pObj || (window.allPatients||[]).find(x => x.hn === hn);
+    const name = pt ? ((pt.prefix||'') + (pt.first_name||'') + ' ' + (pt.last_name||'')).trim() : '';
+
+    // ── Navigate ไปหน้า patients แล้วเปิด viewPatient ──
+    if (typeof showPage === 'function') {
+      const navEl = document.querySelector('.nav-item[onclick*=\'patients\']');
+      showPage('patients', navEl);
+    }
+    // รอให้ allPatients โหลดก่อน (กรณีข้ามหน้า)
+    const _openView = () => {
+      if (typeof viewPatient === 'function' && (window.allPatients||[]).find(x => x.hn === hn)) {
+        viewPatient(hn);
+        if (name) showToast('✅ พบผู้ป่วย: ' + name);
+      } else {
+        setTimeout(_openView, 300);
+      }
+    };
+    setTimeout(_openView, 200);
+
+    // ── ยัง fill reg-search ด้วย (fallback กรณีอยู่หน้า register) ──
     const regSearch = document.getElementById('reg-search');
-    if (regSearch && pObj) {
-      const name = (pObj.prefix||'') + (pObj.first_name||'') + ' ' + (pObj.last_name||'');
-      regSearch.value = name.trim();
+    if (regSearch && name) {
+      regSearch.value = name;
       regSearch.dispatchEvent(new Event('input'));
-      setTimeout(() => {
-        const dd = document.getElementById('reg-search-result');
-        if (dd) { const first = dd.querySelector('[data-hn]') || dd.firstElementChild; if (first) first.click(); }
-        showToast('✅ เลือกผู้ป่วย: ' + name.trim());
-      }, 600);
-    } else {
-      showToast('HN: ' + hn);
     }
   };
 
@@ -6023,11 +6048,19 @@ async function openFaceAdvanced(initialMode, context) {
             angleFrames[angleIdx] = frame;
             anglesCaptured[angleIdx] = true;
             updateAngles();
+            // ── Auto-save เมื่อครบ 3 มุม ──
+            if (anglesCaptured.filter(Boolean).length === 3) {
+              setSaveBtn(false);
+              setStatus('found', '✅ ครบ 3 มุม — กำลังบันทึกอัตโนมัติ…');
+              setTimeout(() => {
+                if (document.getElementById('fam-overlay')) _famDoAction();
+              }, 800);
+            }
           }
         }
         // enable ปุ่มบันทึกเมื่อมีอย่างน้อย 1 ภาพ
         if ((mode === 'save' || mode === 'edit')) {
-          setSaveBtn(anglesCaptured.some(Boolean));
+          setSaveBtn(anglesCaptured.some(Boolean) && anglesCaptured.filter(Boolean).length < 3);
         }
         // read mode: enable action btn ทันทีที่เจอใบหน้า
         if (mode === 'read') setSaveBtn(true);
