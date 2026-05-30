@@ -5236,6 +5236,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v71', date:'30/05/2569', items:[' opus bug fixed'] },
   { ver:'v70', date:'30/05/2569', items:['face v69 - yaw 3 มุม + ปุ่มใบหน้าในหน้าข้อมลคนไข้'] },
   { ver:'v69', date:'30/05/2569', items:['face v69 - yaw detection 3 มุม + clearFaceCapture fix'] },
   { ver:'v68', date:'30/05/2569', items:['face v68 - layout mockup: cards 3 มุม + ring + scanline ขาว'] },
@@ -5410,14 +5411,6 @@ function stopFaceStream() {
   if (_faceStream) { _faceStream.getTracks().forEach(t => t.stop()); _faceStream = null; }
 }
 
-/* ── Remove modal overlay ────────────────────────────────── */
-function closeFaceModal() {
-  stopFaceStream();
-  const el = document.getElementById('face-modal-overlay');
-  if (el) el.remove();
-}
-
-/* ── Build modal DOM ─────────────────────────────────────── */
 /* ══════════════════════════════════════════════════════════════
    ADVANCED FACE RECOGNITION MODAL  (v66+)
    Unified 3-mode: อ่าน / บันทึกใหม่ / แก้ไข
@@ -5522,7 +5515,7 @@ async function openFaceAdvanced(initialMode, context) {
           <!-- Angle cards + progress ring -->
           <div style="display:flex;gap:6px;align-items:stretch;">
             <!-- Card: หน้าตรง -->
-            <div id="fam-card-0" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;cursor:pointer;" onclick="_famCaptureFront()">
+            <div id="fam-card-0" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;">
               <div id="fam-ang-icon-0" style="width:50px;height:50px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
                 <i class="ti ti-user" style="font-size:22px;color:rgba(255,255,255,.2);"></i>
               </div>
@@ -5745,7 +5738,10 @@ async function openFaceAdvanced(initialMode, context) {
       if (thumbImg) thumbImg.src = best.dataUrl;
       showToast('✅ บันทึกใบหน้าสำเร็จ (' + (best.score*100).toFixed(0) + '%)');
       closeFaceModal();
+      return;
     }
+    // ไม่มี context → ใช้แท็บแก้ไขแทน
+    showToast('กรุณาเลือกผู้ป่วยในแท็บ "แก้ไข" เพื่ออัพเดทใบหน้า', 'error');
   };
 
   // ── SEARCH action ─────────────────────────────────────────────
@@ -5824,15 +5820,19 @@ async function openFaceAdvanced(initialMode, context) {
     const frames = angleFrames.filter(Boolean);
     if (!frames.length) { showToast('ยังไม่มีภาพใบหน้า','error'); return; }
     const best = frames.reduce((a,b) => b.score>a.score ? b : a, frames[0]);
-    const btn = document.getElementById('fam-edit-btn');
-    if (btn) { btn.textContent = '⏳ กำลังอัพเดท…'; btn.disabled = true; }
+    const btn = document.getElementById('fam-action-btn');
+    const lbl = document.getElementById('fam-action-label');
+    const oldLabel = lbl ? lbl.textContent : '';
+    if (btn) btn.disabled = true;
+    if (lbl) lbl.textContent = '⏳ กำลังอัพเดท…';
     try {
       await callApi('patients','update',{ face_descriptor: JSON.stringify(Array.from(best.descriptor)) }, hn);
       showToast('✅ อัพเดทใบหน้าสำเร็จ');
       closeFaceModal();
     } catch(e) {
       showToast('❌ อัพเดทไม่สำเร็จ: ' + e.message,'error');
-      if (btn) { btn.textContent = 'อัพเดทใบหน้า'; btn.disabled = false; }
+      if (btn) btn.disabled = false;
+      if (lbl) lbl.textContent = oldLabel || 'อัพเดทใบหน้า';
     }
   };
 
@@ -5891,26 +5891,41 @@ async function openFaceAdvanced(initialMode, context) {
         const qEl = document.getElementById('fam-quality');
         if (qEl) qEl.textContent = (score*100).toFixed(0) + '%';
 
-        // Auto-capture per angle every 1.5s in save/edit mode
-        if ((mode === 'save' || mode === 'edit') && now - lastSampleTime > 1500) {
-          lastSampleTime = now;
-          const frame = captureFrame(video, det.descriptor, score);
-          // assign to current angle slot
-          if (!anglesCaptured[0])      { angleFrames[0]=frame; anglesCaptured[0]=true; }
-          else if (!anglesCaptured[1]) { angleFrames[1]=frame; anglesCaptured[1]=true; }
-          else if (!anglesCaptured[2]) { angleFrames[2]=frame; anglesCaptured[2]=true; }
-          bestFrame = frame;
-          updateAngles();
-          setSaveBtn(true);
-        } else if ((mode === 'save' || mode === 'edit') && anglesCaptured[0]) {
-          setSaveBtn(true);
+        // ── วัด yaw จาก landmark (nose tip vs eye midpoint) ─────
+        let yaw = 0;
+        if (det.landmarks) {
+          const pts = det.landmarks.positions;
+          const le = pts.slice(36,42).reduce((a,p)=>({x:a.x+p.x/6,y:a.y+p.y/6}),{x:0,y:0});
+          const re = pts.slice(42,48).reduce((a,p)=>({x:a.x+p.x/6,y:a.y+p.y/6}),{x:0,y:0});
+          const nose = pts[30];
+          const eyeMidX = (le.x + re.x) / 2;
+          const eyeW = Math.abs(re.x - le.x);
+          yaw = eyeW > 0 ? ((nose.x - eyeMidX) / eyeW) * 90 : 0;
         }
+        // หมายเหตุ: video mirror (scaleX -1) ทำให้ "หันซ้าย" จริงของผู้ใช้
+        // ปรากฏเป็นการเลื่อนจมูกไปทางขวาในพิกัด video → yaw > 0
+        const angleIdx = Math.abs(yaw) < 12 ? 0 : (yaw > 0 ? 1 : 2);
+        const yawLabel = ['หน้าตรง','หันซ้าย','หันขวา'][angleIdx];
+        const nextMissing = anglesCaptured.findIndex(c => !c);
+        const hints = ['👉 มองตรงเข้ากล้อง','👉 หันซ้ายเล็กน้อย','👉 หันขวาเล็กน้อย'];
+        const yawHint = nextMissing >= 0 ? hints[nextMissing] : '✅ ครบทุกมุมแล้ว';
 
-        // In read mode enable search btn
-        if (mode === 'read') {
-          const sbtn = document.getElementById('fam-search-btn');
-          if (sbtn) { sbtn.disabled = false; }
+        // Auto-capture เฉพาะมุมที่ตรงกับ slot ที่ยังไม่มี (1.2 วิ debounce)
+        if ((mode === 'save' || mode === 'edit') && now - lastSampleTime > 1200) {
+          if (!anglesCaptured[angleIdx]) {
+            lastSampleTime = now;
+            const frame = captureFrame(video, det.descriptor, score);
+            angleFrames[angleIdx] = frame;
+            anglesCaptured[angleIdx] = true;
+            updateAngles();
+          }
         }
+        // ปุ่มบันทึก enable เฉพาะเมื่อครบ 3 มุม
+        if ((mode === 'save' || mode === 'edit')) {
+          setSaveBtn(anglesCaptured.every(Boolean));
+        }
+        // read mode: enable action btn ทันทีที่เจอใบหน้า
+        if (mode === 'read') setSaveBtn(true);
 
         const captured_labels = ['หน้าตรง','หันซ้าย','หันขวา'];
         const done = anglesCaptured.map((c,i) => c ? '● '+captured_labels[i] : '').filter(Boolean).join('  ');
@@ -5934,8 +5949,8 @@ async function openFaceAdvanced(initialMode, context) {
 }
 
 // compat: faceSelectPatient (เรียกจาก search result เดิม)
-window.clearFaceCapture = function(mode) {
-  if (mode === 'addpatient') {
+window.clearFaceCapture = function(ctx) {
+  if (ctx === 'addpatient') {
     const descEl  = document.getElementById('addpat-face-descriptor');
     const preview = document.getElementById('addpat-face-preview');
     const thumb   = document.getElementById('addpat-face-thumb');
@@ -5943,6 +5958,13 @@ window.clearFaceCapture = function(mode) {
     if (preview) preview.style.display = 'none';
     if (thumb)   thumb.src = '';
     showToast('ลบข้อมูลใบหน้าแล้ว');
+    return;
+  }
+  if (ctx && ctx.startsWith('HN-')) {
+    if (!confirm('ยืนยันลบข้อมูลใบหน้า ' + ctx + '?')) return;
+    callApi('patients','update',{ face_descriptor:'' }, ctx)
+      .then(()=>showToast('✅ ลบใบหน้าสำเร็จ'))
+      .catch(e=>showToast('❌ ' + e.message,'error'));
   }
 };
 
@@ -5954,7 +5976,6 @@ window.faceSelectPatient = function(el) {
 };
 
 /* ════════════════════════════════════════════════════════
-   FEATURE TOGGLES═══════════════════════════════════
    FEATURE TOGGLES — บันทึกใน localStorage
 ════════════════════════════════════════════════════════ */
 const FEAT_KEY = 'superclinic_features';
