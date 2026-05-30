@@ -5241,11 +5241,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v86', date:'30/05/2569', items:['fix face save HN format bug'] },
-  { ver:'v85', date:'30/05/2569', items:['fix face save hn'] },
-  { ver:'v84', date:'30/05/2569', items:['face recognition UI improvements'] },
-  { ver:'v83', date:'30/05/2569', items:['face recognition UI improvements'] },
-  { ver:'v82', date:'30/05/2569', items:['update'] },
+  { ver:'v87', date:'30/05/2569', items:['v87 face save debug + success '] },
   { ver:'v79', date:'30/05/2569', items:['debug yaw value'] },
   { ver:'v78', date:'30/05/2569', items:['fix face save - enable บันทึกเมื่อมี 1 ภาพ + hint ชัดขึ้น'] },
   { ver:'v77', date:'30/05/2569', items:['fix p is not defined - ใช้ allPatients แทน p ใน onclick'] },
@@ -5635,7 +5631,7 @@ async function openFaceAdvanced(initialMode, context) {
 
   // ── set active mode tab ───────────────────────────────────────
   // แสดงชื่อผู้ป่วยถ้า ctx เป็น HN
-  if (ctx && ctx.startsWith('HN-') && window.allPatients) {
+  if (ctx && ctx !== 'addpatient' && window.allPatients) {
     const _p = window.allPatients.find(x => x.hn === ctx);
     const nameEl = document.getElementById('fam-patient-name');
     if (nameEl && _p) {
@@ -5656,7 +5652,7 @@ async function openFaceAdvanced(initialMode, context) {
     document.getElementById('fam-edit-section').style.display = m === 'edit' ? 'flex' : 'none';
     // ── เช็คว่ามี face_descriptor อยู่แล้วหรือยัง (เฉพาะ ctx HN) ──
     let _hasExisting = false;
-    if (ctx && ctx.startsWith('HN-') && window.allPatients) {
+    if (ctx && ctx !== 'addpatient' && window.allPatients) {
       const _p = window.allPatients.find(x => x.hn === ctx);
       _hasExisting = !!(_p && _p.face_descriptor);
     }
@@ -5821,6 +5817,7 @@ async function openFaceAdvanced(initialMode, context) {
   };
 
   window._famDoSave = async function() {
+    console.log('[FAM] _famDoSave called: ctx=', ctx, 'mode=', mode, 'frames=', angleFrames.filter(Boolean).length);
     const frames = angleFrames.filter(Boolean);
     if (!frames.length) { showToast('ยังไม่มีภาพ — รอตรวจจับใบหน้าก่อน','error'); return; }
     const best = frames.reduce((a,b) => b.score>a.score ? b : a, frames[0]);
@@ -5840,18 +5837,27 @@ async function openFaceAdvanced(initialMode, context) {
     }
 
     // กรณี 2: เปิดจากหน้าข้อมูลคนไข้ (ctx = HN) → save ลง DB โดยตรง
-    if (ctx && ctx.startsWith('HN-')) {
+    if (ctx && ctx !== 'addpatient') {
       const btn = document.getElementById('fam-action-btn');
       if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก…'; }
       try {
-        await callApi('patients','update',{ face_descriptor: descriptorJson }, ctx);
+        const updateRes = await callApi('patients','update',{ face_descriptor: descriptorJson }, ctx);
+        console.log('[FAM] update result:', updateRes);
         const cached = (window.allPatients||[]).find(p => p.hn === ctx);
         if (cached) cached.face_descriptor = descriptorJson;
-        showToast('✅ บันทึกใบหน้า ' + ctx + ' สำเร็จ (' + (best.score*100).toFixed(0) + '%)');
-        closeFaceModal();
+        // ✅ success UI
+        const btnEl = document.getElementById('fam-action-btn');
+        if (btnEl) {
+          btnEl.disabled = true;
+          btnEl.style.background = 'linear-gradient(135deg,#166534,#15803d)';
+          btnEl.innerHTML = '<i class="ti ti-check" style="font-size:16px;"></i> <span>บันทึกเรียบร้อยแล้ว</span>';
+        }
+        showToast('✅ บันทึกใบหน้า ' + ctx + ' สำเร็จ');
+        setTimeout(() => closeFaceModal(), 1500);
       } catch(e) {
+        console.error('[FAM] save error:', e);
         showToast('❌ บันทึกไม่สำเร็จ: ' + e.message, 'error');
-        if (btn) { btn.disabled = false; btn.textContent = 'บันทึกใหม่'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy" class="ti-icon"></i> <span id="fam-action-label">บันทึกใหม่</span>'; }
       }
       return;
     }
@@ -6102,7 +6108,7 @@ window.clearFaceCapture = function(ctx) {
     showToast('ลบข้อมูลใบหน้าแล้ว');
     return;
   }
-  if (ctx && ctx.startsWith('HN-')) {
+  if (ctx && ctx !== 'addpatient') {
     if (!confirm('ยืนยันลบข้อมูลใบหน้า ' + ctx + '?')) return;
     callApi('patients','update',{ face_descriptor:'' }, ctx)
       .then(()=>showToast('✅ ลบใบหน้าสำเร็จ'))
