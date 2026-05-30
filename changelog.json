@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v88",
+    "date": "30/05/2569",
+    "items": [
+      "v88 refresh patient view after face save"
+    ]
+  },
+  {
     "ver": "v87",
     "date": "30/05/2569",
     "items": [
