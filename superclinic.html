@@ -2369,7 +2369,7 @@ function viewPatient(id){
       </div>`:''}
     </div>`,
     `<button class="btn btn-outline" onclick="closeModal()" style="margin-right:auto;">ปิด</button>
-     <button class="btn btn-outline" onclick="closeModal();openFaceAdvanced('${p.face_descriptor?'edit':'save'}','${p.hn||''}')" style="border-color:#5F8D4E;color:#5F8D4E;gap:6px;"><i class="ti ti-face-id"></i>${p.face_descriptor ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
+     <button class="btn btn-outline" onclick="closeModal();(function(){var _mode=p&&p.face_descriptor?'edit':'save';openFaceAdvanced(_mode,'${id}');})()" style="border-color:#5F8D4E;color:#5F8D4E;gap:6px;"><i class="ti ti-face-id"></i>${p.face_descriptor ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
      <button class="btn btn-outline" onclick="closeMedCert();(async()=>openMedCert(\'${id}\'))();" style="border-color:var(--g1);color:var(--g1);gap:6px;"><i class="ti ti-certificate"></i>ออกใบรับรองแพทย์</button>
      <button class="btn btn-green" onclick="closeModal();goRegisterWithPatient('${id}')"><i class="ti ti-clipboard-list"></i>ลงทะเบียน</button>
      <button class="btn-edit" onclick="closeModal();openEditPatient('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>`
@@ -5239,6 +5239,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v76', date:'30/05/2569', items:['face v76 - fix quote bug + ชื่อผ้ป่วยใน modal + yaw threshold'] },
   { ver:'v75', date:'30/05/2569', items:['ลบปุ่มค้นหาด้วยใบหน้าออกจาก quick actions'] },
   { ver:'v74', date:'30/05/2569', items:[' opus bug fixed3'] },
   { ver:'v73', date:'30/05/2569', items:[' opus bug fixed3'] },
@@ -5483,6 +5484,7 @@ async function openFaceAdvanced(initialMode, context) {
         <div>
           <div style="font-size:18px;font-weight:700;color:#fff;letter-spacing:.3px;">ระบบจดจำใบหน้า</div>
           <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px;">Advanced Face Recognition</div>
+          <div id="fam-patient-name" style="font-size:12px;color:#C8A96B;margin-top:3px;display:none;"></div>
         </div>
         <div style="display:flex;gap:8px;margin-left:auto;">
           <button class="fam-tab" id="fam-tab-read"  onclick="_famSetMode('read')">
@@ -5622,6 +5624,17 @@ async function openFaceAdvanced(initialMode, context) {
   document.body.appendChild(overlay);
 
   // ── set active mode tab ───────────────────────────────────────
+  // แสดงชื่อผู้ป่วยถ้า ctx เป็น HN
+  if (ctx && ctx.startsWith('HN-') && window.allPatients) {
+    const _p = window.allPatients.find(x => x.hn === ctx);
+    const nameEl = document.getElementById('fam-patient-name');
+    if (nameEl && _p) {
+      const _name = (_p.prefix||'') + (_p.first_name||'') + ' ' + (_p.last_name||'');
+      nameEl.textContent = '👤 ' + _name.trim() + ' · ' + ctx;
+      nameEl.style.display = 'block';
+    }
+  }
+
   window._famSetMode = function(m) {
     mode = m;
     ['read','save','edit'].forEach(k => {
@@ -5983,11 +5996,12 @@ async function openFaceAdvanced(initialMode, context) {
           const nose = pts[30];
           const eyeMidX = (le.x + re.x) / 2;
           const eyeW = Math.abs(re.x - le.x);
-          yaw = eyeW > 0 ? ((nose.x - eyeMidX) / eyeW) * 90 : 0;
+          // video mirror: จมูกขยับขวา = ผู้ใช้หันซ้าย
+          yaw = eyeW > 0 ? ((nose.x - eyeMidX) / eyeW) * 100 : 0;
         }
-        // หมายเหตุ: video mirror (scaleX -1) ทำให้ "หันซ้าย" จริงของผู้ใช้
-        // ปรากฏเป็นการเลื่อนจมูกไปทางขวาในพิกัด video → yaw > 0
-        const angleIdx = Math.abs(yaw) < 12 ? 0 : (yaw > 0 ? 1 : 2);
+        // |yaw|<15 = หน้าตรง | yaw>15 = หันซ้าย | yaw<-15 = หันขวา
+        const YAW_THR = 15;
+        const angleIdx = Math.abs(yaw) < YAW_THR ? 0 : (yaw > 0 ? 1 : 2);
         const yawLabel = ['หน้าตรง','หันซ้าย','หันขวา'][angleIdx];
         const nextMissing = anglesCaptured.findIndex(c => !c);
         const hints = ['👉 มองตรงเข้ากล้อง','👉 หันซ้ายเล็กน้อย','👉 หันขวาเล็กน้อย'];
