@@ -5236,6 +5236,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v73', date:'30/05/2569', items:[' opus bug fixed3'] },
   { ver:'v72', date:'30/05/2569', items:[' opus bug fixed2'] },
   { ver:'v71', date:'30/05/2569', items:[' opus bug fixed'] },
   { ver:'v70', date:'30/05/2569', items:['face v69 - yaw 3 มุม + ปุ่มใบหน้าในหน้าข้อมลคนไข้'] },
@@ -5491,6 +5492,16 @@ async function openFaceAdvanced(initialMode, context) {
         </div>
       </div>
 
+      <!-- ── Banner ผู้ป่วยที่ล็อกไว้ (HN context) ── -->
+      <div id="fam-patient-banner" style="display:none;margin:0 16px 8px;padding:10px 14px;background:linear-gradient(135deg,rgba(47,93,80,.18),rgba(200,169,107,.15));border:1px solid rgba(200,169,107,.35);border-radius:10px;align-items:center;gap:10px;">
+        <i class="ti ti-user-check" style="font-size:18px;color:#C8A96B;"></i>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);">กำลังบันทึกใบหน้าให้</div>
+          <div id="fam-patient-name" style="font-size:14px;font-weight:700;color:#fff;">—</div>
+        </div>
+        <div id="fam-patient-hn" style="font-size:11px;color:#C8A96B;font-weight:600;background:rgba(0,0,0,.3);padding:3px 8px;border-radius:6px;">HN: —</div>
+      </div>
+
       <!-- ── Camera View ── -->
       <div class="fam-video-wrap" id="fam-video-wrap" style="position:relative;">
         <video id="fam-video" autoplay playsinline muted style="width:100%;max-height:44vh;display:block;object-fit:cover;"></video>
@@ -5630,16 +5641,50 @@ async function openFaceAdvanced(initialMode, context) {
     if (m === 'edit') _famLoadPatientList();
   };
 
-  // ถ้า context เป็น HN-XXX → บังคับ edit mode + เตรียม pre-select
-  if (ctx && /^HN-/i.test(ctx)) {
+  // ถ้า context เป็น HN-XXX → บังคับ edit mode + ล็อกผู้ป่วย
+  const _isHnCtx = ctx && /^HN-/i.test(ctx);
+  if (_isHnCtx) {
     mode = 'edit';
-    // เรียกหลัง _famSetMode ด้านล่าง — เก็บ HN ไว้ใช้ใน _famLoadPatientList
     window._famPreselectHn = ctx;
   } else {
     window._famPreselectHn = null;
   }
 
   _famSetMode(mode);
+
+  // ถ้าล็อกผู้ป่วยไว้ → โหลดชื่อมาแสดงใน banner + ซ่อน dropdown + ซ่อนแท็บอื่น
+  if (_isHnCtx) {
+    (async () => {
+      try {
+        const resp = await callApi('patients','get', null, ctx);
+        const p = resp && resp.rows ? resp.rows[0] : (resp && resp.data ? resp.data : resp);
+        const name = ((p?.prefix||'') + (p?.first_name||'') + ' ' + (p?.last_name||'')).trim() || 'ผู้ป่วย';
+        const banner = document.getElementById('fam-patient-banner');
+        const nameEl = document.getElementById('fam-patient-name');
+        const hnEl   = document.getElementById('fam-patient-hn');
+        if (banner) banner.style.display = 'flex';
+        if (nameEl) nameEl.textContent = name;
+        if (hnEl)   hnEl.textContent = 'HN: ' + ctx;
+        // ซ่อน dropdown ใน edit section
+        const editSec = document.getElementById('fam-edit-section');
+        if (editSec) editSec.style.display = 'none';
+        // ซ่อนแท็บ save/read ไปด้วย — ล็อกอยู่โหมดเดียว
+        ['save','read'].forEach(k => {
+          const t = document.getElementById('fam-tab-' + k);
+          if (t) t.style.display = 'none';
+        });
+        // ปรับ label ปุ่ม action ให้ชัดเจน
+        const lbl = document.getElementById('fam-action-label');
+        if (lbl) lbl.textContent = (p?.face_descriptor ? 'อัพเดทใบหน้า' : 'บันทึกใบหน้า');
+      } catch(e) {
+        console.error('โหลดชื่อผู้ป่วยล้มเหลว:', e);
+        const nameEl = document.getElementById('fam-patient-name');
+        if (nameEl) nameEl.textContent = ctx;
+        const banner = document.getElementById('fam-patient-banner');
+        if (banner) banner.style.display = 'flex';
+      }
+    })();
+  }
 
   // ── status helpers ────────────────────────────────────────────
   const setStatus = (type, msg, sub) => {
@@ -5710,12 +5755,9 @@ async function openFaceAdvanced(initialMode, context) {
           const name = (p.prefix||'') + (p.first_name||'') + ' ' + (p.last_name||'');
           return `<option value="${p.hn}">${p.hn} · ${name.trim()}</option>`;
         }).join('');
-      // pre-select ถ้ามี HN ส่งมา
+      // pre-select ถ้ามี HN ส่งมา (เผื่อกรณี dropdown ยังโชว์)
       if (window._famPreselectHn) {
         sel.value = window._famPreselectHn;
-        const opt = sel.querySelector(`option[value="${window._famPreselectHn}"]`);
-        const name = opt ? opt.textContent : window._famPreselectHn;
-        showToast('ผู้ป่วย: ' + name);
       }
     } catch(e) {
       sel.innerHTML = '<option value="">— โหลดไม่สำเร็จ —</option>';
@@ -5832,7 +5874,8 @@ async function openFaceAdvanced(initialMode, context) {
 
   // ── EDIT action ───────────────────────────────────────────────
   window._famDoEdit = async function() {
-    const hn = document.getElementById('fam-edit-patient')?.value;
+    // ถ้ามี HN ล็อกจาก context → ใช้เลย ไม่ต้องดู dropdown
+    const hn = (window._famPreselectHn) || document.getElementById('fam-edit-patient')?.value;
     if (!hn) { showToast('กรุณาเลือกผู้ป่วยก่อน','error'); return; }
     const frames = angleFrames.filter(Boolean);
     if (!frames.length) { showToast('ยังไม่มีภาพใบหน้า','error'); return; }
