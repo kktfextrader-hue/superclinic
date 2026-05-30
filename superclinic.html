@@ -709,7 +709,10 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
     <div class="card">
       <div class="card-head">
         <div class="card-title"><i class="ti ti-clock"></i>นัดหมายวันนี้ & พรุ่งนี้</div>
-        <button class="btn btn-outline btn-sm" onclick="showPage('appointments',null)">ดูทั้งหมด →</button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="border-color:#5F8D4E;color:#2F5D50;gap:4px;"><i class="ti ti-face-id" style="font-size:13px;"></i>ค้นหาด้วยใบหน้า</button>
+          <button class="btn btn-outline btn-sm" onclick="showPage('appointments',null)">ดูทั้งหมด →</button>
+        </div>
       </div>
       <div id="dash-appt-list" style="padding:8px 0;">
         <div style="text-align:center;padding:30px;color:#aaa;"><i class="ti ti-loader" style="font-size:20px;"></i></div>
@@ -755,6 +758,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
         <button class="btn btn-green" style="width:100%;justify-content:center;" onclick="showPage('patients',null)"><i class="ti ti-user-plus"></i>ลงทะเบียนผู้ป่วยใหม่</button>
         <button class="btn btn-green" style="width:100%;justify-content:center;background:var(--g2);" onclick="openReceiptModal()"><i class="ti ti-file-invoice"></i>ออกใบเสร็จรับเงิน</button>
         <button class="btn btn-danger" style="width:100%;justify-content:center;"><i class="ti ti-alert-triangle"></i>รายงานแพ้ยา / ฉุกเฉิน</button>
+        <button class="btn btn-outline" style="width:100%;justify-content:center;border-color:#5F8D4E;color:#2F5D50;" onclick="openFaceAdvanced('read')"><i class="ti ti-face-id"></i>ค้นหาผู้ป่วยด้วยใบหน้า</button>
       </div>
     </div>
   </div>
@@ -5236,6 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v74', date:'30/05/2569', items:[' opus bug fixed3'] },
   { ver:'v73', date:'30/05/2569', items:[' opus bug fixed3'] },
   { ver:'v72', date:'30/05/2569', items:[' opus bug fixed2'] },
   { ver:'v71', date:'30/05/2569', items:[' opus bug fixed'] },
@@ -5784,24 +5789,42 @@ async function openFaceAdvanced(initialMode, context) {
 
   window._famDoSave = async function() {
     const frames = angleFrames.filter(Boolean);
-    if (!frames.length) { showToast('ยังไม่มีภาพ','error'); return; }
+    if (!frames.length) { showToast('ยังไม่มีภาพ — รอตรวจจับใบหน้าก่อน','error'); return; }
     const best = frames.reduce((a,b) => b.score>a.score ? b : a, frames[0]);
     const descriptorJson = JSON.stringify(Array.from(best.descriptor));
 
+    // กรณี 1: เปิดจากฟอร์มเพิ่มผู้ป่วยใหม่ → save ลง hidden input
     if (ctx === 'addpatient') {
       const descEl   = document.getElementById('addpat-face-descriptor');
       const preview  = document.getElementById('addpat-face-preview');
       const thumbImg = document.getElementById('addpat-face-thumb');
-      if (descEl)   descEl.value = descriptorJson;
+      if (descEl)   descEl.value          = descriptorJson;
       if (preview)  preview.style.display = 'flex';
-      if (thumbImg) thumbImg.src = best.dataUrl;
+      if (thumbImg) thumbImg.src          = best.dataUrl;
       showToast('✅ บันทึกใบหน้าสำเร็จ (' + (best.score*100).toFixed(0) + '%)');
       closeFaceModal();
       return;
     }
-    // ไม่มี context → ใช้แท็บแก้ไขแทน
-    showToast('กรุณาเลือกผู้ป่วยในแท็บ "แก้ไข" เพื่ออัพเดทใบหน้า', 'error');
-  };
+
+    // กรณี 2: เปิดจากหน้าข้อมูลคนไข้ (ctx = HN) → save ลง DB โดยตรง
+    if (ctx && ctx.startsWith('HN-')) {
+      const btn = document.getElementById('fam-action-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก…'; }
+      try {
+        await callApi('patients','update',{ face_descriptor: descriptorJson }, ctx);
+        const cached = (window.allPatients||[]).find(p => p.hn === ctx);
+        if (cached) cached.face_descriptor = descriptorJson;
+        showToast('✅ บันทึกใบหน้า ' + ctx + ' สำเร็จ (' + (best.score*100).toFixed(0) + '%)');
+        closeFaceModal();
+      } catch(e) {
+        showToast('❌ บันทึกไม่สำเร็จ: ' + e.message, 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'บันทึกใหม่'; }
+      }
+      return;
+    }
+
+    showToast('กรุณาเลือกผู้ป่วยในแท็บ "แก้ไข"', 'error');
+  };;
 
   // ── SEARCH action ─────────────────────────────────────────────
   window._famDoSearch = async function() {
