@@ -3031,7 +3031,7 @@ function openAddAppt(){
     .face-capture-btn.primary:disabled{background:#444;color:#888;cursor:not-allowed;}
     .face-capture-btn.secondary{background:rgba(255,255,255,.08);color:#aaa;border:1px solid rgba(255,255,255,.12);}
     /* ── Advanced Face Modal ── */
-    .fam-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;}
+    .fam-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.88);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;}
     .fam-box{background:#0d1117;border-radius:18px;width:400px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;box-sizing:border-box;}
     .fam-header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;}
     .fam-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
@@ -5231,6 +5231,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v67', date:'30/05/2569', items:['fix face modal z-index popup center'] },
   { ver:'v66', date:'30/05/2569', items:['face advanced UI v66 - 3 mode read/save/edit + scanline'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
   { ver:'v42', date:'28/05/2569', items:['update'] },
@@ -5465,7 +5466,7 @@ async function openFaceAdvanced(initialMode, context) {
   // ── build overlay ────────────────────────────────────────────
   const overlay = document.createElement('div');
   overlay.id = 'fam-overlay';
-  overlay.className = 'fam-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.88);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;';
   overlay.innerHTML = `
     <div class="fam-box">
       <div class="fam-header">
