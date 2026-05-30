@@ -5241,6 +5241,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v96', date:'31/05/2569', items:['v94 camera first + no stop search'] },
   { ver:'v95', date:'31/05/2569', items:['v94 fix camera black + show camera first'] },
   { ver:'v94', date:'31/05/2569', items:['v94 fix camera black on search'] },
   { ver:'v93', date:'31/05/2569', items:['v93 keep camera on during face search'] },
@@ -5878,7 +5879,6 @@ async function openFaceAdvanced(initialMode, context) {
     if (!lastDescriptor || searching) return;
     searching = true;
     setSaveBtn(false);
-    stopFaceStream();
     setStatus('detecting', '⏳ กำลังจับคู่ใบหน้า…');
     const matchList = document.getElementById('fam-match-list');
     if (matchList) matchList.innerHTML = '';
@@ -6000,9 +6000,10 @@ async function openFaceAdvanced(initialMode, context) {
 
   // ── detection loop ────────────────────────────────────────────
   try {
-    setStatus('detecting', '⏳ กำลังโหลดโมเดล…');
-    await loadFaceModels();
+    setStatus('detecting', '📷 กำลังเปิดกล้อง…');
     await startFaceWebcam();
+    setStatus('detecting', '⏳ กำลังโหลดโมเดล AI…');
+    await loadFaceModels();
     setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
 
     const video = document.getElementById('fam-video');
