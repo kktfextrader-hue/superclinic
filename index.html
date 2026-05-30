@@ -5240,7 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
-  { ver:'v98', date:'31/05/2569', items:['v98 read mode auto-search'] },
+  { ver:'v99', date:'31/05/2569', items:['v99 auto-open 52% with margin guard'] },
   { ver:'v79', date:'30/05/2569', items:['debug yaw value'] },
   { ver:'v78', date:'30/05/2569', items:['fix face save - enable บันทึกเมื่อมี 1 ภาพ + hint ชัดขึ้น'] },
   { ver:'v77', date:'30/05/2569', items:['fix p is not defined - ใช้ allPatients แทน p ใน onclick'] },
@@ -5906,8 +5906,11 @@ async function openFaceAdvanced(initialMode, context) {
       const best = top[0];
       const conf = Math.max(0, Math.round((1-best.dist)*100));
 
-      // Auto-open if ≥85% confidence (ลด threshold จาก 90 → 85)
-      if (conf >= 85) {
+      // Auto-open if ≥52% confidence + ห่างจากอันดับ 2 ชัดเจน (กันเปิดผิดคน)
+      // เงื่อนไข: ถ้ามีคนที่ 2 ต้องห่าง dist อย่างน้อย 0.08 (≈8%) จึงมั่นใจว่าไม่สับสน
+      const secondDist = top[1] ? top[1].dist : 999;
+      const clearMargin = (secondDist - best.dist) >= 0.08;
+      if (conf >= 52 && (top.length === 1 || clearMargin)) {
         setStatus('matched','✅ Match ' + conf + '% — เปิดข้อมูลผู้ป่วยทันที');
         setTimeout(() => _famSelectPatient(best.patient.hn, best.patient), 800);
         searching = false; return;
