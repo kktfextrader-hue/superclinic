@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v85",
+    "date": "30/05/2569",
+    "items": [
+      "fix face save hn"
+    ]
+  },
+  {
     "ver": "v84",
     "date": "30/05/2569",
     "items": [
