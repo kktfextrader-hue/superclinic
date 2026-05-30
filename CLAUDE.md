@@ -417,3 +417,4 @@ C:\Users\acer\Desktop\Claude\superclinic\push-now.bat
 | F01 | Python script ทุกไฟล์ต้องมี `# -*- coding: utf-8 -*-` + `sys.stdout = io.TextIOWrapper(...)` ต้นไฟล์เสมอ |
 | F02 | ทุก code block คำสั่งต้องรวม `cd` และคำสั่งไว้ใน block เดียว copy ได้ทีเดียว |
 | F03 | ใน wt ต้องใช้ `.\push-now.bat` (มี `.\` นำหน้า) |
+| F04 | **UI Mockup First** — ก่อน patch โค้ด UI ทุกครั้ง ต้องแสดง mockup interactive ใน chat ให้ user approve ก่อนเสมอ ห้าม patch โดยไม่ผ่านขั้นตอนนี้ |

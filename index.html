@@ -758,7 +758,6 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
         <button class="btn btn-green" style="width:100%;justify-content:center;" onclick="showPage('patients',null)"><i class="ti ti-user-plus"></i>ลงทะเบียนผู้ป่วยใหม่</button>
         <button class="btn btn-green" style="width:100%;justify-content:center;background:var(--g2);" onclick="openReceiptModal()"><i class="ti ti-file-invoice"></i>ออกใบเสร็จรับเงิน</button>
         <button class="btn btn-danger" style="width:100%;justify-content:center;"><i class="ti ti-alert-triangle"></i>รายงานแพ้ยา / ฉุกเฉิน</button>
-        <button class="btn btn-outline" style="width:100%;justify-content:center;border-color:#5F8D4E;color:#2F5D50;" onclick="openFaceAdvanced('read')"><i class="ti ti-face-id"></i>ค้นหาผู้ป่วยด้วยใบหน้า</button>
       </div>
     </div>
   </div>
@@ -5240,6 +5239,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v75', date:'30/05/2569', items:['ลบปุ่มค้นหาด้วยใบหน้าออกจาก quick actions'] },
   { ver:'v74', date:'30/05/2569', items:[' opus bug fixed3'] },
   { ver:'v73', date:'30/05/2569', items:[' opus bug fixed3'] },
   { ver:'v72', date:'30/05/2569', items:[' opus bug fixed2'] },
