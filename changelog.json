@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v91",
+    "date": "31/05/2569",
+    "items": [
+      "v90+v91 fix face search + revert avatar"
+    ]
+  },
+  {
     "ver": "v90",
     "date": "31/05/2569",
     "items": [
