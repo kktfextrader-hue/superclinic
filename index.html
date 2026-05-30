@@ -3032,7 +3032,7 @@ function openAddAppt(){
     .face-capture-btn.secondary{background:rgba(255,255,255,.08);color:#aaa;border:1px solid rgba(255,255,255,.12);}
     /* ── Advanced Face Modal ── */
     .fam-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.88);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;}
-    .fam-box{background:#0d1117;border-radius:18px;width:400px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;box-sizing:border-box;}
+    .fam-box{background:#0d1117;border-radius:18px;width:520px;max-width:96vw;max-height:94vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;box-sizing:border-box;}
     .fam-header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;}
     .fam-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
     .fam-tabs{display:flex;gap:6px;}
@@ -3043,7 +3043,7 @@ function openAddAppt(){
     .fam-video-wrap{position:relative;width:100%;background:#000;overflow:hidden;flex-shrink:0;}
     .fam-video-wrap video{width:100%;display:block;transform:scaleX(-1);}
     .fam-video-wrap canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
-    .fam-scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 0%,rgba(96,165,250,.8) 40%,rgba(96,165,250,1) 50%,rgba(96,165,250,.8) 60%,transparent 100%);animation:famScan 2.5s ease-in-out infinite;pointer-events:none;}
+    .fam-scanline{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.25) 35%,rgba(255,255,255,.5) 50%,rgba(255,255,255,.25) 65%,transparent 100%);animation:famScan 3s ease-in-out infinite;pointer-events:none;}
     @keyframes famScan{0%{top:5%}50%{top:90%}100%{top:5%}}
     .fam-indicators{display:flex;gap:10px;padding:6px 12px;background:rgba(0,0,0,.4);}
     .fam-ind{font-size:10px;font-weight:600;letter-spacing:.3px;}
@@ -5231,6 +5231,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v68', date:'30/05/2569', items:['face v68 - layout mockup: cards 3 มุม + ring + scanline ขาว'] },
   { ver:'v67', date:'30/05/2569', items:['fix face modal z-index popup center'] },
   { ver:'v66', date:'30/05/2569', items:['face advanced UI v66 - 3 mode read/save/edit + scanline'] },
   { ver:'v53', date:'28/05/2569', items:['update'] },
@@ -5469,54 +5470,135 @@ async function openFaceAdvanced(initialMode, context) {
   overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.88);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;';
   overlay.innerHTML = `
     <div class="fam-box">
-      <div class="fam-header">
-        <div class="fam-title">ระบบจดจำใบหน้า Advanced</div>
-        <div class="fam-tabs">
-          <button class="fam-tab" id="fam-tab-read"  onclick="_famSetMode('read')"><i class="ti ti-eye" style="font-size:14px;"></i> อ่าน</button>
-          <button class="fam-tab" id="fam-tab-save"  onclick="_famSetMode('save')"><i class="ti ti-camera-plus" style="font-size:14px;"></i> บันทึกใหม่</button>
-          <button class="fam-tab" id="fam-tab-edit"  onclick="_famSetMode('edit')"><i class="ti ti-pencil" style="font-size:14px;"></i> แก้ไข</button>
+
+      <!-- ── Header: Title + 3 Mode Tabs ── -->
+      <div style="padding:16px 20px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#fff;letter-spacing:.3px;">ระบบจดจำใบหน้า</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px;">Advanced Face Recognition</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-left:auto;">
+          <button class="fam-tab" id="fam-tab-read"  onclick="_famSetMode('read')">
+            <i class="ti ti-eye" style="font-size:13px;"></i> อ่าน
+          </button>
+          <button class="fam-tab" id="fam-tab-save"  onclick="_famSetMode('save')">
+            <i class="ti ti-camera-plus" style="font-size:13px;"></i> บันทึกใหม่
+          </button>
+          <button class="fam-tab" id="fam-tab-edit"  onclick="_famSetMode('edit')">
+            <i class="ti ti-pencil" style="font-size:13px;"></i> แก้ไข
+          </button>
         </div>
       </div>
 
-      <div class="fam-video-wrap" id="fam-video-wrap">
-        <video id="fam-video" autoplay playsinline muted style="max-height:38vh;"></video>
-        <canvas id="fam-canvas" style="display:none;"></canvas>
+      <!-- ── Camera View ── -->
+      <div class="fam-video-wrap" id="fam-video-wrap" style="position:relative;">
+        <video id="fam-video" autoplay playsinline muted style="width:100%;max-height:44vh;display:block;object-fit:cover;"></video>
+        <canvas id="fam-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%;"></canvas>
         <div class="fam-scanline" id="fam-scanline"></div>
-      </div>
-      <div class="fam-indicators">
-        <span class="fam-ind">Quality: <span class="val" id="fam-quality">—</span></span>
-        <span class="fam-ind" style="margin-left:auto;">FPS: <span class="val" id="fam-fps">—</span></span>
-      </div>
-
-      <div class="fam-body">
-        <div class="fam-status detecting" id="fam-status">
-          <span class="fam-dot" id="fam-dot" style="background:#C8A96B;"></span>
-          <span class="fam-status-text" id="fam-status-text" style="color:#C8A96B;">⏳ กำลังโหลดโมเดล…</span>
+        <!-- Quality badge top-left -->
+        <div style="position:absolute;top:10px;left:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);border:1px solid rgba(74,222,128,.3);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:6px;">
+          <i class="ti ti-scan" style="font-size:13px;color:#4ade80;"></i>
+          <span style="font-size:12px;font-weight:600;color:#4ade80;">Quality: <span id="fam-quality">—</span></span>
         </div>
+        <!-- FPS badge top-right -->
+        <div style="position:absolute;top:10px;right:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:6px;">
+          <i class="ti ti-activity" style="font-size:13px;color:rgba(255,255,255,.5);"></i>
+          <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.6);">FPS: <span id="fam-fps">—</span></span>
+        </div>
+      </div>
 
-        <div id="fam-save-section" style="display:none;flex-direction:column;gap:8px;">
-          <div class="fam-angle-row" id="fam-angles">
-            <div class="fam-angle"><div class="fam-angle-dot" id="fam-ang-0"></div><span style="color:rgba(255,255,255,.5);">หน้าตรง</span></div>
-            <div class="fam-angle"><div class="fam-angle-dot" id="fam-ang-1"></div><span style="color:rgba(255,255,255,.5);">หันซ้าย</span></div>
-            <div class="fam-angle"><div class="fam-angle-dot" id="fam-ang-2"></div><span style="color:rgba(255,255,255,.5);">หันขวา</span></div>
+      <!-- ── Body ── -->
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;">
+
+        <!-- SAVE section -->
+        <div id="fam-save-section" style="display:none;flex-direction:column;gap:10px;">
+          <!-- Angle cards + progress ring -->
+          <div style="display:flex;gap:6px;align-items:stretch;">
+            <!-- Card: หน้าตรง -->
+            <div id="fam-card-0" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;cursor:pointer;" onclick="_famCaptureFront()">
+              <div id="fam-ang-icon-0" style="width:50px;height:50px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <i class="ti ti-user" style="font-size:22px;color:rgba(255,255,255,.2);"></i>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <div class="fam-angle-dot" id="fam-ang-0"></div>
+                <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);">ตรง</span>
+              </div>
+            </div>
+            <!-- Card: ซ้าย -->
+            <div id="fam-card-1" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;">
+              <div id="fam-ang-icon-1" style="width:50px;height:50px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <i class="ti ti-user" style="font-size:22px;color:rgba(255,255,255,.2);"></i>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <div class="fam-angle-dot" id="fam-ang-1"></div>
+                <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);">ซ้าย</span>
+              </div>
+            </div>
+            <!-- Card: ขวา -->
+            <div id="fam-card-2" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;">
+              <div id="fam-ang-icon-2" style="width:50px;height:50px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <i class="ti ti-user" style="font-size:22px;color:rgba(255,255,255,.2);"></i>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <div class="fam-angle-dot" id="fam-ang-2"></div>
+                <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);">ขวา</span>
+              </div>
+            </div>
+            <!-- Progress ring -->
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 6px;gap:4px;min-width:64px;">
+              <svg id="fam-ring-svg" width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4"/>
+                <circle id="fam-ring-arc" cx="28" cy="28" r="23" fill="none" stroke="#C8A96B" stroke-width="4"
+                  stroke-dasharray="0 144.51" stroke-linecap="round"
+                  transform="rotate(-90 28 28)" style="transition:stroke-dasharray .4s,stroke .3s;"/>
+                <text x="28" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" id="fam-ring-num">0</text>
+                <text x="28" y="37" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.4)">มุม</text>
+              </svg>
+            </div>
           </div>
-          <button class="fam-save-btn" id="fam-save-btn" disabled onclick="_famDoSave()">บันทึกใหม่</button>
+          <!-- Legend -->
+          <div style="display:flex;gap:12px;font-size:10px;color:rgba(255,255,255,.4);padding:0 2px;">
+            <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);margin-right:4px;vertical-align:middle;"></span>ยังไม่ได้</span>
+            <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-right:4px;vertical-align:middle;"></span>เก็บแล้ว</span>
+            <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#facc15;margin-right:4px;vertical-align:middle;"></span>1 มุม</span>
+            <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#60a5fa;margin-right:4px;vertical-align:middle;"></span>2 มุม</span>
+            <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-right:4px;vertical-align:middle;"></span>3 มุม</span>
+          </div>
         </div>
 
+        <!-- READ section -->
         <div id="fam-read-section" style="display:none;flex-direction:column;gap:8px;">
-          <button class="fam-save-btn" id="fam-search-btn" disabled onclick="_famDoSearch()" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;">ค้นหาผู้ป่วย</button>
           <div class="fam-match-list" id="fam-match-list"></div>
         </div>
 
+        <!-- EDIT section -->
         <div id="fam-edit-section" style="display:none;flex-direction:column;gap:8px;">
           <div style="font-size:11px;color:rgba(255,255,255,.4);">เลือกผู้ป่วยที่ต้องการอัพเดทใบหน้า</div>
           <select class="fam-select-patient" id="fam-edit-patient">
             <option value="">— กำลังโหลด… —</option>
           </select>
-          <button class="fam-save-btn" id="fam-edit-btn" disabled onclick="_famDoEdit()" style="background:linear-gradient(135deg,#991b1b,#ef4444);color:#fff;">อัพเดทใบหน้า</button>
         </div>
 
-        <button class="fam-cancel-btn" onclick="closeFaceModal()">ยกเลิก</button>
+        <!-- Status bar -->
+        <div class="fam-status detecting" id="fam-status">
+          <span class="fam-dot" id="fam-dot" style="background:#C8A96B;"></span>
+          <div style="flex:1;">
+            <div class="fam-status-text" id="fam-status-text" style="color:#C8A96B;">⏳ กำลังโหลดโมเดล…</div>
+            <div id="fam-status-sub" style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px;display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:8px;">
+          <button class="fam-save-btn" id="fam-action-btn" disabled onclick="_famDoAction()" style="flex:2;">
+            <i class="ti ti-device-floppy" style="font-size:16px;vertical-align:-2px;margin-right:6px;"></i>
+            <span id="fam-action-label">บันทึกใหม่</span>
+          </button>
+          <button onclick="closeFaceModal()" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:10px;font-size:13px;cursor:pointer;padding:11px 8px;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <i class="ti ti-x" style="font-size:15px;"></i> ยกเลิก
+          </button>
+        </div>
+
       </div>
     </div>`;
 
@@ -5532,46 +5614,77 @@ async function openFaceAdvanced(initialMode, context) {
     document.getElementById('fam-save-section').style.display = m === 'save' ? 'flex' : 'none';
     document.getElementById('fam-read-section').style.display = m === 'read' ? 'flex' : 'none';
     document.getElementById('fam-edit-section').style.display = m === 'edit' ? 'flex' : 'none';
+    const labels = { save:'บันทึกใหม่', read:'ค้นหาผู้ป่วย', edit:'อัพเดทใบหน้า' };
+    const icons  = { save:'ti-device-floppy', read:'ti-search', edit:'ti-refresh' };
+    const lbl = document.getElementById('fam-action-label');
+    const btn = document.getElementById('fam-action-btn');
+    if (lbl) lbl.textContent = labels[m] || '';
+    if (btn) {
+      const ic = btn.querySelector('i');
+      if (ic) ic.className = 'ti ' + (icons[m]||'ti-device-floppy') + ' ti-icon';
+      if (m === 'save') btn.style.background = 'linear-gradient(135deg,#C8A96B,#a8853b)';
+      else if (m === 'read') btn.style.background = 'linear-gradient(135deg,#1d4ed8,#3b82f6)';
+      else btn.style.background = 'linear-gradient(135deg,#991b1b,#ef4444)';
+    }
     if (m === 'edit') _famLoadPatientList();
   };
 
   _famSetMode(mode);
 
   // ── status helpers ────────────────────────────────────────────
-  const setStatus = (type, msg) => {
+  const setStatus = (type, msg, sub) => {
     const box  = document.getElementById('fam-status');
     const dot  = document.getElementById('fam-dot');
     const txt  = document.getElementById('fam-status-text');
+    const subEl= document.getElementById('fam-status-sub');
     if (!box) return;
     const map = {
-      detecting: { bg:'rgba(200,169,107,.1)', dotC:'#C8A96B', txtC:'#C8A96B' },
-      found:     { bg:'rgba(74,222,128,.1)',  dotC:'#4ade80', txtC:'#4ade80' },
-      error:     { bg:'rgba(248,113,113,.1)', dotC:'#f87171', txtC:'#f87171' },
-      matched:   { bg:'rgba(96,165,250,.1)',  dotC:'#60a5fa', txtC:'#60a5fa' },
+      detecting: { bg:'rgba(200,169,107,.08)', dotC:'#C8A96B', txtC:'#C8A96B' },
+      found:     { bg:'rgba(74,222,128,.1)',   dotC:'#4ade80', txtC:'#4ade80' },
+      error:     { bg:'rgba(248,113,113,.1)',  dotC:'#f87171', txtC:'#f87171' },
+      matched:   { bg:'rgba(96,165,250,.1)',   dotC:'#60a5fa', txtC:'#60a5fa' },
     };
     const s = map[type] || map.detecting;
     box.style.background = s.bg;
     if (dot) dot.style.background = s.dotC;
     if (txt) { txt.style.color = s.txtC; txt.textContent = msg; }
+    if (subEl) {
+      if (sub) { subEl.textContent = sub; subEl.style.display = 'block'; }
+      else subEl.style.display = 'none';
+    }
   };
 
   const setSaveBtn = (ok) => {
-    const btn = document.getElementById('fam-save-btn');
-    const sbtn = document.getElementById('fam-search-btn');
-    const ebtn = document.getElementById('fam-edit-btn');
-    if (btn)  { btn.disabled  = !ok; }
-    if (sbtn) { sbtn.disabled = !ok; }
-    if (ebtn) { ebtn.disabled = !ok; }
+    const btn = document.getElementById('fam-action-btn');
+    if (btn) { btn.disabled = !ok; btn.style.opacity = ok ? '1' : '0.45'; }
   };
 
   const updateAngles = () => {
+    const count = anglesCaptured.filter(Boolean).length;
+    const ringColors = ['','#facc15','#60a5fa','#4ade80'];
     anglesCaptured.forEach((captured, i) => {
-      const dot = document.getElementById('fam-ang-' + i);
-      if (dot) {
-        const count = anglesCaptured.filter(Boolean).length;
-        dot.className = 'fam-angle-dot' + (captured ? (count >= 3 ? ' captured-2' : ' captured') : '');
+      const dot   = document.getElementById('fam-ang-' + i);
+      const card  = document.getElementById('fam-card-' + i);
+      const icon  = document.getElementById('fam-ang-icon-' + i);
+      if (dot) dot.className = 'fam-angle-dot' + (captured ? (count >= 3 ? ' captured-2' : ' captured') : '');
+      if (card) {
+        card.style.borderColor = captured ? (count >= 3 ? 'rgba(74,222,128,.5)' : (count >= 2 ? 'rgba(96,165,250,.5)' : 'rgba(250,204,21,.5)')) : 'rgba(255,255,255,.1)';
+        card.style.background  = captured ? 'rgba(74,222,128,.06)' : 'rgba(255,255,255,.04)';
+      }
+      if (icon && captured && angleFrames[i]) {
+        icon.innerHTML = '<img src="' + angleFrames[i].dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">';
       }
     });
+    // update progress ring
+    const arc = document.getElementById('fam-ring-arc');
+    const num = document.getElementById('fam-ring-num');
+    const circum = 2 * Math.PI * 23;
+    if (arc) {
+      const pct = count / 3;
+      arc.setAttribute('stroke-dasharray', (pct * circum).toFixed(1) + ' ' + circum.toFixed(1));
+      arc.setAttribute('stroke', ringColors[count] || '#C8A96B');
+    }
+    if (num) num.textContent = count;
   };
 
   // ── load patient list for edit mode ───────────────────────────
@@ -5604,6 +5717,12 @@ async function openFaceAdvanced(initialMode, context) {
   };
 
   // ── SAVE action ───────────────────────────────────────────────
+  window._famDoAction = function() {
+    if (mode === 'save') _famDoSave();
+    else if (mode === 'read') _famDoSearch();
+    else if (mode === 'edit') _famDoEdit();
+  };
+
   window._famDoSave = async function() {
     const frames = angleFrames.filter(Boolean);
     if (!frames.length) { showToast('ยังไม่มีภาพ','error'); return; }
@@ -5786,7 +5905,9 @@ async function openFaceAdvanced(initialMode, context) {
           if (sbtn) { sbtn.disabled = false; }
         }
 
-        setStatus('found', '✅ ตรวจพบใบหน้า ' + (score*100).toFixed(0) + '%');
+        const captured_labels = ['หน้าตรง','หันซ้าย','หันขวา'];
+        const done = anglesCaptured.map((c,i) => c ? '● '+captured_labels[i] : '').filter(Boolean).join('  ');
+        setStatus('found', '✅ ตรวจพบใบหน้า ' + (score*100).toFixed(0) + '%', done || null);
       } else {
         const qEl = document.getElementById('fam-quality');
         if (qEl) qEl.textContent = '—';
