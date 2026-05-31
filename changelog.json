@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v124",
+    "date": "31/05/2569",
+    "items": [
+      "v124 fix: face toggle ซ่อน/แสดงปุ่มทุกจุด, sync faceVersion select"
+    ]
+  },
+  {
     "ver": "v123",
     "date": "31/05/2569",
     "items": [

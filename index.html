@@ -1458,8 +1458,8 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
             <div class="setting-sub">เวอร์ชันระบบจดจำใบหน้า</div>
           </div>
           <select onchange="localStorage.setItem('faceVersion',this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;background:#fff;color:var(--dk);">
-            <option value="standard" id="fv-standard">Standard</option>
-            <option value="advanced" id="fv-advanced">Advanced</option>
+            <option value="standard" id="fv-standard">Standard (อ่านอย่างเดียว)</option>
+            <option value="advanced" id="fv-advanced" selected>Advanced (บันทึก+อ่าน+แก้ไข)</option>
           </select>
         </div>
         <div class="setting-row" style="padding:12px 0;border-top:1px solid rgba(0,0,0,.07);">
@@ -5305,6 +5305,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v124', date:'31/05/2569', items:['v124 fix: face toggle ซ่อน/แสดงปุ่มทุกจุด, sync faceVersion select'] },
   { ver:'v123', date:'31/05/2569', items:['v123 face: dropdown text-only, match card no-avatar balanced layout'] },
   { ver:'v122', date:'31/05/2569', items:['v122 face select: viewPatient โดยตรง + match cards compact+avatar gender'] },
   { ver:'v121', date:'31/05/2569', items:['v121 face: avatar gender color, banner+phone, scan2 hide tabs, patients 1-dropdown+autocomplete'] },
@@ -6307,9 +6308,13 @@ function applyFeatureUI(key) {
     if (st) st.textContent = on ? '● เปิดใช้งาน' : '● ปิดการใช้งาน';
     if (st) st.style.color = on ? 'var(--ok)' : 'var(--er)';
     // ซ่อน/แสดงปุ่มใบหน้าทุกที่
-    document.querySelectorAll('[onclick*="openFaceCapture"],[onclick*="openFaceSearch"]').forEach(btn => {
-      btn.style.display = on ? '' : 'none';
-    });
+    // ซ่อน/แสดงทุกปุ่มที่เกี่ยวกับ face scan
+    document.querySelectorAll(
+      '[onclick*="openFaceCapture"],[onclick*="openFaceSearch"],' +
+      '[onclick*="openFaceAdvanced"],[onclick*="_fsdToggle"]'
+    ).forEach(btn => { btn.style.display = on ? '' : 'none'; });
+    const _fsdW = document.getElementById('fsd-wrap');
+    if (_fsdW) _fsdW.style.display = on ? '' : 'none';
   }
   if (key === 'idcard') {
     const st = document.getElementById('feat-idcard-status');
@@ -6325,6 +6330,10 @@ function applyFeatureUI(key) {
 function syncFeatureButtons() {
   applyFeatureUI('face');
   applyFeatureUI('idcard');
+  // sync faceVersion select ให้แสดงค่าที่บันทึกไว้
+  const _fv = localStorage.getItem('faceVersion') || 'advanced';
+  const _sel = document.querySelector('select[onchange*="faceVersion"]');
+  if (_sel) _sel.value = _fv;
 }
 
 // เรียกตอน DOMContentLoaded (เพิ่มใน boot)
