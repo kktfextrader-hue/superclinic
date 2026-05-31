@@ -5240,6 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v110', date:'31/05/2569', items:['v109 use own repo raw for weights'] },
   { ver:'v109', date:'31/05/2569', items:['v108 add local weights'] },
   { ver:'v108', date:'31/05/2569', items:['v108 add local weights folder'] },
   { ver:'v107', date:'31/05/2569', items:['v105 add face weights folder to repo'] },
@@ -5408,7 +5409,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
    Threshold 0.45, Top-3 match
    ============================================================ */
 
-const FACE_MODELS_URL = './weights';
+const FACE_MODELS_URL = 'https://raw.githubusercontent.com/kktfextrader-hue/superclinic/main/weights';
 let _faceModelsLoaded = false;
 let _faceStream = null;      // active MediaStream
 let _faceAnimFrame = null;   // requestAnimationFrame id

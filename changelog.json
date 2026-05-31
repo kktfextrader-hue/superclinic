@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v110",
+    "date": "31/05/2569",
+    "items": [
+      "v109 use own repo raw for weights"
+    ]
+  },
+  {
     "ver": "v109",
     "date": "31/05/2569",
     "items": [
