@@ -5240,6 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v114', date:'31/05/2569', items:['v114 fix face match countdown selector'] },
   { ver:'v113', date:'31/05/2569', items:['v113 fix _famLoadPatientList undefined'] },
   { ver:'v112', date:'31/05/2569', items:['v112 face match countdown 20s'] },
   { ver:'v111', date:'31/05/2569', items:['v109 add face-api weights'] },
@@ -5932,7 +5933,7 @@ async function openFaceAdvanced(initialMode, context) {
       const clearMargin = (secondDist - best.dist) >= 0.08;
       if (conf >= 52 && (top.length === 1 || clearMargin)) {
         setStatus('matched','✅ Match ' + conf + '% — เปิดข้อมูลผู้ป่วยทันที');
-        let _countdown=20; const _cdTimer=setInterval(()=>{ _countdown--; const el=document.getElementById('fam-status'); if(el) el.textContent='✅ Match '+conf+'% — เปิดใน '+_countdown+' วิ'; if(_countdown<=0){clearInterval(_cdTimer);_famSelectPatient(best.patient.hn,best.patient);}},1000); window._cdTimer=_cdTimer;
+        let _countdown=20; const _cdTimer=setInterval(()=>{ _countdown--; const el=document.querySelector('.fam-status-text'); if(el) el.textContent='✅ Match '+conf+'% — เปิดใน '+_countdown+' วิ'; if(_countdown<=0){clearInterval(_cdTimer);_famSelectPatient(best.patient.hn,best.patient);}},1000); window._cdTimer=_cdTimer;
         searching = false; return;
       }
 

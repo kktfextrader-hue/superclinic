@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v114",
+    "date": "31/05/2569",
+    "items": [
+      "v114 fix face match countdown selector"
+    ]
+  },
+  {
     "ver": "v113",
     "date": "31/05/2569",
     "items": [
