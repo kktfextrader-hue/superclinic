@@ -5305,6 +5305,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v122', date:'31/05/2569', items:['v122 face select: viewPatient โดยตรง + match cards compact+avatar gender'] },
   { ver:'v121', date:'31/05/2569', items:['v121 face: avatar gender color, banner+phone, scan2 hide tabs, patients 1-dropdown+autocomplete'] },
   { ver:'v120', date:'31/05/2569', items:['v120 face UI: button tabs, match+phone, throttle status, scan1-2-3 patients, HN ctx fix, face-scan.md'] },
   { ver:'v119', date:'31/05/2569', items:['v119 face scan: ลบ countdown auto-close, หยุด auto-re-search หลังเจอผล, highlight high-conf match'] },
@@ -6050,17 +6051,20 @@ async function openFaceAdvanced(initialMode, context) {
           const barColor = c >= 70 ? '#4ade80' : c >= 55 ? '#facc15' : '#f87171';
           const isTop = i===0 && highConf;
           const displayName = name.trim() || p.hn || '—';
+          const _male = p.gender==='M'||p.gender==='ชาย';
+          const _avBg = _male ? 'linear-gradient(135deg,#1e40af,#3b82f6)' : 'linear-gradient(135deg,#2F5D50,#4a9e6e)';
           return `<div class="fam-match-item" onclick="_famSelectPatient('${p.hn}', null)"
-            style="padding:14px 16px;gap:14px;${isTop?'border:2px solid #4ade80;background:rgba(74,222,128,.07);':'border:1.5px solid rgba(255,255,255,.08);'}">
-            <div style="width:54px;height:54px;border-radius:50%;background:${isTop?'rgba(74,222,128,.2)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${i===0?'⭐':'👤'}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:${isTop?'17':'15'}px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</div>
-              <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;">HN: ${p.hn||'—'}</div>
-              <div style="font-size:13px;color:${isTop?'#86efac':'rgba(255,255,255,.6)'};margin-top:4px;font-weight:500;">📞 ${p.phone||'—'}</div>
+            style="padding:10px 14px;gap:12px;align-items:center;${isTop?'border:2px solid #4ade80;background:rgba(74,222,128,.07);':'border:1.5px solid rgba(255,255,255,.08);'}">
+            <div style="width:44px;height:44px;border-radius:50%;background:${_avBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;border:${isTop?'2px solid #4ade80':'2px solid rgba(255,255,255,.1)'};">
+              <i class="ti ti-user-circle" style="font-size:22px;color:#fff;line-height:1;"></i>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
-              <div style="font-size:${isTop?'24':'20'}px;font-weight:900;color:${barColor};">${c}%</div>
-              <button style="font-size:12px;font-weight:700;background:${isTop?'#4ade80':'rgba(255,255,255,.12)'};border:none;color:${isTop?'#000':'#fff'};padding:7px 18px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:filter .15s;" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">${isTop?'✓ เปิดเลย':'เลือก'}</button>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${isTop?'⭐ ':''} ${displayName}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;white-space:nowrap;">HN: ${p.hn||'—'} &nbsp;·&nbsp; 📞 ${p.phone||'—'}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+              <span style="font-size:${isTop?'20':'17'}px;font-weight:900;color:${barColor};">${c}%</span>
+              <button style="font-size:11px;font-weight:700;background:${isTop?'#4ade80':'rgba(255,255,255,.12)'};border:none;color:${isTop?'#000':'#fff'};padding:5px 13px;border-radius:7px;cursor:pointer;white-space:nowrap;transition:filter .15s;" onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter=''">${isTop?'✓ เปิดเลย':'เลือก'}</button>
             </div>
           </div>`;
         }).join('');
@@ -6104,27 +6108,19 @@ async function openFaceAdvanced(initialMode, context) {
     const pt = pObj || (window.allPatients||[]).find(x => x.hn === hn);
     const name = pt ? ((pt.prefix||'') + (pt.first_name||'') + ' ' + (pt.last_name||'')).trim() : '';
 
-    // ── Navigate ไปหน้า patients แล้วเปิด viewPatient ──
-    if (typeof showPage === 'function') {
-      const navEl = document.querySelector('.nav-item[onclick*=\'patients\']');
-      showPage('patients', navEl);
-    }
-    // รอให้ allPatients โหลดก่อน (กรณีข้ามหน้า)
-    const _openView = () => {
-      if (typeof viewPatient === 'function' && (window.allPatients||[]).find(x => x.hn === hn)) {
-        viewPatient(hn);
-        if (name) showToast('✅ พบผู้ป่วย: ' + name);
-      } else {
-        setTimeout(_openView, 300);
-      }
-    };
-    setTimeout(_openView, 200);
+    if (name) showToast('✅ พบผู้ป่วย: ' + name);
 
-    // ── ยัง fill reg-search ด้วย (fallback กรณีอยู่หน้า register) ──
-    const regSearch = document.getElementById('reg-search');
-    if (regSearch && name) {
-      regSearch.value = name;
-      regSearch.dispatchEvent(new Event('input'));
+    // เปิด viewPatient โดยตรง — ไม่ต้องไปหน้า patients ก่อน
+    if (typeof viewPatient === 'function') {
+      const _cached = (window.allPatients||[]).find(x => x.hn === hn);
+      if (_cached) {
+        setTimeout(() => viewPatient(hn), 80);
+      } else {
+        callApi('patients','list').then(res => {
+          window.allPatients = (res.data?.rows||[]).filter(p=>p.is_active!=='FALSE'&&p.is_active!==false);
+          viewPatient(hn);
+        }).catch(() => showToast('โหลดข้อมูลผู้ป่วยไม่สำเร็จ','error'));
+      }
     }
   };
 
