@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v102",
+    "date": "31/05/2569",
+    "items": [
+      "v101 faster face model CDN via jsdelivr npm"
+    ]
+  },
+  {
     "ver": "v101",
     "date": "31/05/2569",
     "items": [
