@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v119",
+    "date": "31/05/2569",
+    "items": [
+      "v119 face scan: ลบ countdown auto-close, หยุด auto-re-search หลังเจอผล, highlight high-conf match"
+    ]
+  },
+  {
     "ver": "v118",
     "date": "31/05/2569",
     "items": [

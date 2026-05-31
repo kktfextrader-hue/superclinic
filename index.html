@@ -5242,6 +5242,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v119', date:'31/05/2569', items:['v119 face scan: ลบ countdown auto-close, หยุด auto-re-search หลังเจอผล, highlight high-conf match'] },
   { ver:'v118', date:'31/05/2569', items:['v118 face UX: mode badge, no quality badge, face icon avatar, bigger cards, no auto-save, hover buttons'] },
   { ver:'v117', date:'31/05/2569', items:['v116 autopilot test'] },
   { ver:'v116', date:'31/05/2569', items:['v116 autopilot test'] },
@@ -5496,6 +5497,7 @@ async function openFaceAdvanced(initialMode, context) {
   let anglesCaptured = [false, false, false]; // [front, left, right]
   let angleFrames    = [null, null, null];
   let searching = false;
+  let resultShown = false; // หยุด auto-scan หลังเจอผล
 
   // ── build overlay ────────────────────────────────────────────
   const overlay = document.createElement('div');
@@ -5919,8 +5921,8 @@ async function openFaceAdvanced(initialMode, context) {
   window._famDoSearch = async function() {
     if (!lastDescriptor || searching) return;
     searching = true;
+    resultShown = false; // reset ให้ scan ซ้ำได้เมื่อกดปุ่มเอง
     setSaveBtn(false);
-    // ไม่หยุดกล้องระหว่าง search — หยุดเฉพาะตอน match แล้ว
     setStatus('detecting', '⏳ กำลังจับคู่ใบหน้า…');
     const matchList = document.getElementById('fam-match-list');
     if (matchList) matchList.innerHTML = '';
@@ -5944,22 +5946,22 @@ async function openFaceAdvanced(initialMode, context) {
       results.sort((a,b) => a.dist-b.dist);
       const top = results.slice(0,3).filter(r => r.dist < THRESHOLD + 0.25);
 
-      if (!top.length) { setStatus('error','❌ ไม่พบผู้ป่วยที่ตรงกัน'); searching=false; return; }
+      if (!top.length) { setStatus('error','❌ ไม่พบผู้ป่วยที่ตรงกัน'); resultShown=true; searching=false; return; }
 
       const best = top[0];
       const conf = Math.max(0, Math.round((1-best.dist)*100));
 
-      // Auto-open if ≥52% confidence + ห่างจากอันดับ 2 ชัดเจน (กันเปิดผิดคน)
-      // เงื่อนไข: ถ้ามีคนที่ 2 ต้องห่าง dist อย่างน้อย 0.08 (≈8%) จึงมั่นใจว่าไม่สับสน
+      // แสดงผลใน list — ไม่มี auto-navigate ไม่มี countdown
       const secondDist = top[1] ? top[1].dist : 999;
       const clearMargin = (secondDist - best.dist) >= 0.08;
-      if (conf >= 52 && (top.length === 1 || clearMargin)) {
-        setStatus('matched','✅ Match ' + conf + '% — เปิดข้อมูลผู้ป่วยทันที');
-        let _countdown=20; const _cdTimer=setInterval(()=>{ _countdown--; const el=document.querySelector('.fam-status-text'); if(el) el.textContent='✅ Match '+conf+'% — เปิดใน '+_countdown+' วิ'; if(_countdown<=0){clearInterval(_cdTimer);_famSelectPatient(best.patient.hn,best.patient);}},1000); window._cdTimer=_cdTimer;
-        searching = false; return;
-      }
+      const highConf = conf >= 52 && (top.length === 1 || clearMargin);
+      resultShown = true; // หยุด auto-search loop ไม่ให้ล้างผลซ้ำ
 
-      setStatus('found','⚠️ พบผู้ป่วยที่ใกล้เคียง — กดเลือกเพื่อยืนยัน');
+      if (highConf) {
+        setStatus('matched', '✅ Match ' + conf + '% — กดชื่อเพื่อเปิดข้อมูล');
+      } else {
+        setStatus('found', '⚠️ พบผู้ป่วยใกล้เคียง — กดเลือกเพื่อยืนยัน');
+      }
 
       if (matchList) {
         matchList.innerHTML = top.map((r,i) => {
@@ -5967,15 +5969,16 @@ async function openFaceAdvanced(initialMode, context) {
           const c = Math.max(0, Math.round((1-r.dist)*100));
           const name = (p.prefix||'') + (p.first_name||'') + ' ' + (p.last_name||'');
           const barColor = c >= 70 ? '#4ade80' : c >= 55 ? '#facc15' : '#f87171';
-          return `<div class="fam-match-item" onclick="_famSelectPatient('${p.hn}', null)">
-            <div class="fam-match-thumb">${i===0 ? '⭐' : (i+1)}</div>
+          const isTop = i===0 && highConf;
+          return `<div class="fam-match-item" onclick="_famSelectPatient('${p.hn}', null)" style="${isTop?'border-color:#4ade80;background:rgba(74,222,128,.08);':''}">
+            <div class="fam-match-thumb" style="${isTop?'background:rgba(74,222,128,.25);color:#4ade80;font-size:18px;':''}"> ${i===0 ? '⭐' : (i+1)}</div>
             <div style="flex:1;">
-              <div style="font-size:13px;font-weight:600;color:#fff;">${name.trim()}</div>
+              <div style="font-size:${isTop?'15':'13'}px;font-weight:700;color:#fff;">${name.trim()}</div>
               <div style="font-size:11px;color:rgba(255,255,255,.4);">HN: ${p.hn||'—'}</div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:14px;font-weight:700;color:${barColor};">${c}%</div>
-              <button style="font-size:10px;background:rgba(255,255,255,.08);border:none;color:#fff;padding:3px 8px;border-radius:4px;cursor:pointer;margin-top:2px;">เลือก</button>
+              <div style="font-size:${isTop?'18':'14'}px;font-weight:700;color:${barColor};">${c}%</div>
+              <button style="font-size:10px;background:${isTop?'#4ade80':'rgba(255,255,255,.08)'};border:none;color:${isTop?'#000':'#fff'};padding:3px 10px;border-radius:4px;cursor:pointer;margin-top:2px;font-weight:${isTop?'700':'400'};">${isTop?'✓ เปิดเลย':'เลือก'}</button>
             </div>
           </div>`;
         }).join('');
@@ -6128,7 +6131,7 @@ async function openFaceAdvanced(initialMode, context) {
         if (mode === 'read') {
           setSaveBtn(true);
           // auto-search เมื่อหน้าตรง (|yaw|<20) + quality>=65% + ไม่ได้ search อยู่
-          if (Math.abs(yaw) < 20 && score >= 0.65 && !searching && now - lastSampleTime > 1500) {
+          if (Math.abs(yaw) < 20 && score >= 0.65 && !searching && !resultShown && now - lastSampleTime > 1500) {
             lastSampleTime = now;
             _famDoSearch();
           }
