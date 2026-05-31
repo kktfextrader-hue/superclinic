@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v104",
+    "date": "31/05/2569",
+    "items": [
+      "v104 revert to jsDelivr GitHub CDN"
+    ]
+  },
+  {
     "ver": "v103",
     "date": "31/05/2569",
     "items": [
