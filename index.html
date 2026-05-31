@@ -2245,7 +2245,7 @@ function renderPatients(filter){
     const safeName=name.replace(/"/g,'&quot;');
     return `<tr data-pid="${safePid}" data-name="${safeName}">
       <td style="color:var(--go);font-weight:600;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)">${p.hn||'—'}</td>
-      <td><div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)"><div class="av" style="position:relative;">${initials(name)}${p.face_descriptor?"<span title='face' style='position:absolute;bottom:-2px;right:-2px;width:13px;height:13px;background:#4ade80;border-radius:50%;border:2px solid #1e293b;'></span>":""}</div>
+      <td><div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)"><div class="av" style="position:relative;background:linear-gradient(135deg,var(--g1),var(--g2));color:#e5d3a3;"><i class="ti ti-user-circle" style="font-size:20px;line-height:1;"></i>${p.face_descriptor?"<span title='บันทึกใบหน้าแล้ว' style='position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#4ade80;border-radius:50%;border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:7px;'>✓</span>":""}</div>
         <div><div style="font-size:13px;font-weight:500;">${name}</div><div style="font-size:11px;color:#aaa;">${p.email||'—'}</div></div>
       </div></td>
       <td>${p.age||'—'}</td>
@@ -3045,7 +3045,7 @@ function openAddAppt(){
     .fam-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
     .fam-tabs{display:flex;gap:6px;}
     .fam-tab{flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.04);color:rgba(255,255,255,.55);display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2px;}
-    .fam-tab:hover{background:rgba(255,255,255,.09);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.2);}
+    .fam-tab:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.35);transform:translateY(-2px);box-shadow:0 5px 16px rgba(0,0,0,.45);}
     .fam-tab.active-read{background:linear-gradient(135deg,#1a3d2b,#0f2818);color:#4ade80;border:1.5px solid #4ade80;box-shadow:0 0 12px rgba(74,222,128,.35),inset 0 0 8px rgba(74,222,128,.1);font-weight:700;}
     .fam-tab.active-save{background:linear-gradient(135deg,#3d2a0f,#2a1a05);color:#C8A96B;border:1.5px solid #C8A96B;box-shadow:0 0 12px rgba(200,169,107,.4),inset 0 0 8px rgba(200,169,107,.12);font-weight:700;}
     .fam-tab.active-edit{background:linear-gradient(135deg,#3d1a1a,#2a0f0f);color:#f87171;border:1.5px solid #f87171;box-shadow:0 0 12px rgba(248,113,113,.35),inset 0 0 8px rgba(248,113,113,.1);font-weight:700;}
@@ -3065,6 +3065,7 @@ function openAddAppt(){
     .fam-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s;}
     .fam-status-text{font-size:13px;font-weight:500;flex:1;}
     .fam-save-btn{width:100%;padding:11px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;background:linear-gradient(135deg,#C8A96B,#a8853b);color:#1a1a00;letter-spacing:.3px;}
+    .fam-save-btn:not(:disabled):hover{filter:brightness(1.14);transform:translateY(-2px);box-shadow:0 6px 20px rgba(200,169,107,.45);}
     .fam-save-btn:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.25);cursor:not-allowed;}
     .fam-angle-row{display:flex;gap:8px;justify-content:center;}
     .fam-angle{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:500;}
@@ -3075,7 +3076,8 @@ function openAddAppt(){
     .fam-match-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;cursor:pointer;transition:all .2s;}
     .fam-match-item:hover{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.2);}
     .fam-match-thumb{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
-    .fam-cancel-btn{width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;}
+    .fam-cancel-btn{width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;transition:all .2s;}
+    .fam-cancel-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.2);transform:translateY(-1px);}
     .fam-select-patient{background:rgba(255,255,255,.06);border:none;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;width:100%;}
     .face-preview-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid rgba(200,169,107,.4);flex-shrink:0;}
 
@@ -5240,6 +5242,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v118', date:'31/05/2569', items:['v118 face UX: mode badge, no quality badge, face icon avatar, bigger cards, no auto-save, hover buttons'] },
   { ver:'v117', date:'31/05/2569', items:['v116 autopilot test'] },
   { ver:'v116', date:'31/05/2569', items:['v116 autopilot test'] },
   { ver:'v115', date:'31/05/2569', items:['v115 face badge on patient list'] },
@@ -5502,22 +5505,27 @@ async function openFaceAdvanced(initialMode, context) {
     <div class="fam-box">
 
       <!-- ── Header: Title + 3 Mode Tabs ── -->
-      <div style="padding:16px 20px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <div>
-          <div style="font-size:18px;font-weight:700;color:#fff;letter-spacing:.3px;">ระบบจดจำใบหน้า</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px;">Advanced Face Recognition</div>
-          <div id="fam-patient-name" style="font-size:12px;color:#C8A96B;margin-top:3px;display:none;"></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-left:auto;">
-          <button class="fam-tab" id="fam-tab-read"  onclick="_famSetMode('read')">
-            <i class="ti ti-eye" style="font-size:13px;"></i> อ่าน
-          </button>
-          <button class="fam-tab" id="fam-tab-save"  onclick="_famSetMode('save')">
-            <i class="ti ti-camera-plus" style="font-size:13px;"></i> บันทึกใหม่
-          </button>
-          <button class="fam-tab" id="fam-tab-edit"  onclick="_famSetMode('edit')">
-            <i class="ti ti-pencil" style="font-size:13px;"></i> แก้ไข
-          </button>
+      <div style="padding:16px 20px 12px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px;">ระบบจดจำใบหน้า</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:1px;">Advanced Face Recognition</div>
+            <div id="fam-patient-name" style="font-size:12px;color:#C8A96B;margin-top:3px;display:none;"></div>
+          </div>
+          <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+            <div id="fam-mode-badge" style="font-size:20px;font-weight:900;letter-spacing:.5px;padding:6px 22px;border-radius:12px;background:rgba(200,169,107,.15);color:#C8A96B;border:2.5px solid #C8A96B;transition:all .3s;text-align:center;white-space:nowrap;">📷 บันทึกใหม่</div>
+            <div style="display:flex;gap:6px;">
+              <button class="fam-tab" id="fam-tab-read"  onclick="_famSetMode('read')">
+                <i class="ti ti-eye" style="font-size:13px;"></i> อ่านหน้า
+              </button>
+              <button class="fam-tab" id="fam-tab-save"  onclick="_famSetMode('save')">
+                <i class="ti ti-camera-plus" style="font-size:13px;"></i> บันทึก
+              </button>
+              <button class="fam-tab" id="fam-tab-edit"  onclick="_famSetMode('edit')">
+                <i class="ti ti-pencil" style="font-size:13px;"></i> แก้ไข
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -5536,16 +5544,8 @@ async function openFaceAdvanced(initialMode, context) {
         <video id="fam-video" autoplay playsinline muted style="width:100%;max-height:44vh;display:block;object-fit:cover;"></video>
         <canvas id="fam-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%;"></canvas>
         <div class="fam-scanline" id="fam-scanline"></div>
-        <!-- Quality badge top-left -->
-        <div style="position:absolute;top:10px;left:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);border:1px solid rgba(74,222,128,.3);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:6px;">
-          <i class="ti ti-scan" style="font-size:13px;color:#4ade80;"></i>
-          <span style="font-size:12px;font-weight:600;color:#4ade80;">Quality: <span id="fam-quality">—</span></span>
-        </div>
-        <!-- FPS badge top-right -->
-        <div style="position:absolute;top:10px;right:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:6px;">
-          <i class="ti ti-activity" style="font-size:13px;color:rgba(255,255,255,.5);"></i>
-          <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.6);">FPS: <span id="fam-fps">—</span></span>
-        </div>
+        <span id="fam-quality" style="display:none;"></span>
+        <span id="fam-fps" style="display:none;"></span>
       </div>
 
       <!-- ── Body ── -->
@@ -5556,19 +5556,19 @@ async function openFaceAdvanced(initialMode, context) {
           <!-- Angle cards + progress ring -->
           <div style="display:flex;gap:6px;align-items:stretch;">
             <!-- Card: หน้าตรง -->
-            <div id="fam-card-0" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;">
-              <div id="fam-ang-icon-0" style="width:50px;height:50px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                <i class="ti ti-user" style="font-size:22px;color:rgba(255,255,255,.2);"></i>
+            <div id="fam-card-0" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:130px;">
+              <div id="fam-ang-icon-0" style="width:80px;height:80px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <i class="ti ti-user" style="font-size:30px;color:rgba(255,255,255,.2);"></i>
               </div>
               <div style="display:flex;align-items:center;gap:4px;">
                 <div class="fam-angle-dot" id="fam-ang-0"></div>
-                <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);">ตรง</span>
+                <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);">กลาง</span>
               </div>
             </div>
             <!-- Card: ซ้าย -->
-            <div id="fam-card-1" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;">
-              <div id="fam-ang-icon-1" style="width:50px;height:50px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                <i class="ti ti-user" style="font-size:22px;color:rgba(255,255,255,.2);"></i>
+            <div id="fam-card-1" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:130px;">
+              <div id="fam-ang-icon-1" style="width:80px;height:80px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <i class="ti ti-user" style="font-size:30px;color:rgba(255,255,255,.2);"></i>
               </div>
               <div style="display:flex;align-items:center;gap:4px;">
                 <div class="fam-angle-dot" id="fam-ang-1"></div>
@@ -5576,9 +5576,9 @@ async function openFaceAdvanced(initialMode, context) {
               </div>
             </div>
             <!-- Card: ขวา -->
-            <div id="fam-card-2" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:90px;">
-              <div id="fam-ang-icon-2" style="width:50px;height:50px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                <i class="ti ti-user" style="font-size:22px;color:rgba(255,255,255,.2);"></i>
+            <div id="fam-card-2" style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:130px;">
+              <div id="fam-ang-icon-2" style="width:80px;height:80px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <i class="ti ti-user" style="font-size:30px;color:rgba(255,255,255,.2);"></i>
               </div>
               <div style="display:flex;align-items:center;gap:4px;">
                 <div class="fam-angle-dot" id="fam-ang-2"></div>
@@ -5635,7 +5635,7 @@ async function openFaceAdvanced(initialMode, context) {
             <i class="ti ti-device-floppy" style="font-size:16px;vertical-align:-2px;margin-right:6px;"></i>
             <span id="fam-action-label">บันทึกใหม่</span>
           </button>
-          <button onclick="closeFaceModal()" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:10px;font-size:13px;cursor:pointer;padding:11px 8px;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <button onclick="closeFaceModal()" class="fam-cancel-btn" style="flex:1;padding:11px 8px;display:flex;align-items:center;justify-content:center;gap:6px;">
             <i class="ti ti-x" style="font-size:15px;"></i> ยกเลิก
           </button>
         </div>
@@ -5663,6 +5663,19 @@ async function openFaceAdvanced(initialMode, context) {
       const t = document.getElementById('fam-tab-' + k);
       if (t) t.className = 'fam-tab' + (k === m ? ' active-' + k : '');
     });
+    const _badge = document.getElementById('fam-mode-badge');
+    const _badgeCfg = {
+      read:  { text:'🔍 สแกนหาผู้ป่วย',   bg:'rgba(74,222,128,.18)',   color:'#4ade80', border:'#4ade80' },
+      save:  { text:'📷 บันทึกใบหน้าใหม่', bg:'rgba(200,169,107,.18)',  color:'#C8A96B', border:'#C8A96B' },
+      edit:  { text:'✏️ แก้ไขใบหน้า',      bg:'rgba(248,113,113,.18)',  color:'#f87171', border:'#f87171' },
+    };
+    if (_badge && _badgeCfg[m]) {
+      const _cfg = _badgeCfg[m];
+      _badge.textContent = _cfg.text;
+      _badge.style.background = _cfg.bg;
+      _badge.style.color = _cfg.color;
+      _badge.style.borderColor = _cfg.border;
+    }
     document.getElementById('fam-save-section').style.display = m === 'save' ? 'flex' : 'none';
     document.getElementById('fam-read-section').style.display = m === 'read' ? 'flex' : 'none';
     document.getElementById('fam-edit-section').style.display = m === 'edit' ? 'flex' : 'none';
@@ -5708,6 +5721,12 @@ async function openFaceAdvanced(initialMode, context) {
   }
 
   _famSetMode(mode);
+
+  // ซ่อน tab อ่าน ถ้ามี context (เปิดในโหมด save/edit)
+  if (ctx) {
+    const _readTab2 = document.getElementById('fam-tab-read');
+    if (_readTab2) _readTab2.style.display = 'none';
+  }
 
   // ถ้าล็อกผู้ป่วยไว้ → โหลดชื่อมาแสดงใน banner + ซ่อน dropdown + ซ่อนแท็บอื่น
   if (_isHnCtx) {
@@ -6094,19 +6113,16 @@ async function openFaceAdvanced(initialMode, context) {
             angleFrames[angleIdx] = frame;
             anglesCaptured[angleIdx] = true;
             updateAngles();
-            // ── Auto-save เมื่อครบ 3 มุม ──
+            // ครบ 3 มุม → เปิดปุ่มบันทึก, ไม่ auto-save เพื่อให้เห็นภาพก่อน
             if (anglesCaptured.filter(Boolean).length === 3) {
-              setSaveBtn(false);
-              setStatus('found', '✅ ครบ 3 มุม — กำลังบันทึกอัตโนมัติ…');
-              setTimeout(() => {
-                if (document.getElementById('fam-overlay')) _famDoAction();
-              }, 800);
+              setSaveBtn(true);
+              setStatus('found', '✅ ครบ 3 มุมแล้ว — ตรวจสอบภาพแล้วกดปุ่มบันทึก');
             }
           }
         }
         // enable ปุ่มบันทึกเมื่อมีอย่างน้อย 1 ภาพ
         if ((mode === 'save' || mode === 'edit')) {
-          setSaveBtn(anglesCaptured.some(Boolean) && anglesCaptured.filter(Boolean).length < 3);
+          setSaveBtn(anglesCaptured.some(Boolean));
         }
         // read mode: enable action btn + auto-search เมื่อหน้าตรง quality สูง
         if (mode === 'read') {
