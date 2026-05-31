@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v111",
+    "date": "31/05/2569",
+    "items": [
+      "v109 add face-api weights"
+    ]
+  },
+  {
     "ver": "v110",
     "date": "31/05/2569",
     "items": [
