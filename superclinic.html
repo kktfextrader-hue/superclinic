@@ -5305,6 +5305,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v125', date:'31/05/2569', items:['v125 face Standard vs Advanced: wire จริง — standard=1ภาพหน้าตรง, advanced=3มุม'] },
   { ver:'v124', date:'31/05/2569', items:['v124 fix: face toggle ซ่อน/แสดงปุ่มทุกจุด, sync faceVersion select'] },
   { ver:'v123', date:'31/05/2569', items:['v123 face: dropdown text-only, match card no-avatar balanced layout'] },
   { ver:'v122', date:'31/05/2569', items:['v122 face select: viewPatient โดยตรง + match cards compact+avatar gender'] },
@@ -5568,6 +5569,8 @@ async function openFaceAdvanced(initialMode, context) {
   let searching = false;
   let resultShown = false; // หยุด auto-scan หลังเจอผล
   let lastStatusTime = 0;   // throttle status (ลด jitter)
+  const faceVer    = localStorage.getItem('faceVersion') || 'advanced';
+  const isStandard = faceVer === 'standard'; // standard = หน้าตรง 1 ภาพ
 
   // ── build overlay ────────────────────────────────────────────
   const overlay = document.createElement('div');
@@ -5717,6 +5720,22 @@ async function openFaceAdvanced(initialMode, context) {
     </div>`;
 
   document.body.appendChild(overlay);
+
+  // ── Standard mode: ซ่อน card ซ้าย/ขวา + progress ring ──────────
+  if (isStandard) {
+    const _c1 = document.getElementById('fam-card-1');
+    const _c2 = document.getElementById('fam-card-2');
+    const _rw = document.getElementById('fam-ring-svg')?.parentElement;
+    if (_c1) _c1.style.display = 'none';
+    if (_c2) _c2.style.display = 'none';
+    if (_rw) _rw.style.display = 'none';
+    // ซ่อน legend row (ลูกสุดท้ายของ save-section)
+    const _ss = document.getElementById('fam-save-section');
+    if (_ss && _ss.lastElementChild) _ss.lastElementChild.style.display = 'none';
+    // เปลี่ยน label card กลางให้ชัด
+    const _lbl0 = document.querySelector('#fam-card-0 span');
+    if (_lbl0) _lbl0.textContent = 'หน้าตรง (1 ภาพ)';
+  }
 
   // ── set active mode tab ───────────────────────────────────────
   // แสดงชื่อผู้ป่วยถ้า ctx เป็น HN
@@ -6183,18 +6202,23 @@ async function openFaceAdvanced(initialMode, context) {
                         doneCount >= 3  ? '✅ ครบ 3 มุมแล้ว' :
                         nextMissing >= 0 ? '✅ กด บันทึก ได้แล้ว หรือหัน ' + ['ตรง','ซ้าย','ขวา'][nextMissing] + 'ต่อ' : '✅ พร้อมบันทึก';
 
-        // Auto-capture เฉพาะมุมที่ตรงกับ slot ที่ยังไม่มี (1.2 วิ debounce)
+        // Auto-capture: Standard = หน้าตรง 1 ภาพ | Advanced = 3 มุม
         if ((mode === 'save' || mode === 'edit') && now - lastSampleTime > 1200) {
-          if (!anglesCaptured[angleIdx]) {
+          const _captIdx = isStandard ? 0 : angleIdx;
+          const _okAngle = isStandard ? (Math.abs(yaw) < 18) : true;
+          if (!anglesCaptured[_captIdx] && _okAngle) {
             lastSampleTime = now;
             const frame = captureFrame(video, det.descriptor, score);
-            angleFrames[angleIdx] = frame;
-            anglesCaptured[angleIdx] = true;
+            angleFrames[_captIdx] = frame;
+            anglesCaptured[_captIdx] = true;
             updateAngles();
-            // ครบ 3 มุม → เปิดปุ่มบันทึก, ไม่ auto-save เพื่อให้เห็นภาพก่อน
-            if (anglesCaptured.filter(Boolean).length === 3) {
+            const _count    = anglesCaptured.filter(Boolean).length;
+            const _required = isStandard ? 1 : 3;
+            if (_count >= _required) {
               setSaveBtn(true);
-              setStatus('found', '✅ ครบ 3 มุมแล้ว — ตรวจสอบภาพแล้วกดปุ่มบันทึก');
+              setStatus('found', isStandard
+                ? '✅ ถ่ายภาพสำเร็จ — กดปุ่มบันทึก'
+                : '✅ ครบ 3 มุมแล้ว — ตรวจสอบภาพแล้วกดปุ่มบันทึก');
             }
           }
         }
