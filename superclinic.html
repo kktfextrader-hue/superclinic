@@ -2245,7 +2245,7 @@ function renderPatients(filter){
     const safeName=name.replace(/"/g,'&quot;');
     return `<tr data-pid="${safePid}" data-name="${safeName}">
       <td style="color:var(--go);font-weight:600;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)">${p.hn||'—'}</td>
-      <td><div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)"><div class="av">${initials(name)}</div>
+      <td><div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)"><div class="av" style="position:relative;">${initials(name)}${p.face_descriptor?"<span title='face' style='position:absolute;bottom:-2px;right:-2px;width:13px;height:13px;background:#4ade80;border-radius:50%;border:2px solid #1e293b;'></span>":""}</div>
         <div><div style="font-size:13px;font-weight:500;">${name}</div><div style="font-size:11px;color:#aaa;">${p.email||'—'}</div></div>
       </div></td>
       <td>${p.age||'—'}</td>
@@ -5240,6 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v115', date:'31/05/2569', items:['v115 face badge on patient list'] },
   { ver:'v114', date:'31/05/2569', items:['v114 fix face match countdown selector'] },
   { ver:'v113', date:'31/05/2569', items:['v113 fix _famLoadPatientList undefined'] },
   { ver:'v112', date:'31/05/2569', items:['v112 face match countdown 20s'] },
