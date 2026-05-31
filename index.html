@@ -5240,6 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v113', date:'31/05/2569', items:['v113 fix _famLoadPatientList undefined'] },
   { ver:'v112', date:'31/05/2569', items:['v112 face match countdown 20s'] },
   { ver:'v111', date:'31/05/2569', items:['v109 add face-api weights'] },
   { ver:'v110', date:'31/05/2569', items:['v109 use own repo raw for weights'] },
@@ -5683,7 +5684,14 @@ async function openFaceAdvanced(initialMode, context) {
       else if (m === 'read') btn.style.background = 'linear-gradient(135deg,#1d4ed8,#3b82f6)';
       else btn.style.background = 'linear-gradient(135deg,#991b1b,#ef4444)';
     }
-    if (m === 'edit') _famLoadPatientList();
+    if (m === "edit") {
+    const sel = document.getElementById("fam-edit-patient");
+    if (sel) {
+      sel.innerHTML = "<option value=''>-- กำลังโหลด --</option>";
+      const pts = (window.allPatients||[]).filter(p=>p.is_active!=="FALSE");
+      sel.innerHTML = pts.map(p=>"<option value='"+p.hn+"'>"+(p.prefix||"")+(p.first_name||"")+" "+(p.last_name||"")+" ("+p.hn+")</option>").join("");
+    }
+  }
   };
 
   // ถ้า context เป็น HN-XXX → บังคับ edit mode + ล็อกผู้ป่วย
