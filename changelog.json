@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v106",
+    "date": "31/05/2569",
+    "items": [
+      "v105 host face model weights locally"
+    ]
+  },
+  {
     "ver": "v105",
     "date": "31/05/2569",
     "items": [

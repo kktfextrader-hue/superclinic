@@ -5240,6 +5240,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v106', date:'31/05/2569', items:['v105 host face model weights locally'] },
   { ver:'v105', date:'31/05/2569', items:['v105 fix face model URL to jsDelivr GitHub CDN'] },
   { ver:'v104', date:'31/05/2569', items:['v104 revert to jsDelivr GitHub CDN'] },
   { ver:'v103', date:'31/05/2569', items:['v103 correct face model CDN vladmandic'] },
@@ -5404,7 +5405,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
    Threshold 0.45, Top-3 match
    ============================================================ */
 
-const FACE_MODELS_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
+const FACE_MODELS_URL = './weights';
 let _faceModelsLoaded = false;
 let _faceStream = null;      // active MediaStream
 let _faceAnimFrame = null;   // requestAnimationFrame id
