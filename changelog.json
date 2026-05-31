@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v120",
+    "date": "31/05/2569",
+    "items": [
+      "v120 face UI: button tabs, match+phone, throttle status, scan1-2-3 patients, HN ctx fix, face-scan.md"
+    ]
+  },
+  {
     "ver": "v119",
     "date": "31/05/2569",
     "items": [

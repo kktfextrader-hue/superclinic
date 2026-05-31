@@ -829,10 +829,16 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
   </div>
   <div class="card mb-16">
     <div class="card-head">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" placeholder="ค้นหาชื่อ, HN, เบอร์โทร..."></div>
-        <select class="form-select" style="width:160px;padding:9px 14px;"><option>ทุกสถานะ</option><option>ผู้ป่วยใหม่</option><option>ผู้ป่วยประจำ</option></select>
-        <select class="form-select" style="width:160px;padding:9px 14px;"><option>การรักษาทั้งหมด</option><option>นวดแผนไทย</option><option>ฝังเข็ม</option><option>อบสมุนไพร</option></select>
+        <select class="form-select" style="width:150px;padding:9px 14px;"><option>ทุกสถานะ</option><option>ผู้ป่วยใหม่</option><option>ผู้ป่วยประจำ</option></select>
+        <select class="form-select" style="width:150px;padding:9px 14px;"><option>การรักษาทั้งหมด</option><option>นวดแผนไทย</option><option>ฝังเข็ม</option><option>อบสมุนไพร</option></select>
+        <!-- Face scan buttons -->
+        <div style="display:flex;gap:5px;border-left:1px solid #e5e7eb;padding-left:10px;">
+          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('save')" style="gap:4px;font-size:11px;padding:6px 10px;border-color:var(--go);color:var(--g1);" title="บันทึกใบหน้าใหม่"><i class="ti ti-camera-plus" style="font-size:13px;"></i>บันทึก</button>
+          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="gap:4px;font-size:11px;padding:6px 10px;border-color:#5F8D4E;color:#2F5D50;" title="สแกนหาผู้ป่วยจากใบหน้า"><i class="ti ti-face-id" style="font-size:13px;"></i>สแกนหา</button>
+          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('edit')" style="gap:4px;font-size:11px;padding:6px 10px;border-color:#6366f1;color:#4f46e5;" title="แก้ไข/อัพเดทใบหน้าเดิม"><i class="ti ti-pencil" style="font-size:13px;"></i>แก้ไข</button>
+        </div>
       </div>
       <span id="patient-page-info" style="font-size:12px;color:#aaa;">แสดง 1–10 จาก 348</span>
     </div>
@@ -3044,7 +3050,7 @@ function openAddAppt(){
     .fam-header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;}
     .fam-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
     .fam-tabs{display:flex;gap:6px;}
-    .fam-tab{flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.04);color:rgba(255,255,255,.55);display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2px;}
+    .fam-tab{flex:1;padding:11px 14px;border-radius:10px;border:2px solid rgba(255,255,255,.22);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2px;box-shadow:0 2px 6px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.12);}
     .fam-tab:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.35);transform:translateY(-2px);box-shadow:0 5px 16px rgba(0,0,0,.45);}
     .fam-tab.active-read{background:linear-gradient(135deg,#1a3d2b,#0f2818);color:#4ade80;border:1.5px solid #4ade80;box-shadow:0 0 12px rgba(74,222,128,.35),inset 0 0 8px rgba(74,222,128,.1);font-weight:700;}
     .fam-tab.active-save{background:linear-gradient(135deg,#3d2a0f,#2a1a05);color:#C8A96B;border:1.5px solid #C8A96B;box-shadow:0 0 12px rgba(200,169,107,.4),inset 0 0 8px rgba(200,169,107,.12);font-weight:700;}
@@ -3072,7 +3078,7 @@ function openAddAppt(){
     .fam-angle-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.12);transition:background .3s;}
     .fam-angle-dot.captured{background:#60a5fa;}
     .fam-angle-dot.captured-2{background:#4ade80;}
-    .fam-match-list{display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;}
+    .fam-match-list{display:flex;flex-direction:column;gap:8px;max-height:none;overflow-y:visible;}
     .fam-match-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;cursor:pointer;transition:all .2s;}
     .fam-match-item:hover{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.2);}
     .fam-match-thumb{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
@@ -5242,6 +5248,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v120', date:'31/05/2569', items:['v120 face UI: button tabs, match+phone, throttle status, scan1-2-3 patients, HN ctx fix, face-scan.md'] },
   { ver:'v119', date:'31/05/2569', items:['v119 face scan: ลบ countdown auto-close, หยุด auto-re-search หลังเจอผล, highlight high-conf match'] },
   { ver:'v118', date:'31/05/2569', items:['v118 face UX: mode badge, no quality badge, face icon avatar, bigger cards, no auto-save, hover buttons'] },
   { ver:'v117', date:'31/05/2569', items:['v116 autopilot test'] },
@@ -5498,6 +5505,7 @@ async function openFaceAdvanced(initialMode, context) {
   let angleFrames    = [null, null, null];
   let searching = false;
   let resultShown = false; // หยุด auto-scan หลังเจอผล
+  let lastStatusTime = 0;   // throttle status (ลด jitter)
 
   // ── build overlay ────────────────────────────────────────────
   const overlay = document.createElement('div');
@@ -5678,7 +5686,7 @@ async function openFaceAdvanced(initialMode, context) {
       _badge.style.color = _cfg.color;
       _badge.style.borderColor = _cfg.border;
     }
-    document.getElementById('fam-save-section').style.display = m === 'save' ? 'flex' : 'none';
+    document.getElementById('fam-save-section').style.display = (m === 'save' || m === 'edit') ? 'flex' : 'none';
     document.getElementById('fam-read-section').style.display = m === 'read' ? 'flex' : 'none';
     document.getElementById('fam-edit-section').style.display = m === 'edit' ? 'flex' : 'none';
     // ── เช็คว่ามี face_descriptor อยู่แล้วหรือยัง (เฉพาะ ctx HN) ──
@@ -5713,10 +5721,11 @@ async function openFaceAdvanced(initialMode, context) {
   }
   };
 
-  // ถ้า context เป็น HN-XXX → บังคับ edit mode + ล็อกผู้ป่วย
+  // ถ้า context เป็น HN-XXX → ล็อกผู้ป่วย, ใช้ initialMode ที่ส่งมา
   const _isHnCtx = ctx && ctx !== 'addpatient';
   if (_isHnCtx) {
-    mode = 'edit';
+    // save = ไม่มีใบหน้าเลย, edit = อัพเดท — ใช้ค่าจาก button ที่เปิด modal
+    if (!initialMode || initialMode === 'read') mode = 'edit';
     window._famPreselectHn = ctx;
   } else {
     window._famPreselectHn = null;
@@ -5970,15 +5979,18 @@ async function openFaceAdvanced(initialMode, context) {
           const name = (p.prefix||'') + (p.first_name||'') + ' ' + (p.last_name||'');
           const barColor = c >= 70 ? '#4ade80' : c >= 55 ? '#facc15' : '#f87171';
           const isTop = i===0 && highConf;
-          return `<div class="fam-match-item" onclick="_famSelectPatient('${p.hn}', null)" style="${isTop?'border-color:#4ade80;background:rgba(74,222,128,.08);':''}">
-            <div class="fam-match-thumb" style="${isTop?'background:rgba(74,222,128,.25);color:#4ade80;font-size:18px;':''}"> ${i===0 ? '⭐' : (i+1)}</div>
-            <div style="flex:1;">
-              <div style="font-size:${isTop?'15':'13'}px;font-weight:700;color:#fff;">${name.trim()}</div>
-              <div style="font-size:11px;color:rgba(255,255,255,.4);">HN: ${p.hn||'—'}</div>
+          const displayName = name.trim() || p.hn || '—';
+          return `<div class="fam-match-item" onclick="_famSelectPatient('${p.hn}', null)"
+            style="padding:14px 16px;gap:14px;${isTop?'border:2px solid #4ade80;background:rgba(74,222,128,.07);':'border:1.5px solid rgba(255,255,255,.08);'}">
+            <div style="width:54px;height:54px;border-radius:50%;background:${isTop?'rgba(74,222,128,.2)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${i===0?'⭐':'👤'}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:${isTop?'17':'15'}px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;">HN: ${p.hn||'—'}</div>
+              <div style="font-size:13px;color:${isTop?'#86efac':'rgba(255,255,255,.6)'};margin-top:4px;font-weight:500;">📞 ${p.phone||'—'}</div>
             </div>
-            <div style="text-align:right;">
-              <div style="font-size:${isTop?'18':'14'}px;font-weight:700;color:${barColor};">${c}%</div>
-              <button style="font-size:10px;background:${isTop?'#4ade80':'rgba(255,255,255,.08)'};border:none;color:${isTop?'#000':'#fff'};padding:3px 10px;border-radius:4px;cursor:pointer;margin-top:2px;font-weight:${isTop?'700':'400'};">${isTop?'✓ เปิดเลย':'เลือก'}</button>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+              <div style="font-size:${isTop?'24':'20'}px;font-weight:900;color:${barColor};">${c}%</div>
+              <button style="font-size:12px;font-weight:700;background:${isTop?'#4ade80':'rgba(255,255,255,.12)'};border:none;color:${isTop?'#000':'#fff'};padding:7px 18px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:filter .15s;" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">${isTop?'✓ เปิดเลย':'เลือก'}</button>
             </div>
           </div>`;
         }).join('');
@@ -6137,14 +6149,19 @@ async function openFaceAdvanced(initialMode, context) {
           }
         }
 
-        const captured_labels = ['หน้าตรง','หันซ้าย','หันขวา'];
-        const done = anglesCaptured.map((c,i) => c ? '● '+captured_labels[i] : '').filter(Boolean).join('  ');
-        setStatus('found', '✅ ' + yawLabel + ' ' + (score*100).toFixed(0) + '% [yaw:' + yaw.toFixed(1) + ']',
-          (mode==='save'||mode==='edit') ? yawHint : (done||null));
+        // อัพเดต status ทุก 500ms เท่านั้น (ลด layout reflow + jitter)
+        if (now - lastStatusTime > 500) {
+          lastStatusTime = now;
+          const pct = (score*100).toFixed(0);
+          setStatus('found', '✅ ตรวจพบใบหน้า ' + pct + '%');
+        }
       } else {
         const qEl = document.getElementById('fam-quality');
         if (qEl) qEl.textContent = '—';
-        setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
+        if (now - lastStatusTime > 800) {
+          lastStatusTime = now;
+          setStatus('detecting', '🔍 กำลังตรวจหาใบหน้า…');
+        }
       }
 
       _faceAnimFrame = requestAnimationFrame(loop);
