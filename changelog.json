@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v105",
+    "date": "31/05/2569",
+    "items": [
+      "v105 fix face model URL to jsDelivr GitHub CDN"
+    ]
+  },
+  {
     "ver": "v104",
     "date": "31/05/2569",
     "items": [
