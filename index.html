@@ -830,14 +830,26 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
   <div class="card mb-16">
     <div class="card-head">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" placeholder="ค้นหาชื่อ, HN, เบอร์โทร..."></div>
+        <div class="search-wrap" style="position:relative;">
+          <i class="ti ti-search"></i>
+          <input id="pat-search-input" class="search-input" placeholder="ค้นหาชื่อ, HN, เบอร์โทร..." autocomplete="off"
+            oninput="patSearchInput(this.value)"
+            onkeydown="acKeyNav(event,'pat-search-dd',el=>{el.dispatchEvent(new MouseEvent('mousedown'));})"
+            onblur="setTimeout(()=>{const d=document.getElementById('pat-search-dd');if(d)d.style.display='none'},200)">
+          <div id="pat-search-dd" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:300;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:300px;max-height:260px;overflow-y:auto;padding:5px;"></div>
+        </div>
         <select class="form-select" style="width:150px;padding:9px 14px;"><option>ทุกสถานะ</option><option>ผู้ป่วยใหม่</option><option>ผู้ป่วยประจำ</option></select>
         <select class="form-select" style="width:150px;padding:9px 14px;"><option>การรักษาทั้งหมด</option><option>นวดแผนไทย</option><option>ฝังเข็ม</option><option>อบสมุนไพร</option></select>
-        <!-- Face scan buttons -->
-        <div style="display:flex;gap:5px;border-left:1px solid #e5e7eb;padding-left:10px;">
-          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('save')" style="gap:4px;font-size:11px;padding:6px 10px;border-color:var(--go);color:var(--g1);" title="บันทึกใบหน้าใหม่"><i class="ti ti-camera-plus" style="font-size:13px;"></i>บันทึก</button>
-          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="gap:4px;font-size:11px;padding:6px 10px;border-color:#5F8D4E;color:#2F5D50;" title="สแกนหาผู้ป่วยจากใบหน้า"><i class="ti ti-face-id" style="font-size:13px;"></i>สแกนหา</button>
-          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('edit')" style="gap:4px;font-size:11px;padding:6px 10px;border-color:#6366f1;color:#4f46e5;" title="แก้ไข/อัพเดทใบหน้าเดิม"><i class="ti ti-pencil" style="font-size:13px;"></i>แก้ไข</button>
+        <!-- Face scan single dropdown -->
+        <div style="position:relative;border-left:1px solid #e5e7eb;padding-left:10px;" id="fsd-wrap">
+          <button class="btn btn-outline btn-sm" onclick="_fsdToggle()" style="gap:5px;font-size:12px;padding:7px 13px;border-color:#5F8D4E;color:#2F5D50;font-weight:600;">
+            <i class="ti ti-face-id" style="font-size:14px;"></i>ค้นหาด้วยใบหน้า<i class="ti ti-chevron-down" style="font-size:10px;opacity:.55;margin-left:2px;"></i>
+          </button>
+          <div id="fsd-menu" style="display:none;position:absolute;top:calc(100% + 5px);right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:5px;min-width:180px;box-shadow:0 6px 24px rgba(0,0,0,.13);z-index:400;">
+            <button onclick="openFaceAdvanced('save');_fsdClose()" class="fsd-opt"><i class="ti ti-camera-plus" style="font-size:15px;color:var(--g1);"></i>บันทึกใบหน้าใหม่</button>
+            <button onclick="openFaceAdvanced('read');_fsdClose()" class="fsd-opt"><i class="ti ti-face-id" style="font-size:15px;color:#2F5D50;"></i>สแกนหาผู้ป่วย</button>
+            <button onclick="openFaceAdvanced('edit');_fsdClose()" class="fsd-opt"><i class="ti ti-pencil" style="font-size:15px;color:#4f46e5;"></i>แก้ไขใบหน้าเดิม</button>
+          </div>
         </div>
       </div>
       <span id="patient-page-info" style="font-size:12px;color:#aaa;">แสดง 1–10 จาก 348</span>
@@ -2232,6 +2244,49 @@ async function loadPatients(){
   }
 }
 
+// ── helper: avatar สีตามเพศ + มีใบหน้าหรือเปล่า ──────────────────
+function patAv(p){
+  const hf=!!p.face_descriptor;
+  const male=p.gender==='M'||p.gender==='ชาย';
+  const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,var(--g1),#4a9e6e)'):'rgba(200,169,107,.07)';
+  const bdr=hf?(male?'2px solid rgba(96,165,250,.5)':'2px solid rgba(74,222,128,.4)'):'1.5px dashed rgba(200,169,107,.35)';
+  const ic=hf?'ti-user-circle':'ti-face-id';
+  const col=hf?'#fff':'rgba(200,169,107,.65)';
+  return `<div class="av" style="position:relative;background:${bg};color:${col};border:${bdr};"><i class="ti ${ic}" style="font-size:20px;line-height:1;"></i></div>`;
+}
+
+// ── helper: patients search autocomplete ──────────────────────
+function patSearchInput(val){
+  patPage=1; renderPatients(val);
+  const dd=document.getElementById('pat-search-dd');
+  if(!dd) return;
+  if(!val||!val.trim()){ dd.style.display='none'; return; }
+  const q=val.toLowerCase();
+  const pts=(window.allPatients||[]).filter(p=>{
+    const n=((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')+' '+(p.hn||'')+(p.phone||'')).toLowerCase();
+    return n.includes(q);
+  }).slice(0,7);
+  if(!pts.length){ dd.style.display='none'; return; }
+  dd.innerHTML=pts.map(p=>{
+    const name=((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')).trim();
+    const hf=!!p.face_descriptor; const male=p.gender==='M'||p.gender==='ชาย';
+    const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,var(--g1),#4a9e6e)'):'rgba(200,169,107,.1)';
+    const ic=hf?'ti-user-circle':'ti-face-id';
+    const safeN=name.replace(/'/g,"\\'");
+    return `<div class="ac-item" style="display:flex;align-items:center;gap:10px;"
+      onmouseover="this.classList.add('ac-focused')" onmouseout="this.classList.remove('ac-focused')"
+      onmousedown="document.getElementById('pat-search-input').value='${safeN}';renderPatients('${safeN}');document.getElementById('pat-search-dd').style.display='none';viewPatient('${p.hn||''}')">
+      <div class="av" style="width:28px;height:28px;font-size:10px;flex-shrink:0;background:${bg};color:#fff;"><i class="ti ${ic}" style="font-size:14px;"></i></div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:500;">${name||'—'}</div><div style="font-size:11px;color:#aaa;">${p.hn||'—'} · ${p.phone||'—'}</div></div>
+    </div>`;
+  }).join('');
+  dd.style.display='block';
+}
+
+// ── helpers: face-scan dropdown (fsd) ─────────────────────────
+function _fsdToggle(){const m=document.getElementById('fsd-menu');if(m)m.style.display=m.style.display==='block'?'none':'block';}
+function _fsdClose(){const m=document.getElementById('fsd-menu');if(m)m.style.display='none';}
+
 let _patFilter='';
 function renderPatients(filter){
   if(filter!==undefined) _patFilter=filter;
@@ -2251,7 +2306,7 @@ function renderPatients(filter){
     const safeName=name.replace(/"/g,'&quot;');
     return `<tr data-pid="${safePid}" data-name="${safeName}">
       <td style="color:var(--go);font-weight:600;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)">${p.hn||'—'}</td>
-      <td><div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)"><div class="av" style="position:relative;background:linear-gradient(135deg,var(--g1),var(--g2));color:#e5d3a3;"><i class="ti ti-user-circle" style="font-size:20px;line-height:1;"></i>${p.face_descriptor?"<span title='บันทึกใบหน้าแล้ว' style='position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#4ade80;border-radius:50%;border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:7px;'>✓</span>":""}</div>
+      <td><div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="viewPatient(this.closest('tr').dataset.pid)">${patAv(p)}
         <div><div style="font-size:13px;font-weight:500;">${name}</div><div style="font-size:11px;color:#aaa;">${p.email||'—'}</div></div>
       </div></td>
       <td>${p.age||'—'}</td>
@@ -3084,6 +3139,8 @@ function openAddAppt(){
     .fam-match-thumb{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
     .fam-cancel-btn{width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;transition:all .2s;}
     .fam-cancel-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.2);transform:translateY(-1px);}
+    .fsd-opt{width:100%;text-align:left;padding:9px 13px;border:none;background:transparent;cursor:pointer;border-radius:7px;font-size:13px;color:#1f2937;display:flex;align-items:center;gap:9px;transition:background .12s;}
+    .fsd-opt:hover{background:#f0fdf4;}
     .fam-select-patient{background:rgba(255,255,255,.06);border:none;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;width:100%;}
     .face-preview-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid rgba(200,169,107,.4);flex-shrink:0;}
 
@@ -5248,6 +5305,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v121', date:'31/05/2569', items:['v121 face: avatar gender color, banner+phone, scan2 hide tabs, patients 1-dropdown+autocomplete'] },
   { ver:'v120', date:'31/05/2569', items:['v120 face UI: button tabs, match+phone, throttle status, scan1-2-3 patients, HN ctx fix, face-scan.md'] },
   { ver:'v119', date:'31/05/2569', items:['v119 face scan: ลบ countdown auto-close, หยุด auto-re-search หลังเจอผล, highlight high-conf match'] },
   { ver:'v118', date:'31/05/2569', items:['v118 face UX: mode badge, no quality badge, face icon avatar, bigger cards, no auto-save, hover buttons'] },
@@ -5381,7 +5439,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   // Patient search
   const ps = document.querySelector('#page-patients .search-input');
-  if(ps) ps.addEventListener('input', e=>{ patPage=1; renderPatients(e.target.value); });
+  if(ps) ps.addEventListener('input', e=>{ patSearchInput(e.target.value); });
+  document.addEventListener('click',function(e){if(!document.getElementById('fsd-wrap')?.contains(e.target))_fsdClose();});
 
   // Stock search
   const ss = document.querySelector('#page-stock .search-input');
@@ -5544,7 +5603,8 @@ async function openFaceAdvanced(initialMode, context) {
         <i class="ti ti-user-check" style="font-size:18px;color:#C8A96B;"></i>
         <div style="flex:1;">
           <div style="font-size:10px;color:rgba(255,255,255,.5);">กำลังบันทึกใบหน้าให้</div>
-          <div id="fam-patient-name" style="font-size:14px;font-weight:700;color:#fff;">—</div>
+          <div id="fam-patient-name" style="font-size:15px;font-weight:700;color:#fff;">—</div>
+          <div id="fam-patient-phone" style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px;letter-spacing:.2px;">📞 —</div>
         </div>
         <div id="fam-patient-hn" style="font-size:11px;color:#C8A96B;font-weight:600;background:rgba(0,0,0,.3);padding:3px 8px;border-radius:6px;">HN: —</div>
       </div>
@@ -5739,6 +5799,14 @@ async function openFaceAdvanced(initialMode, context) {
     if (_readTab2) _readTab2.style.display = 'none';
   }
 
+  // ซ่อน tabs ทั้งหมดถ้าเป็น scan2 บริสุทธิ์ (read mode, ไม่มี ctx)
+  if (mode === 'read' && !ctx) {
+    ['read','save','edit'].forEach(k => {
+      const t = document.getElementById('fam-tab-' + k);
+      if (t) t.style.display = 'none';
+    });
+  }
+
   // ถ้าล็อกผู้ป่วยไว้ → โหลดชื่อมาแสดงใน banner + ซ่อน dropdown + ซ่อนแท็บอื่น
   if (_isHnCtx) {
     (async () => {
@@ -5751,6 +5819,8 @@ async function openFaceAdvanced(initialMode, context) {
         const hnEl   = document.getElementById('fam-patient-hn');
         if (banner) banner.style.display = 'flex';
         if (nameEl) nameEl.textContent = name;
+        const _phEl = document.getElementById('fam-patient-phone');
+        if (_phEl) _phEl.textContent = '📞 ' + (p?.phone || '—');
         if (hnEl)   hnEl.textContent = 'HN: ' + ctx;
         // ซ่อน dropdown ใน edit section
         const editSec = document.getElementById('fam-edit-section');
