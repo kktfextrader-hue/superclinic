@@ -314,6 +314,7 @@ callApi('settings','update',{ key:'herb_stock_value', value: String(Math.round(v
 | 2026-05-25 | v63 | Label Printer v2 — font size inputs/preset, live preview, autocomplete search |
 | 2026-05-25 | v64 | ใบรับรองแพทย์แผนไทยประยุกต์ — modal A4, live preview, พิมพ์จริง |
 | 2026-05-25 | v65 | เปลี่ยนชื่อไฟล์หลัก thai-clinic.html → superclinic.html, อัพเดท push-now.bat และ CLAUDE.md |
+| 2026-06-01 | v66 | แก้ B01/B02/B07 — loadDashboard assign allAppts, searchTreatPat ส่ง p.hn แทน p.id |
 
 ---
 
@@ -391,13 +392,13 @@ C:\Users\acer\Desktop\Claude\superclinic\push-now.bat
 
 | # | หน้า | ปัญหา |
 |---|---|---|
-| B01 | บันทึกหลังการรักษา | เลือกผู้ป่วยสายบ้านทรายทอง → ขึ้นชื่อเซย่า เพกาซัสแทน (ชื่อไทยใน dropdown ผิด) |
-| B02 | ภาพรวม | แก้ไขข้อมูลนัดไม่ได้ — ขึ้น "ไม่พบข้อมูลนัดหมาย" |
+| ~~B01~~ | ~~บันทึกหลังการรักษา~~ | ~~เลือกผู้ป่วยสายบ้านทรายทอง → ขึ้นชื่อเซย่า เพกาซัสแทน~~ | ✅ แก้แล้ว v66 |
+| ~~B02~~ | ~~ภาพรวม~~ | ~~แก้ไขข้อมูลนัดไม่ได้ — ขึ้น "ไม่พบข้อมูลนัดหมาย"~~ | ✅ แก้แล้ว v66 |
 | B03 | การเงิน | รายรับจากผู้ป่วยขึ้นแล้ว แต่รายการล่าสุดไม่แสดง ต้อง refresh |
 | B04 | ทั่วไป | changelog sidebar ยังขึ้น 2 version และไม่ update จริง |
 | B05 | นัดหมาย | วันที่เลื่อนไป 7 ชั่วโมง (timezone offset) |
 | B06 | Face Recognition | face-api.js โหลด model จาก jsDelivr ไม่ได้ (404) — CDN เปลี่ยน path ต้องแก้ URL ใหม่ |
-| B07 | บันทึกหลังรักษา + ทุกหน้า | เลือกผู้ป่วยจาก dropdown แล้วด้านขวาแสดงข้อมูลผิดคน — เพราะดึงข้อมูลด้วย HN-000001 เสมอ ไม่ใช่ HN ของคนที่เลือก |
+| ~~B07~~ | ~~บันทึกหลังรักษา + ทุกหน้า~~ | ~~เลือกผู้ป่วยจาก dropdown แล้วด้านขวาแสดงข้อมูลผิดคน~~ | ✅ แก้แล้ว v66 |
 
 ### 🟡 แก้ไข UI
 

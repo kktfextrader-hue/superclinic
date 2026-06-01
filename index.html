@@ -2036,7 +2036,8 @@ async function loadDashboard(){
       callApi('herbs','list')
     ]);
     const patients = (pRes.data?.rows||[]).filter(p=>p.is_active!=='FALSE'&&p.is_active!==false);
-    const appts    = aRes.data?.rows||[];
+    allAppts = aRes.data?.rows||[];
+    const appts    = allAppts;
     const herbs    = hRes.data?.rows||[];
     const todayAp    = appts.filter(a=>dateToISO(a.date)===today && normalizeStatus(a.status)!=='cancelled').sort((a,b)=>parseTimeStr(a.time_start).localeCompare(parseTimeStr(b.time_start)));
     const tomorrowAp = appts.filter(a=>dateToISO(a.date)===tomorrowISO && normalizeStatus(a.status)!=='cancelled').sort((a,b)=>parseTimeStr(a.time_start).localeCompare(parseTimeStr(b.time_start)));
@@ -4272,7 +4273,7 @@ function searchTreatPat(q){
       const name = `${p.prefix||''}${p.first_name||''} ${p.last_name||''}`.trim();
       return `<div class="ac-item" tabindex="-1" style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f5f0e8;"
         onmousedown="event.preventDefault()"
-        onclick="selectTreatPatFromSearch('${p.id}','${name.replace(/'/g,"\\'")}')">
+        onclick="selectTreatPatFromSearch('${p.hn||p.id}','${name.replace(/'/g,"\\'")}')">
         <div class="av" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${initials(name)}</div>
         <div><div style="font-size:13px;font-weight:500;">${name}</div><div style="font-size:11px;color:#aaa;">${p.hn||'—'} • ${p.phone||'—'}</div></div>
       </div>`;
@@ -4302,7 +4303,7 @@ function renderTreatmentPatientList(filter){
   el.innerHTML=show.map(p=>{
     const name=`${p.first_name||''} ${p.last_name||''}`.trim();
     const active=selTreatPat===p.id;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;cursor:pointer;border:1px solid ${active?'var(--go)':'transparent'};background:${active?'rgba(200,169,107,.08)':'transparent'};" onclick="selectTreatPat('${p.id}')">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;cursor:pointer;border:1px solid ${active?'var(--go)':'transparent'};background:${active?'rgba(200,169,107,.08)':'transparent'};" onclick="selectTreatPat('${p.hn||p.id}')">
       <div class="av" style="width:30px;height:30px;font-size:11px;">${initials(name)}</div>
       <div><div style="font-size:12.5px;font-weight:500;">${name}</div><div style="font-size:11px;color:#aaa;">${p.hn||'—'}</div></div>
     </div>`;
@@ -5309,6 +5310,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v131', date:'01/06/2569', items:['update'] },
   { ver:'v130', date:'01/06/2569', items:['v130 Code.gs v2.0: LockService, soft-delete normalize, timezone fix(B05), exact-match filter, ลบ stack leak, protect api_token, cache token'] },
   { ver:'v129', date:'01/06/2569', items:['v129 fix: Code.gs time UTC getHours→Utilities.formatDate UTC (13:00 ไม่แปลงเป็น 21:00)'] },
   { ver:'v128', date:'01/06/2569', items:['v127 timezone UTC+7 + 24h format (ลบ PAT ออกจาก CLAUDE.md)'] },
@@ -7135,191 +7137,4 @@ function mcRender(){
       <div style="text-align:center;min-width:220px;">
         <div style="border-bottom:1px solid #333;height:48px;margin-bottom:6px;"></div>
         <div style="font-size:12pt;font-weight:600;">(${_escHtml(m.doctorName)})</div>
-        <div style="font-size:10pt;color:#555;">แพทย์แผนไทยประยุกต์</div>
-        <div style="font-size:10pt;color:#555;">${_escHtml(m.doctorLicense)}</div>
-        <div style="font-size:10pt;color:#888;margin-top:4px;">วันที่ ${_escHtml(m.date)}</div>
-      </div>
-    </div>
-
-    <!-- หมายเหตุล่าง -->
-    <div style="position:absolute;bottom:14mm;left:20mm;right:20mm;border-top:1px solid #ddd;padding-top:8px;font-size:9pt;color:#aaa;text-align:center;">
-      ใบรับรองแพทย์ฉบับนี้ออกโดย ${_escHtml(m.clinicName)} • เลขที่ ${_escHtml(m.certNo)} • วันที่ ${_escHtml(m.date)}
-    </div>
-  </div>`;
-}
-
-// ── Print A4 ──
-function mcPrint(){
-  const a4 = document.getElementById('mc-a4');
-  if(!a4){ showToast('ไม่พบ Preview','error'); return; }
-  const pa = document.getElementById('lp-print-area');
-  if(!pa){ showToast('ไม่พบ print area','error'); return; }
-  pa.innerHTML = a4.outerHTML;
-  pa.style.display = 'block';
-  window.print();
-  setTimeout(()=>{ pa.innerHTML=''; pa.style.display='none'; }, 1500);
-}
-
-let _mcFontSize=14;
-function mcFontAdj(d){
-  _mcFontSize=Math.max(9,Math.min(18,_mcFontSize+d));
-  const el=document.getElementById('mc-font-val'); if(el) el.textContent=_mcFontSize;
-  const a4=document.getElementById('mc-a4'); if(a4) a4.style.fontSize=_mcFontSize+'pt';
-}
-</script>
-
-<script>
-/* ── Mobile Sidebar Toggle ── */
-(function(){
-  const btn      = document.getElementById('hamburger-btn');
-  const sidebar  = document.getElementById('main-sidebar');
-  const backdrop = document.getElementById('sidebar-backdrop');
-  if (!btn || !sidebar || !backdrop) return;
-
-  function openSidebar() {
-    sidebar.classList.add('open');
-    backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeSidebar() {
-    sidebar.classList.remove('open');
-    backdrop.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  btn.addEventListener('click', function(){
-    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-  });
-
-  // ปิด sidebar เมื่อคลิก backdrop
-  backdrop.addEventListener('click', closeSidebar);
-
-  // ปิด sidebar เมื่อเลือก nav item บน mobile
-  sidebar.querySelectorAll('.nav-item').forEach(function(item){
-    item.addEventListener('click', function(){
-      if (window.innerWidth <= 768) closeSidebar();
-    });
-  });
-
-  // อัปเดต icon hamburger ตาม state
-  sidebar.addEventListener('transitionend', function(){
-    const icon = btn.querySelector('i');
-    if (!icon) return;
-    icon.className = sidebar.classList.contains('open')
-      ? 'ti ti-x'
-      : 'ti ti-menu-2';
-  });
-})();
-</script>
-<script>
-/* ══ LINE NOTIFY ══ */
-const LINE_TOKEN_KEY = 'sc_line_notify_token';
-
-function initLineNotifyUI() {
-  const saved = localStorage.getItem(LINE_TOKEN_KEY) || '';
-  const inp = document.getElementById('line-token-input');
-  const tog = document.getElementById('toggle-line-notify');
-  if (inp) inp.value = saved;
-  if (tog) { if (saved) tog.classList.add('on'); else tog.classList.remove('on'); }
-  updateLineStatus(saved ? '✅ มี Token บันทึกอยู่แล้ว' : '');
-}
-
-function toggleLineNotifyUI(forceOpen) {
-  const tog = document.getElementById('toggle-line-notify');
-  const ui  = document.getElementById('line-notify-ui');
-  if (!ui) return;
-  const willOpen = forceOpen || (ui.style.display === 'none');
-  ui.style.display = willOpen ? 'block' : 'none';
-  if (tog) {
-    // toggle ON เฉพาะเมื่อมี token บันทึกแล้ว
-    const saved = localStorage.getItem(LINE_TOKEN_KEY);
-    if (saved) tog.classList.add('on'); else tog.classList.remove('on');
-  }
-}
-
-function toggleShowToken() {
-  const inp = document.getElementById('line-token-input');
-  const icon = document.getElementById('eye-icon');
-  if (!inp) return;
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  if (icon) icon.className = show ? 'ti ti-eye-off' : 'ti ti-eye';
-}
-
-function updateLineStatus(msg, isError) {
-  const el = document.getElementById('line-notify-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.color = isError ? '#C0392B' : (msg.startsWith('✅') ? '#27AE60' : '#888');
-}
-
-async function saveLineToken() {
-  const inp = document.getElementById('line-token-input');
-  if (!inp) return;
-  const token = inp.value.trim();
-  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
-  updateLineStatus('⏳ กำลังบันทึก...');
-  try {
-    await callApi('settings', 'update', { key: 'line_notify_token', value: token, description: 'LINE Notify Token' });
-    localStorage.setItem(LINE_TOKEN_KEY, token);
-    const tog = document.getElementById('toggle-line-notify');
-    if (tog) tog.classList.add('on');
-    updateLineStatus('✅ บันทึก Token เรียบร้อยแล้ว');
-    showToast('✅ บันทึก LINE Notify Token แล้ว');
-  } catch (err) {
-    updateLineStatus('❌ บันทึกไม่สำเร็จ: ' + err.message, true);
-    showToast('❌ ' + err.message, 'error');
-  }
-}
-
-async function testLineNotify() {
-  const inp = document.getElementById('line-token-input');
-  const token = (inp ? inp.value.trim() : '') || localStorage.getItem(LINE_TOKEN_KEY) || '';
-  if (!token) { updateLineStatus('⚠️ กรุณากรอก Token ก่อน', true); return; }
-  updateLineStatus('⏳ กำลังส่งข้อความทดสอบ...');
-  try {
-    await sendLineNotify('🌿 ทดสอบแจ้งเตือนจาก Superclinic\nระบบ LINE Notify พร้อมใช้งาน ✅', token);
-    updateLineStatus('✅ ส่งสำเร็จ — เช็ค LINE ของคุณได้เลย');
-    showToast('✅ ส่ง LINE Notify สำเร็จ');
-  } catch (err) {
-    updateLineStatus('❌ ' + err.message, true);
-    showToast('❌ LINE: ' + err.message, 'error');
-  }
-}
-
-async function sendLineNotify(message, token) {
-  const body = { message };
-  if (token) body.token = token;
-  const url = `${API_URL}?sheet=settings&action=notify&token=${encodeURIComponent(API_TOKEN)}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(body)
-  });
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error || 'LINE Notify failed');
-  return json.data;
-}
-
-async function notifyNewAppointment(data) {
-  const token = localStorage.getItem(LINE_TOKEN_KEY);
-  if (!token) return;
-  const tog = document.getElementById('toggle-line-notify');
-  if (tog && !tog.classList.contains('on')) return;
-  const msg = `📅 นัดหมายใหม่\nผู้ป่วย: ${data.patient_name||''}\nวันที่: ${data.date||''} เวลา ${data.time_start||''}\nประเภท: ${data.treatment_type||''}\n— Superclinic`;
-  try { await sendLineNotify(msg); } catch (e) {}
-}
-
-async function notifyLowStock(herbName, qty, minQty) {
-  const token = localStorage.getItem(LINE_TOKEN_KEY);
-  if (!token) return;
-  const tog = document.getElementById('toggle-line-notify');
-  if (tog && !tog.classList.contains('on')) return;
-  const msg = `⚠️ สต็อกใกล้หมด\nชื่อ: ${herbName}\nคงเหลือ: ${qty} (ต่ำสุด: ${minQty})\n— Superclinic`;
-  try { await sendLineNotify(msg); } catch (e) {}
-}
-
-document.addEventListener('DOMContentLoaded', initLineNotifyUI);
-</script>
-</body>
-</html>
+        <div style="font-size:10pt;color:#555;">แพทย์แผนไทยประยุก
