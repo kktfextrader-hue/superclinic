@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v136",
+    "date": "01/06/2569",
+    "items": [
+      "v136 face capture: quality gate (score>=62%) กันจับก่อนเห็นหน้าชัด + dead zone 12-22 กันมุมซ้ำ + status แนะนำมุม"
+    ]
+  },
+  {
     "ver": "v135",
     "date": "01/06/2569",
     "items": [

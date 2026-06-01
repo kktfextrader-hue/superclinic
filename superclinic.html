@@ -5324,6 +5324,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v136', date:'01/06/2569', items:['v136 face capture: quality gate (score>=62%) กันจับก่อนเห็นหน้าชัด + dead zone 12-22 กันมุมซ้ำ + status แนะนำมุม'] },
   { ver:'v135', date:'01/06/2569', items:['v135 แยก face_descriptor -> tab face_data: patients list เบาลง (has_face flag), face search ใช้ face_data'] },
   { ver:'v134', date:'01/06/2569', items:['v134 cleanup: ลบ superclinic-ai, temp_clone, backup เก่า, patch scripts (-36MB) + purge repo'] },
   { ver:'v133', date:'01/06/2569', items:['v133 rebrand: Marvel -> Superclinic ทุกที่ (html comment, bodymap, docs, CLAUDE) + fix api-token selector'] },
@@ -6227,22 +6228,33 @@ async function openFaceAdvanced(initialMode, context) {
           // video mirror: จมูกขยับขวา = ผู้ใช้หันซ้าย
           yaw = eyeW > 0 ? ((nose.x - eyeMidX) / eyeW) * 100 : 0;
         }
-        // |yaw|<15 = หน้าตรง | yaw>15 = หันซ้าย | yaw<-15 = หันขวา
-        const YAW_THR = 15;
-        const angleIdx = Math.abs(yaw) < YAW_THR ? 0 : (yaw > 0 ? 1 : 2);
+        // เกณฑ์จับภาพ: quality gate + dead zone กัน noise/มุมซ้ำ
+        const MIN_SCORE  = 0.62;  // คุณภาพขั้นต่ำก่อนจับ (กันจับตอนหน้ายังไม่ชัด)
+        const CENTER_MAX = 12;    // |yaw| < 12 = หน้าตรง
+        const TURN_MIN   = 22;    // |yaw| > 22 = หันจริง (ช่วง 12-22 = dead zone ไม่จับ)
+        const angleIdx = Math.abs(yaw) < CENTER_MAX ? 0 : (yaw > 0 ? 1 : 2);
         const yawLabel = ['หน้าตรง','หันซ้าย','หันขวา'][angleIdx];
         const doneCount = anglesCaptured.filter(Boolean).length;
         const nextMissing = anglesCaptured.findIndex(c => !c);
-        const hints = ['👉 มองตรงเข้ากล้อง','👉 หันซ้ายเล็กน้อย','👉 หันขวาเล็กน้อย'];
+        const hints = ['👉 มองตรงเข้ากล้อง','👉 หันหน้าไปทางซ้าย','👉 หันหน้าไปทางขวา'];
         const yawHint = doneCount === 0 ? hints[0] :
                         doneCount >= 3  ? '✅ ครบ 3 มุมแล้ว' :
                         nextMissing >= 0 ? '✅ กด บันทึก ได้แล้ว หรือหัน ' + ['ตรง','ซ้าย','ขวา'][nextMissing] + 'ต่อ' : '✅ พร้อมบันทึก';
 
-        // Auto-capture: Standard = หน้าตรง 1 ภาพ | Advanced = 3 มุม
-        if ((mode === 'save' || mode === 'edit') && now - lastSampleTime > 1200) {
-          const _captIdx = isStandard ? 0 : angleIdx;
-          const _okAngle = isStandard ? (Math.abs(yaw) < 18) : true;
-          if (!anglesCaptured[_captIdx] && _okAngle) {
+        // Auto-capture: ต้อง score>=MIN_SCORE (เห็นหน้าชัด) + อยู่ในโซนมุมจริง
+        if ((mode === 'save' || mode === 'edit') && score >= MIN_SCORE && now - lastSampleTime > 1000) {
+          let _captIdx = -1;
+          if (isStandard) {
+            if (Math.abs(yaw) < CENTER_MAX) _captIdx = 0;
+          } else if (Math.abs(yaw) < CENTER_MAX) {
+            _captIdx = 0;            // หน้าตรง
+          } else if (yaw > TURN_MIN) {
+            _captIdx = 1;            // หันซ้าย (หันจริง >22)
+          } else if (yaw < -TURN_MIN) {
+            _captIdx = 2;            // หันขวา (หันจริง >22)
+          }
+          // yaw อยู่ dead zone (CENTER_MAX..TURN_MIN) → ไม่จับ กันภาพมุมซ้ำ
+          if (_captIdx !== -1 && !anglesCaptured[_captIdx]) {
             lastSampleTime = now;
             const frame = captureFrame(video, det.descriptor, score);
             angleFrames[_captIdx] = frame;
@@ -6272,11 +6284,16 @@ async function openFaceAdvanced(initialMode, context) {
           }
         }
 
-        // อัพเดต status ทุก 500ms เท่านั้น (ลด layout reflow + jitter)
-        if (now - lastStatusTime > 500) {
+        // อัพเดต status ทุก 400ms + แนะนำมุมถัดไป / เตือนหน้าไม่ชัด
+        if (now - lastStatusTime > 400) {
           lastStatusTime = now;
           const pct = (score*100).toFixed(0);
-          setStatus('found', '✅ ตรวจพบใบหน้า ' + pct + '%');
+          if (mode === 'save' || mode === 'edit') {
+            if (score < MIN_SCORE) setStatus('detecting', '📷 ขยับให้เห็นหน้าชัดขึ้น (' + pct + '%)');
+            else setStatus('found', '✅ ' + pct + '% · ' + yawHint);
+          } else {
+            setStatus('found', '✅ ตรวจพบใบหน้า ' + pct + '%');
+          }
         }
       } else {
         const qEl = document.getElementById('fam-quality');
