@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v133",
+    "date": "01/06/2569",
+    "items": [
+      "v133 rebrand: Marvel -> Superclinic ทุกที่ (html comment, bodymap, docs, CLAUDE) + fix api-token selector"
+    ]
+  },
+  {
     "ver": "v132",
     "date": "01/06/2569",
     "items": [

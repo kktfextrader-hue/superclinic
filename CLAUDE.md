@@ -111,7 +111,7 @@ Fonts: `Cormorant Garamond` (headings) · `Sarabun` (body Thai) · Tabler Icons 
 แผนที่จุดเจ็บปวด — 4 มุมมอง, 5 ระดับความปวด, หลาย instance พร้อมกัน
 
 ```
-Component file : https://kktfextrader-hue.github.io/Marvel-Clinic/bodymap-component.html
+Component file : https://kktfextrader-hue.github.io/superclinic/bodymap-component.html
 API reference  : BODYMAP.md
 ```
 

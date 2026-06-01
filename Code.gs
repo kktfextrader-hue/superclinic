@@ -159,6 +159,12 @@ function handleRequest(e, method) {
       return jsonResponse_({ ok: true, action: 'setup', data: r }, 200);
     }
 
+    // ── action=migrate: ย้ายข้อมูลจาก Marvel DB + remap HN (one-time) ──
+    if (action === 'migrate') {
+      const r = withLock_(() => migrateFromMarvel_());
+      return jsonResponse_({ ok: true, action: 'migrate', data: r }, 200);
+    }
+
     const sheet = (params.sheet || '').toLowerCase();
     if (!sheet || !CONFIG.TABS[sheet]) {
       return jsonResponse_({ ok: false, error: 'Invalid or missing sheet name' }, 400);
@@ -256,6 +262,137 @@ function setupDatabase_() {
   try { CacheService.getScriptCache().remove('api_token'); } catch (_) {}
 
   return { created: true, sheetId: id, url: ss.getUrl(), tabs: names };
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  MIGRATION — ย้ายจาก Marvel DB เดิม + remap HN เป็น HN-000001...
+//  (one-time; เรียก ?action=migrate&token=<TOKEN>)
+// ═══════════════════════════════════════════════════════════════
+const MARVEL_IDS = {
+  patients:     '1fycv9S3Y-1lP2Oksa6DZwCn-fywFrhzOkk9qNoGY5BA',
+  appointments: '1utR7rwh7ylKw_osJJqtivmV_VHGRx4R6K58j0mOdZyg',
+  treatments:   '1jw3LRXfChip46iKsIdIUjnhT0vwebBDc4vd1LJhgNTc'
+};
+
+/** อ่านข้อมูลจาก Marvel spreadsheet (แปลง Date → string ตาม TZ) */
+function migrateReadMarvel_(ssId, preferName) {
+  const ss = SpreadsheetApp.openById(ssId);
+  const sh = ss.getSheetByName(preferName) || ss.getSheets()[0];
+  if (sh.getLastRow() < 2) return [];
+  const v = sh.getDataRange().getValues();
+  const H = v[0].map(x => String(x).trim());
+  const rows = [];
+  for (let i = 1; i < v.length; i++) {
+    const o = {}; let empty = true;
+    for (let j = 0; j < H.length; j++) {
+      let val = v[i][j];
+      if (val instanceof Date) {
+        if (H[j] === 'time_start' || H[j] === 'time_end') val = Utilities.formatDate(val, TZ, 'HH:mm');
+        else if (H[j] === 'created_at' || H[j] === 'updated_at') val = Utilities.formatDate(val, TZ, 'dd/MM/yyyy HH:mm');
+        else val = Utilities.formatDate(val, TZ, 'dd/MM/yyyy');
+      }
+      o[H[j]] = val;
+      if (val !== '' && val !== null) empty = false;
+    }
+    if (!empty) rows.push(o);
+  }
+  return rows;
+}
+
+/** ล้างข้อมูล (เก็บ header) */
+function migrateClearData_(tab) {
+  const last = tab.getLastRow();
+  if (last >= 2) tab.getRange(2, 1, last - 1, tab.getLastColumn()).clearContent();
+}
+
+/** เขียนข้อมูลตาม schema (force time cols เป็น text) */
+function migrateWrite_(tab, schema, rows) {
+  if (!rows.length) return 0;
+  CONFIG.TIME_COLS.forEach(c => {
+    const ci = schema.indexOf(c);
+    if (ci !== -1) tab.getRange(2, ci + 1, rows.length, 1).setNumberFormat('@STRING@');
+  });
+  const out = rows.map(r => schema.map(h => (r[h] !== undefined && r[h] !== null) ? r[h] : ''));
+  tab.getRange(2, 1, out.length, schema.length).setValues(out);
+  return out.length;
+}
+
+/** normalize ชื่อสำหรับจับคู่ (lowercase + ยุบ space) */
+function migrateNameKey_(s) {
+  return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function migrateFromMarvel_() {
+  const db = SpreadsheetApp.openById(getDbId_());
+
+  // 1) patients — remap HN ตามลำดับแถว → HN-000001, HN-000002...
+  const mp = migrateReadMarvel_(MARVEL_IDS.patients, 'patients')
+              .filter(r => !isDeleted_(r.is_active));
+  const mapHN   = {}; // oldHN/oldId → newHN
+  const mapName = {}; // nameKey → newHN  (เผื่อ appointments อ้างด้วยชื่อ)
+  let n = 0;
+  mp.forEach(r => {
+    n++;
+    const newHN = 'HN-' + String(n).padStart(6, '0');
+    [r.hn, r.id].forEach(k => { const o = String(k || '').trim(); if (o) mapHN[o] = newHN; });
+    // name keys: "ชื่อเต็ม นามสกุล" และ "ชื่อแรก นามสกุล"
+    const fn = String(r.first_name || '').trim();
+    const ln = String(r.last_name || '').trim();
+    if (fn || ln) {
+      mapName[migrateNameKey_(fn + ' ' + ln)] = newHN;
+      mapName[migrateNameKey_(fn.split(' ')[0] + ' ' + ln)] = newHN;
+    }
+    r.hn = newHN;
+    r.id = newHN; // compat กับ frontend ที่อ้าง p.id
+  });
+  const patTab = db.getSheetByName('patients');
+  migrateClearData_(patTab);
+  const cntP = migrateWrite_(patTab, CONFIG.SCHEMA.patients, mp);
+
+  const resolvePid = (pid, pname) => {
+    const o = String(pid || '').trim();
+    if (mapHN[o]) return mapHN[o];
+    const nk = migrateNameKey_(pname);
+    if (nk && mapName[nk]) return mapName[nk];
+    return o; // หาไม่เจอ → คงค่าเดิม
+  };
+
+  // 2) appointments — remap patient_id (ลอง HN ก่อน, ไม่เจอใช้ชื่อ)
+  const ma = migrateReadMarvel_(MARVEL_IDS.appointments, 'appointments');
+  const apptToPid = {}; // appointmentId → newPid (ใช้ link treatments)
+  let remapA = 0;
+  ma.forEach(r => {
+    const np = resolvePid(r.patient_id, r.patient_name);
+    if (np !== String(r.patient_id || '').trim()) remapA++;
+    r.patient_id = np;
+    if (r.id) apptToPid[String(r.id).trim()] = np;
+  });
+  const apTab = db.getSheetByName('appointments');
+  migrateClearData_(apTab);
+  const cntA = migrateWrite_(apTab, CONFIG.SCHEMA.appointments, ma);
+
+  // 3) treatments — remap patient_id (HN → ผ่าน appointment_id → คงเดิม)
+  const mt = migrateReadMarvel_(MARVEL_IDS.treatments, 'treatments');
+  let remapT = 0;
+  mt.forEach(r => {
+    const o = String(r.patient_id || '').trim();
+    let np = mapHN[o] || apptToPid[String(r.appointment_id || '').trim()] || o;
+    if (np !== o) remapT++;
+    r.patient_id = np;
+  });
+  const trTab = db.getSheetByName('treatments');
+  migrateClearData_(trTab);
+  const cntT = migrateWrite_(trTab, CONFIG.SCHEMA.treatments, mt);
+
+  try { CacheService.getScriptCache().remove('api_token'); } catch (_) {}
+  return { patients: cntP, appointments: cntA, appointmentsRemapped: remapA,
+           treatments: cntT, treatmentsRemapped: remapT, hnCount: n };
+}
+
+/** รันใน editor (ทางเลือกแทน ?action=migrate) */
+function adminMigrate() {
+  Logger.log(JSON.stringify(migrateFromMarvel_(), null, 2));
 }
 
 
@@ -385,6 +522,11 @@ function createRow_(sheetName, body) {
   const idCfg = CONFIG.ID_PREFIX[sheetName];
   if (idCfg && !body[idCfg.col]) {
     body[idCfg.col] = generateNextId_(sheet, headers, idCfg);
+  }
+
+  // patients: mirror hn → id (compat กับ frontend เดิมที่อ้าง p.id)
+  if (sheetName === 'patients' && headers.indexOf('id') !== -1 && !body.id && body.hn) {
+    body.id = body.hn;
   }
 
   if (headers.indexOf('created_at') !== -1 && !body.created_at) body.created_at = nowBKK_();

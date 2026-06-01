@@ -9,9 +9,9 @@
 
 | รายการ | URL |
 |---|---|
-| Standalone HTML (demo + code) | https://kktfextrader-hue.github.io/Marvel-Clinic/bodymap-component.html |
-| Raw source | https://raw.githubusercontent.com/kktfextrader-hue/Marvel-Clinic/main/bodymap-component.html |
-| GitHub repo | https://github.com/kktfextrader-hue/Marvel-Clinic |
+| Standalone HTML (demo + code) | https://kktfextrader-hue.github.io/superclinic/bodymap-component.html |
+| Raw source | https://raw.githubusercontent.com/kktfextrader-hue/superclinic/main/bodymap-component.html |
+| GitHub repo | https://github.com/kktfextrader-hue/superclinic |
 
 ---
 
@@ -33,7 +33,7 @@
 
 **ให้ AI fetch ไฟล์นี้:**
 ```
-https://raw.githubusercontent.com/kktfextrader-hue/Marvel-Clinic/main/bodymap-component.html
+https://raw.githubusercontent.com/kktfextrader-hue/superclinic/main/bodymap-component.html
 ```
 
 แล้วดึง 2 ส่วน:
@@ -111,7 +111,7 @@ bmClear('patient-001');
 
 ```
 ฉันมี Body Map Component เก็บไว้ที่:
-https://raw.githubusercontent.com/kktfextrader-hue/Marvel-Clinic/main/bodymap-component.html
+https://raw.githubusercontent.com/kktfextrader-hue/superclinic/main/bodymap-component.html
 
 ขอให้:
 1. Fetch ไฟล์นั้น
@@ -129,6 +129,6 @@ https://raw.githubusercontent.com/kktfextrader-hue/Marvel-Clinic/main/bodymap-co
 
 | วันที่ | Version | หมายเหตุ |
 |---|---|---|
-| 2026-05-22 | v1.0 | แยกออกจาก Marvel Clinic v50 |
+| 2026-05-22 | v1.0 | แยกออกจาก Superclinic v50 |
 
-> **Source:** [kktfextrader-hue/Marvel-Clinic](https://github.com/kktfextrader-hue/Marvel-Clinic)
+> **Source:** [kktfextrader-hue/superclinic](https://github.com/kktfextrader-hue/superclinic)

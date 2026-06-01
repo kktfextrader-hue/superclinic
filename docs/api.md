@@ -15,8 +15,8 @@ BASE_URL = https://script.google.com/macros/s/{DEPLOYMENT_ID}/exec
 ## Authentication
 
 ```
-Authorization: Bearer MARVEL-SECRET-TOKEN-2025
-หรือ query string: ?token=MARVEL-SECRET-TOKEN-2025
+Authorization: Bearer SCL-Tx7Kq9F-mP2rW4nZ-2026
+หรือ query string: ?token=SCL-Tx7Kq9F-mP2rW4nZ-2026
 ```
 
 ---

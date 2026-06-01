@@ -1,4 +1,4 @@
-# docs/patients.md — Marvel Dataset (Test Data)
+# docs/patients.md — Superclinic Dataset (Test Data)
 > อ่านเมื่อ: ทดสอบระบบ, seed data, demo ให้ลูกค้า, dev/staging
 
 ---

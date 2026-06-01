@@ -1482,7 +1482,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 
 <script>
 /* ════════════════════════════════════════════════════════
-   MARVEL CLINIC — API INTEGRATION LAYER v1.4
+   SUPERCLINIC — API INTEGRATION LAYER v1.4
    ตั้งค่า Deployment ID จาก Google Apps Script ที่ Deploy แล้ว
 ════════════════════════════════════════════════════════ */
 const API_URL   = 'https://script.google.com/macros/s/AKfycby5lO4up1vOCI_qaMW5zHsa15p0j2p3d21OMxp33LckGalbrSmJrMl6S29UIA87QJSwEw/exec';
@@ -5308,6 +5308,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v133', date:'01/06/2569', items:['v133 rebrand: Marvel -> Superclinic ทุกที่ (html comment, bodymap, docs, CLAUDE) + fix api-token selector'] },
   { ver:'v132', date:'01/06/2569', items:['v131 REBRAND: DB ใหม่ (Superclinic Database 9 tabs) + token ใหม่ SCL- + Code.gs v3.0 deployed via clasp'] },
   { ver:'v131', date:'01/06/2569', items:['update'] },
   { ver:'v130', date:'01/06/2569', items:['v130 Code.gs v2.0: LockService, soft-delete normalize, timezone fix(B05), exact-match filter, ลบ stack leak, protect api_token, cache token'] },
@@ -5471,7 +5472,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 
   // Settings api token field
-  const apiField = document.querySelector('#page-settings input[value*="MARVEL"]');
+  const apiField = document.querySelector('#set-api-token');
   if(!apiField){
     const settingsCard = document.querySelector('#page-settings .card .card-body');
     if(settingsCard){
