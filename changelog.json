@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v134",
+    "date": "01/06/2569",
+    "items": [
+      "v134 cleanup: ลบ superclinic-ai, temp_clone, backup เก่า, patch scripts (-36MB) + purge repo"
+    ]
+  },
+  {
     "ver": "v133",
     "date": "01/06/2569",
     "items": [
