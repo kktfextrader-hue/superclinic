@@ -394,13 +394,11 @@ function readSheet_(sheetName) {
       // แปลง Date object → string ให้ถูก format
       if (val instanceof Date) {
         const h = headers[j];
-        // คอลัมน์เวลา (time_start, time_end) → HH:MM
+        // คอลัมน์เวลา (time_start, time_end) → HH:MM (force UTC เพื่อกัน GAS timezone shift)
         if (h === 'time_start' || h === 'time_end') {
-          const hh = String(val.getHours()).padStart(2,'0');
-          const mm = String(val.getMinutes()).padStart(2,'0');
-          val = hh + ':' + mm;
+          val = Utilities.formatDate(val, 'UTC', 'HH:mm');
         } else {
-          // คอลัมน์วันที่ทั่วไป → DD/MM/YYYY
+          // คอลัมน์วันที่ทั่วไป → DD/MM/YYYY (Asia/Bangkok)
           const y  = val.getFullYear();
           const mo = String(val.getMonth()+1).padStart(2,'0');
           const d  = String(val.getDate()).padStart(2,'0');
