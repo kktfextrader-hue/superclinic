@@ -1458,8 +1458,8 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
             <div class="setting-sub">เวอร์ชันระบบจดจำใบหน้า</div>
           </div>
           <select onchange="localStorage.setItem('faceVersion',this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;background:#fff;color:var(--dk);">
-            <option value="standard" id="fv-standard">Standard (อ่านอย่างเดียว)</option>
-            <option value="advanced" id="fv-advanced" selected>Advanced (บันทึก+อ่าน+แก้ไข)</option>
+            <option value="standard" id="fv-standard">เฉพาะหน้าตรง (Standard)</option>
+            <option value="advanced" id="fv-advanced" selected>หลายมุมมอง (Advanced)</option>
           </select>
         </div>
         <div class="setting-row" style="padding:12px 0;border-top:1px solid rgba(0,0,0,.07);">
@@ -2267,8 +2267,8 @@ async function loadPatients(){
 function patAv(p){
   const hf=(p.has_face==='TRUE');
   const male=p.gender==='M'||p.gender==='ชาย';
-  const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,var(--g1),#4a9e6e)'):'rgba(200,169,107,.07)';
-  const bdr=hf?(male?'2px solid rgba(96,165,250,.5)':'2px solid rgba(74,222,128,.4)'):'1.5px dashed rgba(200,169,107,.35)';
+  const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,#db2777,#f472b6)'):'rgba(200,169,107,.07)';
+  const bdr=hf?(male?'2px solid rgba(96,165,250,.6)':'2px solid rgba(244,114,182,.6)'):'1.5px dashed rgba(200,169,107,.35)';
   const ic=hf?'ti-user-circle':'ti-face-id';
   const col=hf?'#fff':'rgba(200,169,107,.65)';
   return `<div class="av" style="position:relative;background:${bg};color:${col};border:${bdr};"><i class="ti ${ic}" style="font-size:20px;line-height:1;"></i></div>`;
@@ -2289,7 +2289,7 @@ function patSearchInput(val){
   dd.innerHTML=pts.map(p=>{
     const name=((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')).trim();
     const hf=(p.has_face==='TRUE'); const male=p.gender==='M'||p.gender==='ชาย';
-    const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,var(--g1),#4a9e6e)'):'rgba(200,169,107,.1)';
+    const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,#db2777,#f472b6)'):'rgba(200,169,107,.1)';
     const ic=hf?'ti-user-circle':'ti-face-id';
     const safeN=name.replace(/'/g,"\\'");
     return `<div class="ac-item" style="display:flex;align-items:center;gap:10px;"
@@ -5324,6 +5324,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v137', date:'01/06/2569', items:['v137 face version dropdown ไทย (เฉพาะหน้าตรง/หลายมุมมอง) + avatar ผู้หญิงมีใบหน้า = พื้นชมพู'] },
   { ver:'v136', date:'01/06/2569', items:['v136 face capture: quality gate (score>=62%) กันจับก่อนเห็นหน้าชัด + dead zone 12-22 กันมุมซ้ำ + status แนะนำมุม'] },
   { ver:'v135', date:'01/06/2569', items:['v135 แยก face_descriptor -> tab face_data: patients list เบาลง (has_face flag), face search ใช้ face_data'] },
   { ver:'v134', date:'01/06/2569', items:['v134 cleanup: ลบ superclinic-ai, temp_clone, backup เก่า, patch scripts (-36MB) + purge repo'] },
