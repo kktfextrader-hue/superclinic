@@ -255,7 +255,17 @@ function createRow_(sheetName, body) {
 
   // map body → row array ตาม headers
   const row = headers.map(h => body[h] !== undefined ? body[h] : '');
-  sheet.appendRow(row);
+  const newRow = sheet.appendRow(row);
+  // force time_start/time_end columns เป็น plain text ป้องกัน Sheets แปลงเป็น Date
+  ['time_start','time_end'].forEach(f => {
+    const ci = headers.indexOf(f);
+    if(ci !== -1 && body[f]) {
+      const lastRow = sheet.getLastRow();
+      const cell = sheet.getRange(lastRow, ci + 1);
+      cell.setNumberFormat('@STRING@');
+      cell.setValue(String(body[f]));
+    }
+  });
 
   return getRow_(sheetName, body[pk]);
 }
@@ -283,7 +293,12 @@ function updateRow_(sheetName, id, body) {
   // อัปเดตทีละ column
   headers.forEach((h, idx) => {
     if (body[h] !== undefined && h !== pk) {
-      sheet.getRange(rowIndex, idx + 1).setValue(body[h]);
+      const cell = sheet.getRange(rowIndex, idx + 1);
+      // force time columns เป็น plain text ป้องกัน Sheets แปลงเป็น Date
+      if (h === 'time_start' || h === 'time_end') {
+        cell.setNumberFormat('@STRING@');
+      }
+      cell.setValue(body[h]);
     }
   });
 

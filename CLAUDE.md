@@ -126,26 +126,36 @@ bmClear('uid')              // ล้าง
 
 ## 8. Deploy Workflow
 
+**กฎ: หลังแก้ไขเสร็จทุกครั้ง ให้แจ้ง user รัน `push-now.bat` — Claude sandbox ไม่มี network access ออก GitHub**
+
 ```bash
-# ใช้ push-now.bat บน Windows แทน (อัตโนมัติ backup + version)
-# C:\Users\acer\Desktop\Claude\superclinic\push-now.bat
+# Claude push จาก bash sandbox (ทำทุกครั้งหลังแก้ไข):
+PAT=ghp_XXXX_เก็บเฉพาะใน_session_ห้ามใส่ในไฟล์นี้
+USER=kktfextrader-hue
+REPO_NAME=superclinic
+SRC=/sessions/gracious-brave-bardeen/mnt/superclinic
+TMP=/tmp/SC-push
 
-# หรือ manual (bash sandbox):
-SRC=/sessions/happy-intelligent-einstein/mnt/superclinic
-REPO=/tmp/SC-push
+# ตรวจก่อน push
+grep -n "async async" $SRC/superclinic.html  # ต้องไม่มี output
 
-# ตรวจก่อน push ทุกครั้ง
-grep -n "async async" $SRC/superclinic.html   # ต้องได้ (no output)
-
-# copy + commit + push
-cp $SRC/superclinic.html $REPO/index.html
-cp $SRC/superclinic.html $REPO/superclinic.html
-cd $REPO && git add -A
+# clone + copy + push
+rm -rf $TMP && mkdir $TMP
+git clone https://$PAT@github.com/$USER/$REPO_NAME.git $TMP
+cp $SRC/superclinic.html $TMP/index.html
+cp $SRC/superclinic.html $TMP/superclinic.html
+cp $SRC/Code.gs $TMP/Code.gs
+cp $SRC/CLAUDE.md $TMP/CLAUDE.md
+cd $TMP
+git config user.email "kktfextrader@gmail.com"
+git config user.name "KK"
+git add -A
 git commit -m "feat: vXX — [description]"
-git push https://[PAT]@github.com/kktfextrader-hue/superclinic.git main
+git push https://$PAT@github.com/$USER/$REPO_NAME.git main
+rm -rf $TMP
 ```
 
-**กฎ:** PAT token เก็บเฉพาะใน session — ห้ามใส่ในไฟล์ที่ push
+> ⚠️ session path `/sessions/gracious-brave-bardeen/` อาจเปลี่ยนทุก session — ตรวจสอบจาก system prompt ก่อนรัน
 
 ---
 
