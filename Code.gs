@@ -1,57 +1,63 @@
 /**
  * ════════════════════════════════════════════════════════════════
  *  Superclinic — Google Apps Script REST API
- *  Version  : 2.0  (security + concurrency + timezone hardening)
+ *  Version  : 3.0  (REBRAND: single-spreadsheet DB + token ใหม่)
  *  Author   : Dr. Stephen Strange (Superclinic)
  *  Updated  : 2026-06-01
  * ════════════════════════════════════════════════════════════════
  *
- *  วิธีใช้งาน (Quick Setup):
- *    1) เปิด script.google.com → New Project → วาง Code.gs นี้ทั้งหมด
- *    2) แก้ค่า API_TOKEN ในชีต settings ให้ตรงกับ CONFIG.API_TOKEN ด้านล่าง
- *    3) Deploy → New deployment → Web app
- *         - Execute as : Me
- *         - Who has access : Anyone
- *    4) Copy URL ที่ได้ ใส่ใน superclinic.html (constant API_URL)
- *    5) ทดสอบด้วย:
- *         GET  {URL}?sheet=patients&action=list&token=<TOKEN>
- *         POST {URL}?sheet=patients&action=create  (body: JSON, Content-Type: text/plain)
+ *  สถาปัตยกรรมใหม่ v3.0:
+ *    - ใช้ Spreadsheet เดียว ("Superclinic Database") มี 9 แท็บ
+ *      → SHEET_ID เก็บใน ScriptProperties (key: SHEET_ID)
+ *    - สร้าง DB อัตโนมัติด้วย:  GET ?action=setup&token=<TOKEN>
+ *    - token ใหม่ (แยกจาก Marvel เดิม) อยู่ใน API_TOKEN_FALLBACK + settings tab
+ *
+ *  Setup ครั้งแรก:
+ *    1) clasp push && clasp deploy --deploymentId <id>
+ *    2) เปิด URL:  {EXEC_URL}?action=setup&token=<TOKEN>
+ *       → สร้าง Superclinic Database + seed settings + คืน sheetId
+ *    3) เสร็จ — ทุก endpoint ใช้งานได้ทันที
  *
  *  Endpoints:
+ *    GET  ?action=setup                          ← สร้าง DB ครั้งแรก
  *    GET  ?sheet=<name>&action=list
  *    GET  ?sheet=<name>&action=get&id=<id>
  *    POST ?sheet=<name>&action=create   { ...fields }
  *    POST ?sheet=<name>&action=update   { id, ...fields }
  *    POST ?sheet=<name>&action=delete   { id }            ← Soft delete
  *
- *  v2.0 changes:
- *    - LockService ครอบทุก write (กัน HN/APT ชนกัน)
- *    - soft-delete normalize (boolean/string FALSE → ถือว่าลบ)
- *    - timezone: serialize เวลา/วันที่ด้วย timezone ของ spreadsheet (กัน B05)
- *    - filter exact match (กัน HN-1 ชน HN-10)
- *    - ไม่ส่ง stack trace กลับ client + redact api_token
- *    - cache api_token (ลด quota)
+ *  คงไว้จาก v2.x: LockService, soft-delete normalize, exact-match filter,
+ *    timezone Asia/Bangkok, redact api_token, cache token, safeEqual
  * ════════════════════════════════════════════════════════════════
  */
 
 // ───────────────────────────────────────────────────────────────
-//  CONFIG — Spreadsheet IDs (จาก CLAUDE.md)
+//  TIMEZONE
+// ───────────────────────────────────────────────────────────────
+const TZ = 'Asia/Bangkok'; // UTC+7
+
+// ───────────────────────────────────────────────────────────────
+//  CONFIG
 // ───────────────────────────────────────────────────────────────
 const CONFIG = {
-  // ⚠️ Fallback token ใช้เฉพาะตอน Settings sheet ยังไม่พร้อม
-  //    ค่าจริงอ่านจาก Settings sheet (key: api_token) ใน getApiToken_()
-  API_TOKEN_FALLBACK: 'MARVEL-SECRET-TOKEN-2025',
+  // 🔑 Token ใหม่ของ Superclinic (แยกจาก Marvel เดิมที่หลุดใน public repo)
+  //    ค่าจริงอ่านจาก settings tab (key: api_token) — ค่านี้ใช้เป็น fallback + seed
+  API_TOKEN_FALLBACK: 'SCL-Tx7Kq9F-mP2rW4nZ-2026',
 
-  SHEETS: {
-    patients:           '1fycv9S3Y-1lP2Oksa6DZwCn-fywFrhzOkk9qNoGY5BA',
-    appointments:       '1utR7rwh7ylKw_osJJqtivmV_VHGRx4R6K58j0mOdZyg',
-    treatments:         '1jw3LRXfChip46iKsIdIUjnhT0vwebBDc4vd1LJhgNTc',
-    treatment_notes:    '1jw3LRXfChip46iKsIdIUjnhT0vwebBDc4vd1LJhgNTc',
-    herbs:              '1h0mMQ_Aic0kCBaTF3NJrpY_Oc3sC3fnUb9gpndGO83I',
-    stock_transactions: '1ezsLZPbdFNdWlERmHuFK-8CColwhCuB3WP6vOaxQw4Q',
-    finance:            '1Zn52HjTTP7ghlroUxlU_7n9TVRSZWO9WzW2PwBLyHtQ',
-    settings:           '19J1hsEMzHSAPuUw8vdnhK7uGqCw4B1xivC-hwBJe0hw',
-    users:              '1bpslZW_b31YeONe1iBSjalZwugiTuld8ojyI-iGxvZk'
+  // ชื่อไฟล์ Spreadsheet ที่จะสร้าง
+  DB_NAME: 'Superclinic Database',
+
+  // logical sheet name → tab name (แท็บใน Spreadsheet เดียว)
+  TABS: {
+    patients:           'patients',
+    appointments:       'appointments',
+    treatments:         'treatments',
+    treatment_notes:    'treatment_notes',
+    herbs:              'herbs',
+    stock_transactions: 'stock_transactions',
+    finance:            'finance',
+    settings:           'settings',
+    users:              'users'
   },
 
   // ใช้สร้าง ID อัตโนมัติ
@@ -64,10 +70,9 @@ const CONFIG = {
     stock_transactions: { col: 'id',  prefix: 'STK-', pad: 6 },
     finance:            { col: 'id',  prefix: 'FIN-', pad: 6 },
     users:              { col: 'id',  prefix: 'USR-', pad: 4 }
-    // settings ใช้ key เป็น identifier — ไม่ต้อง generate
   },
 
-  // primary key ที่ใช้ในแต่ละชีต (ใช้ค้นหา/อัปเดต/ลบ)
+  // primary key
   PRIMARY_KEY: {
     patients:           'hn',
     appointments:       'id',
@@ -83,12 +88,51 @@ const CONFIG = {
   // ชีตที่รองรับ soft delete (มี column is_active)
   SOFT_DELETE: ['patients', 'users', 'appointments', 'herbs'],
 
-  // คอลัมน์เวลา (เก็บเป็น text HH:MM เสมอ — ห้ามให้ Sheets แปลงเป็น Date)
+  // คอลัมน์เวลา (เก็บเป็น text HH:MM เสมอ)
   TIME_COLS: ['time_start', 'time_end'],
 
-  // settings keys ที่ห้ามอ่าน/เขียนผ่าน API (ความปลอดภัย)
-  PROTECTED_SETTINGS: ['api_token']
+  // settings keys ที่ห้ามอ่าน/เขียนผ่าน API
+  PROTECTED_SETTINGS: ['api_token'],
+
+  // ── Schema: header ของแต่ละ tab (ตรงกับ Marvel เดิม + เพิ่ม is_active ให้ soft-delete ครบ) ──
+  SCHEMA: {
+    patients: ['id','hn','prefix','first_name','last_name','dob','age','gender','phone','email',
+               'address','blood_type','element','allergy','chronic_disease','patient_type',
+               'emergency_contact','created_at','updated_at','is_active','body_map','face_descriptor'],
+    appointments: ['id','patient_id','patient_name','date','time_start','time_end','doctor',
+                   'treatment_type','note','status','room','created_at','updated_at','is_active'],
+    treatments: ['id','patient_id','appointment_id','date','treatment_type','duration_min','doctor',
+                 'symptoms','diagnosis','procedure','herbs_used','result','advice','price',
+                 'next_appointment','created_at','updated_at'],
+    treatment_notes: ['id','treatment_id','patient_id','field_name','content','created_at','updated_at','updated_by'],
+    herbs: ['id','name_th','name_en','name_sci','category','unit','quantity','min_quantity',
+            'cost_per_unit','supplier','status','description','สรรพคุณ','is_active','created_at','updated_at'],
+    stock_transactions: ['id','herb_id','herb_name','type','quantity','reason','reference_id',
+                         'price','note','created_by','created_at'],
+    finance: ['id','date','type','category','amount','description','reference_id','payment_method',
+              'receipt_no','created_by','created_at'],
+    settings: ['key','value','description','updated_at'],
+    users: ['id','name','role','email','is_active','created_at','updated_at']
+  }
 };
+
+
+// ═══════════════════════════════════════════════════════════════
+//  TIMEZONE HELPER
+// ═══════════════════════════════════════════════════════════════
+function nowBKK_() {
+  return Utilities.formatDate(new Date(), TZ, 'dd/MM/yyyy HH:mm');
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  DATABASE ID (ScriptProperties)
+// ═══════════════════════════════════════════════════════════════
+function getDbId_() {
+  const id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  if (!id) throw new Error('ยังไม่ได้สร้างฐานข้อมูล — เรียก ?action=setup&token=<TOKEN> ก่อน');
+  return id;
+}
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -97,50 +141,46 @@ const CONFIG = {
 function doGet(e)     { return handleRequest(e, 'GET');  }
 function doPost(e)    { return handleRequest(e, 'POST'); }
 function doOptions(e) {
-  // หมายเหตุ: Apps Script ContentService ตั้ง CORS header เองไม่ได้
-  // client จึงต้องส่ง Content-Type: text/plain (simple request) เพื่อเลี่ยง preflight
-  return ContentService.createTextOutput('')
-    .setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput('').setMimeType(ContentService.MimeType.TEXT);
 }
 
 function handleRequest(e, method) {
   try {
-    // ── Auth check
     if (!isAuthorized_(e)) {
       return jsonResponse_({ ok: false, error: 'Unauthorized' }, 401);
     }
 
     const params = e.parameter || {};
-    const sheet  = (params.sheet  || '').toLowerCase();
     const action = (params.action || '').toLowerCase();
 
-    if (!sheet || !CONFIG.SHEETS[sheet]) {
+    // ── action=setup: สร้างฐานข้อมูลครั้งแรก (ไม่ต้องมี sheet param) ──
+    if (action === 'setup') {
+      const r = withLock_(() => setupDatabase_());
+      return jsonResponse_({ ok: true, action: 'setup', data: r }, 200);
+    }
+
+    const sheet = (params.sheet || '').toLowerCase();
+    if (!sheet || !CONFIG.TABS[sheet]) {
       return jsonResponse_({ ok: false, error: 'Invalid or missing sheet name' }, 400);
     }
     if (!action) {
       return jsonResponse_({ ok: false, error: 'Missing action' }, 400);
     }
 
-    // ── Parse body (POST only)
     let body = {};
     if (method === 'POST' && e.postData && e.postData.contents) {
-      try {
-        body = JSON.parse(e.postData.contents);
-      } catch (err) {
-        return jsonResponse_({ ok: false, error: 'Invalid JSON body' }, 400);
-      }
+      try { body = JSON.parse(e.postData.contents); }
+      catch (err) { return jsonResponse_({ ok: false, error: 'Invalid JSON body' }, 400); }
     }
 
-    // ── Route
-    //    read = ไม่ต้อง lock | write = ครอบด้วย LockService กัน race condition
     let result;
     switch (action) {
-      case 'list':   result = listRows_(sheet, params);                                    break;
-      case 'get':    result = getRow_(sheet, params.id);                                    break;
-      case 'create': result = withLock_(() => createRow_(sheet, body));                     break;
-      case 'update': result = withLock_(() => updateRow_(sheet, body.id || params.id, body)); break;
-      case 'delete': result = withLock_(() => deleteRow_(sheet, body.id || params.id));     break;
-      case 'notify': result = handleLineNotify_(body);                                      break;
+      case 'list':   result = listRows_(sheet, params);                                       break;
+      case 'get':    result = getRow_(sheet, params.id);                                       break;
+      case 'create': result = withLock_(() => createRow_(sheet, body));                        break;
+      case 'update': result = withLock_(() => updateRow_(sheet, body.id || params.id, body));  break;
+      case 'delete': result = withLock_(() => deleteRow_(sheet, body.id || params.id));        break;
+      case 'notify': result = handleLineNotify_(body);                                         break;
       default:
         return jsonResponse_({ ok: false, error: 'Unknown action: ' + action }, 400);
     }
@@ -148,7 +188,6 @@ function handleRequest(e, method) {
     return jsonResponse_({ ok: true, sheet: sheet, action: action, data: result }, 200);
 
   } catch (err) {
-    // ❗ ไม่ส่ง stack trace กลับ client (information disclosure) — log ฝั่ง server แทน
     try { console.error('[Superclinic API] ' + (err && err.stack ? err.stack : err)); } catch (_) {}
     return jsonResponse_({ ok: false, error: (err && err.message) ? err.message : 'Internal error' }, 500);
   }
@@ -156,43 +195,96 @@ function handleRequest(e, method) {
 
 
 // ═══════════════════════════════════════════════════════════════
-//  CONCURRENCY — LockService กัน race condition (HN/APT ชนกัน)
+//  SETUP — สร้างฐานข้อมูล Superclinic ครั้งแรก
+// ═══════════════════════════════════════════════════════════════
+function setupDatabase_() {
+  const props = PropertiesService.getScriptProperties();
+  const existing = props.getProperty('SHEET_ID');
+  if (existing) {
+    return { already: true, sheetId: existing,
+             url: 'https://docs.google.com/spreadsheets/d/' + existing };
+  }
+
+  // สร้าง Spreadsheet ใหม่
+  const ss = SpreadsheetApp.create(CONFIG.DB_NAME);
+  const id = ss.getId();
+  ss.setSpreadsheetTimeZone(TZ);
+
+  // สร้างแต่ละ tab + header
+  const names = Object.keys(CONFIG.SCHEMA);
+  names.forEach((tab, idx) => {
+    let sh;
+    if (idx === 0) {
+      sh = ss.getSheets()[0];
+      sh.setName(tab);
+    } else {
+      sh = ss.insertSheet(tab);
+    }
+    const headers = CONFIG.SCHEMA[tab];
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  });
+
+  // ── seed: settings ──
+  const stamp = nowBKK_();
+  const settingsRows = [
+    ['api_token',        CONFIG.API_TOKEN_FALLBACK, 'API token (ห้ามเปิดเผย)', stamp],
+    ['finance_password', '123456',                  'รหัสผ่านหน้าการเงิน',      stamp],
+    ['herb_stock_value', '0',                       'มูลค่าสต็อกยารวม (บาท)',   stamp],
+    ['clinic_name',      'Superclinic',             'ชื่อคลินิก',               stamp],
+    ['line_notify_token','',                        'LINE token (deprecated)',  stamp]
+  ];
+  ss.getSheetByName('settings')
+    .getRange(2, 1, settingsRows.length, 4).setValues(settingsRows);
+
+  // ── seed: admin user ──
+  ss.getSheetByName('users')
+    .getRange(2, 1, 1, CONFIG.SCHEMA.users.length)
+    .setValues([['USR-0001','ผู้ดูแลระบบ','admin','admin@superclinic.local','TRUE', stamp, stamp]]);
+
+  // ── seed: ยาสมุนไพรตัวอย่าง 3 รายการ (ให้หน้าสต็อกไม่ว่าง) ──
+  const herbsTab = ss.getSheetByName('herbs');
+  const herbSeed = [
+    ['HRB-001','ฟ้าทะลายโจร','Andrographis','Andrographis paniculata','สมุนไพรเดี่ยว','แคปซูล','100','20','3','-','เพียงพอ','แก้ไข้ เจ็บคอ','ลดไข้ แก้หวัด','TRUE',stamp,stamp],
+    ['HRB-002','ขมิ้นชัน','Turmeric','Curcuma longa','สมุนไพรเดี่ยว','แคปซูล','80','20','2.5','-','เพียงพอ','บำรุงกระเพาะ','แก้ท้องอืด',  'TRUE',stamp,stamp],
+    ['HRB-003','ขิง','Ginger','Zingiber officinale','สมุนไพรเดี่ยว','กรัม','500','100','0.5','-','เพียงพอ','ขับลม','แก้คลื่นไส้',       'TRUE',stamp,stamp]
+  ];
+  herbsTab.getRange(2, 1, herbSeed.length, herbSeed[0].length).setValues(herbSeed);
+
+  // เก็บ SHEET_ID + ล้าง cache token เก่า
+  props.setProperty('SHEET_ID', id);
+  try { CacheService.getScriptCache().remove('api_token'); } catch (_) {}
+
+  return { created: true, sheetId: id, url: ss.getUrl(), tabs: names };
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  CONCURRENCY
 // ═══════════════════════════════════════════════════════════════
 function withLock_(fn) {
   const lock = LockService.getScriptLock();
-  try {
-    lock.waitLock(15000); // รอ lock สูงสุด 15 วิ
-  } catch (e) {
-    throw new Error('ระบบกำลังถูกใช้งานพร้อมกัน กรุณาลองใหม่อีกครั้ง');
-  }
-  try {
-    return fn();
-  } finally {
-    lock.releaseLock();
-  }
+  try { lock.waitLock(15000); }
+  catch (e) { throw new Error('ระบบกำลังถูกใช้งานพร้อมกัน กรุณาลองใหม่อีกครั้ง'); }
+  try { return fn(); }
+  finally { lock.releaseLock(); }
 }
 
 
 // ═══════════════════════════════════════════════════════════════
 //  AUTH
 // ═══════════════════════════════════════════════════════════════
-
-/** อ่าน api_token จาก Settings sheet (cache 5 นาที ลด quota) */
 function getApiToken_() {
-  // 1) ลองอ่านจาก cache ก่อน
   try {
-    const cache  = CacheService.getScriptCache();
-    const cached = cache.get('api_token');
+    const cached = CacheService.getScriptCache().get('api_token');
     if (cached) return cached;
   } catch (_) {}
 
-  // 2) อ่านจาก Settings sheet
   let token = CONFIG.API_TOKEN_FALLBACK;
   try {
-    const ss    = SpreadsheetApp.openById(CONFIG.SHEETS['settings']);
-    const sheet = ss.getSheetByName('settings') ||
-                  ss.getSheetByName('Settings') ||
-                  ss.getSheets()[0];
+    // อ่านจาก settings tab (ถ้า DB สร้างแล้ว)
+    const ss    = SpreadsheetApp.openById(getDbId_());
+    const sheet = ss.getSheetByName('settings');
     const values = sheet.getDataRange().getValues();
     for (let i = 1; i < values.length; i++) {
       if (String(values[i][0]).trim() === 'api_token') {
@@ -201,15 +293,13 @@ function getApiToken_() {
       }
     }
   } catch (err) {
-    // อ่าน Settings ไม่ได้ → ใช้ fallback
+    // DB ยังไม่ถูกสร้าง → ใช้ fallback (token ใหม่)
   }
 
-  // 3) เก็บ cache
   try { CacheService.getScriptCache().put('api_token', token, 300); } catch (_) {}
   return token;
 }
 
-/** เปรียบเทียบ token แบบ constant-time (กัน timing attack) */
 function safeEqual_(a, b) {
   a = String(a); b = String(b);
   if (a.length !== b.length) return false;
@@ -219,12 +309,8 @@ function safeEqual_(a, b) {
 }
 
 function isAuthorized_(e) {
-  // Apps Script Web App ไม่ส่ง Authorization header มาให้ฝั่ง server เสมอ
-  // วิธีหลัก: ส่ง token ใน query string ?token=xxx
   const params = e.parameter || {};
   const tokenFromQuery = params.token || '';
-
-  // Authorization header (fallback — อาจไม่ได้รับใน Apps Script)
   let tokenFromHeader = '';
   if (e.headers && e.headers.Authorization) {
     tokenFromHeader = String(e.headers.Authorization).replace(/^Bearer\s+/i, '');
@@ -233,17 +319,14 @@ function isAuthorized_(e) {
   } else if (params.authorization) {
     tokenFromHeader = String(params.authorization).replace(/^Bearer\s+/i, '');
   }
-
   const token = tokenFromQuery || tokenFromHeader;
   return safeEqual_(token, getApiToken_());
 }
 
 
 // ═══════════════════════════════════════════════════════════════
-//  HELPERS — normalize values
+//  HELPERS — normalize
 // ═══════════════════════════════════════════════════════════════
-
-/** ตรวจว่า row ถูก soft-delete แล้วหรือยัง (รองรับทั้ง boolean false และ string 'FALSE') */
 function isDeleted_(v) {
   if (v === false) return true;
   const s = String(v).trim().toUpperCase();
@@ -252,20 +335,16 @@ function isDeleted_(v) {
 
 
 // ═══════════════════════════════════════════════════════════════
-//  CRUD OPERATIONS
+//  CRUD
 // ═══════════════════════════════════════════════════════════════
-
-/** อ่านข้อมูลทั้งหมดในชีต (รองรับ filter ?key=value แบบ exact match) */
 function listRows_(sheetName, params) {
   const data = readSheet_(sheetName);
   let rows = data.rows;
 
-  // soft delete: ซ่อน row ที่ถูกลบ (รองรับทั้ง boolean false และ string 'FALSE')
   if (CONFIG.SOFT_DELETE.indexOf(sheetName) !== -1) {
     rows = rows.filter(r => !isDeleted_(r.is_active));
   }
 
-  // filter ด้วย query params — EXACT match (กัน HN-1 ชน HN-10)
   const reserved = ['sheet', 'action', 'token', 'authorization', 'id', 'limit', 'offset'];
   Object.keys(params).forEach(k => {
     if (reserved.indexOf(k) === -1 && data.headers.indexOf(k) !== -1) {
@@ -274,10 +353,8 @@ function listRows_(sheetName, params) {
     }
   });
 
-  // ความปลอดภัย: redact api_token ออกจากผล settings
   if (sheetName === 'settings') rows = redactSettings_(rows);
 
-  // pagination (กัน NaN / ค่าติดลบ)
   const offset = Math.max(0, parseInt(params.offset || '0', 10) || 0);
   const limit  = Math.max(0, parseInt(params.limit  || '0', 10) || 0);
   const total  = rows.length;
@@ -286,10 +363,8 @@ function listRows_(sheetName, params) {
   return { total: total, count: rows.length, rows: rows };
 }
 
-/** อ่าน 1 record ด้วย primary key */
 function getRow_(sheetName, id) {
   if (!id) throw new Error('Missing id');
-  // ความปลอดภัย: ห้ามอ่าน setting ที่สงวนไว้ผ่าน API
   if (sheetName === 'settings' && CONFIG.PROTECTED_SETTINGS.indexOf(String(id)) !== -1) {
     throw new Error('Access denied');
   }
@@ -300,35 +375,27 @@ function getRow_(sheetName, id) {
   return row;
 }
 
-/** เพิ่มแถวใหม่ (ต้องเรียกภายใน withLock_) */
 function createRow_(sheetName, body) {
-  // ความปลอดภัย: ห้ามสร้าง/แก้ setting ที่สงวนไว้ผ่าน API
   guardProtectedSetting_(sheetName, body[CONFIG.PRIMARY_KEY[sheetName]]);
 
   const sheet   = openSheet_(sheetName);
   const headers = getHeaders_(sheet);
   const pk      = CONFIG.PRIMARY_KEY[sheetName];
 
-  // auto-generate ID ถ้ายังไม่มี
   const idCfg = CONFIG.ID_PREFIX[sheetName];
   if (idCfg && !body[idCfg.col]) {
     body[idCfg.col] = generateNextId_(sheet, headers, idCfg);
   }
 
-  // auto-fill timestamps
-  const now = new Date();
-  if (headers.indexOf('created_at') !== -1 && !body.created_at) body.created_at = now;
-  if (headers.indexOf('updated_at') !== -1 && !body.updated_at) body.updated_at = now;
-  if (headers.indexOf('is_active')  !== -1 && body.is_active === undefined) body.is_active = true;
+  if (headers.indexOf('created_at') !== -1 && !body.created_at) body.created_at = nowBKK_();
+  if (headers.indexOf('updated_at') !== -1 && !body.updated_at) body.updated_at = nowBKK_();
+  if (headers.indexOf('is_active')  !== -1 && body.is_active === undefined) body.is_active = 'TRUE';
 
-  // map body → row array ตาม headers
   const row = headers.map(h => body[h] !== undefined ? body[h] : '');
   sheet.appendRow(row);
-
-  // จับ row index ทันทีหลัง append (ปลอดภัยเพราะอยู่ใน lock)
   const newRowIndex = sheet.getLastRow();
 
-  // force time columns เป็น plain text ป้องกัน Sheets แปลงเป็น Date
+  // force time columns เป็น plain text
   CONFIG.TIME_COLS.forEach(f => {
     const ci = headers.indexOf(f);
     if (ci !== -1 && body[f] !== undefined && body[f] !== '') {
@@ -338,14 +405,10 @@ function createRow_(sheetName, body) {
     }
   });
 
-  // คืน record ที่เพิ่งสร้าง (ถ้ามี pk) ไม่งั้นคืน body
-  if (body[pk] !== undefined && body[pk] !== '') {
-    return getRow_(sheetName, body[pk]);
-  }
+  if (body[pk] !== undefined && body[pk] !== '') return getRow_(sheetName, body[pk]);
   return body;
 }
 
-/** อัปเดต record (ต้องเรียกภายใน withLock_) */
 function updateRow_(sheetName, id, body) {
   if (!id) throw new Error('Missing id');
   guardProtectedSetting_(sheetName, id);
@@ -354,7 +417,6 @@ function updateRow_(sheetName, id, body) {
   const headers = getHeaders_(sheet);
   const pk      = CONFIG.PRIMARY_KEY[sheetName];
   const pkCol   = headers.indexOf(pk);
-
   if (pkCol === -1) throw new Error('Primary key column not found: ' + pk);
 
   const allValues = sheet.getDataRange().getValues();
@@ -364,14 +426,11 @@ function updateRow_(sheetName, id, body) {
   }
   if (rowIndex === -1) throw new Error('Record not found: ' + id);
 
-  // auto-update timestamp
-  if (headers.indexOf('updated_at') !== -1) body.updated_at = new Date();
+  if (headers.indexOf('updated_at') !== -1) body.updated_at = nowBKK_();
 
-  // อัปเดตทีละ column
   headers.forEach((h, idx) => {
     if (body[h] !== undefined && h !== pk) {
       const cell = sheet.getRange(rowIndex, idx + 1);
-      // force time columns เป็น plain text ป้องกัน Sheets แปลงเป็น Date
       if (CONFIG.TIME_COLS.indexOf(h) !== -1) {
         cell.setNumberFormat('@STRING@');
         cell.setValue(String(body[h]));
@@ -384,14 +443,12 @@ function updateRow_(sheetName, id, body) {
   return getRow_(sheetName, id);
 }
 
-/** ลบ record (soft delete ถ้ามี is_active, ไม่อย่างนั้นลบจริง) (ต้องเรียกภายใน withLock_) */
 function deleteRow_(sheetName, id) {
   if (!id) throw new Error('Missing id');
   const sheet   = openSheet_(sheetName);
   const headers = getHeaders_(sheet);
   const pk      = CONFIG.PRIMARY_KEY[sheetName];
   const pkCol   = headers.indexOf(pk);
-
   if (pkCol === -1) throw new Error('Primary key column not found: ' + pk);
 
   const allValues = sheet.getDataRange().getValues();
@@ -401,19 +458,17 @@ function deleteRow_(sheetName, id) {
   }
   if (rowIndex === -1) throw new Error('Record not found: ' + id);
 
-  // Soft delete — เขียน string 'FALSE' (รูปแบบเดียวกับที่ client ใช้) เพื่อความสม่ำเสมอ
   if (CONFIG.SOFT_DELETE.indexOf(sheetName) !== -1 && headers.indexOf('is_active') !== -1) {
     const col  = headers.indexOf('is_active') + 1;
     const cell = sheet.getRange(rowIndex, col);
     cell.setNumberFormat('@STRING@');
     cell.setValue('FALSE');
     if (headers.indexOf('updated_at') !== -1) {
-      sheet.getRange(rowIndex, headers.indexOf('updated_at') + 1).setValue(new Date());
+      sheet.getRange(rowIndex, headers.indexOf('updated_at') + 1).setValue(nowBKK_());
     }
     return { id: id, deleted: 'soft' };
   }
 
-  // Hard delete
   sheet.deleteRow(rowIndex);
   return { id: id, deleted: 'hard' };
 }
@@ -422,66 +477,38 @@ function deleteRow_(sheetName, id) {
 // ═══════════════════════════════════════════════════════════════
 //  SECURITY HELPERS
 // ═══════════════════════════════════════════════════════════════
-
-/** กันการเขียนทับ setting ที่สงวนไว้ (เช่น api_token) ผ่าน API */
 function guardProtectedSetting_(sheetName, key) {
   if (sheetName === 'settings' && key != null &&
       CONFIG.PROTECTED_SETTINGS.indexOf(String(key)) !== -1) {
     throw new Error('Access denied: protected setting');
   }
 }
-
-/** ลบค่าของ setting ที่สงวนไว้ออกจากผลลัพธ์ (ไม่ให้หลุดออกไป client) */
 function redactSettings_(rows) {
   return rows.filter(r => CONFIG.PROTECTED_SETTINGS.indexOf(String(r.key)) === -1);
 }
 
 
 // ═══════════════════════════════════════════════════════════════
-//  HELPERS
+//  SHEET HELPERS — single spreadsheet, หลาย tab
 // ═══════════════════════════════════════════════════════════════
-
-/** เปิดชีตหลักของ spreadsheet (sheet แรก) */
 function openSheet_(sheetName) {
-  const ssId = CONFIG.SHEETS[sheetName];
-  if (!ssId) throw new Error('Spreadsheet ID not configured: ' + sheetName);
-  const ss = SpreadsheetApp.openById(ssId);
-
-  // treatment_notes อยู่ใน Spreadsheet เดียวกับ treatments แต่คนละ tab
-  if (sheetName === 'treatment_notes') {
-    let sheet = ss.getSheetByName('treatment_notes') ||
-                ss.getSheetByName('Treatment Notes')  ||
-                ss.getSheetByName('TreatmentNotes');
-    if (!sheet) {
-      sheet = ss.insertSheet('treatment_notes');
-      sheet.appendRow(['id','treatment_id','patient_id','field_name','content','created_at','updated_at','updated_by']);
-    }
-    return sheet;
-  }
-
-  // ใช้ชีตที่มีชื่อตรงก่อน, ถ้าไม่เจอ → ใช้ชีตแรก
-  let sheet = ss.getSheetByName(sheetName) ||
-              ss.getSheetByName(sheetName.charAt(0).toUpperCase() + sheetName.slice(1)) ||
-              ss.getSheets()[0];
+  const tab = CONFIG.TABS[sheetName];
+  if (!tab) throw new Error('Unknown sheet: ' + sheetName);
+  const ss = SpreadsheetApp.openById(getDbId_());
+  const sheet = ss.getSheetByName(tab);
+  if (!sheet) throw new Error('Tab not found: ' + tab);
   return sheet;
 }
 
-/** ดึง headers (row แรก) */
 function getHeaders_(sheet) {
   if (sheet.getLastColumn() === 0) return [];
   return sheet.getRange(1, 1, 1, sheet.getLastColumn())
-              .getValues()[0]
-              .map(h => String(h).trim());
+              .getValues()[0].map(h => String(h).trim());
 }
 
-/** อ่านทุก row → array of object */
 function readSheet_(sheetName) {
   const sheet = openSheet_(sheetName);
   if (sheet.getLastRow() < 2) return { headers: getHeaders_(sheet), rows: [] };
-
-  // timezone ของ spreadsheet — ใช้ format วันที่/เวลาให้ตรงกับที่แสดงในชีต (กัน B05)
-  let tz = 'Asia/Bangkok';
-  try { tz = sheet.getParent().getSpreadsheetTimeZone() || 'Asia/Bangkok'; } catch (_) {}
 
   const range = sheet.getDataRange().getValues();
   const headers = range[0].map(h => String(h).trim());
@@ -492,15 +519,14 @@ function readSheet_(sheetName) {
     let isEmpty = true;
     for (let j = 0; j < headers.length; j++) {
       let val = range[i][j];
-      // แปลง Date object → string ตาม timezone ของ spreadsheet (ไม่ใช่ UTC/script tz)
       if (val instanceof Date) {
         const h = headers[j];
         if (CONFIG.TIME_COLS.indexOf(h) !== -1) {
-          // คอลัมน์เวลา → HH:MM ตาม timezone ที่ผู้ใช้กรอก
-          val = Utilities.formatDate(val, tz, 'HH:mm');
+          val = Utilities.formatDate(val, TZ, 'HH:mm');
+        } else if (h === 'created_at' || h === 'updated_at') {
+          val = Utilities.formatDate(val, TZ, 'dd/MM/yyyy HH:mm');
         } else {
-          // คอลัมน์วันที่ทั่วไป → DD/MM/YYYY (ค.ศ.)
-          val = Utilities.formatDate(val, tz, 'dd/MM/yyyy');
+          val = Utilities.formatDate(val, TZ, 'dd/MM/yyyy');
         }
       }
       obj[headers[j]] = val;
@@ -511,7 +537,6 @@ function readSheet_(sheetName) {
   return { headers: headers, rows: rows };
 }
 
-/** สร้าง ID ถัดไป โดยดูค่ามากสุดในคอลัมน์ (ต้องเรียกภายใน withLock_) */
 function generateNextId_(sheet, headers, idCfg) {
   const colIdx = headers.indexOf(idCfg.col);
   if (colIdx === -1) throw new Error('ID column not found: ' + idCfg.col);
@@ -530,21 +555,16 @@ function generateNextId_(sheet, headers, idCfg) {
   return idCfg.prefix + String(maxNum + 1).padStart(idCfg.pad, '0');
 }
 
-/** สร้าง JSON response (Apps Script ไม่รองรับ HTTP status จริง — ใส่ใน body) */
 function jsonResponse_(payload, status) {
   payload.status = status || 200;
-  return ContentService
-    .createTextOutput(JSON.stringify(payload))
+  return ContentService.createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 
 // ═══════════════════════════════════════════════════════════════
-//  LINE NOTIFY
-//  ⚠️ หมายเหตุ: LINE Notify ถูกยกเลิกบริการแล้ว (31 มี.ค. 2025)
-//     ฟังก์ชันนี้คงไว้เพื่อ backward-compat — แนะนำย้ายไป LINE Messaging API
+//  LINE NOTIFY (deprecated — คงไว้เพื่อ backward-compat)
 // ═══════════════════════════════════════════════════════════════
-
 function getLineToken_() {
   try {
     const data = readSheet_('settings');
@@ -553,80 +573,46 @@ function getLineToken_() {
   } catch (e) {}
   return '';
 }
-
 function handleLineNotify_(body) {
   const token = body.token || getLineToken_();
-  if (!token) throw new Error('ไม่พบ LINE Notify Token — กรุณาตั้งค่าใน หน้าตั้งค่าระบบ');
+  if (!token) throw new Error('ไม่พบ LINE Notify Token');
   const msg = body.message || '📢 แจ้งเตือนจาก Superclinic';
   return sendLineNotify_(token, msg);
 }
-
 function sendLineNotify_(token, message) {
   const url = 'https://notify-api.line.me/api/notify';
-  const options = {
-    method:  'post',
-    headers: { 'Authorization': 'Bearer ' + token },
-    payload: 'message=' + encodeURIComponent(message),
-    muteHttpExceptions: true
-  };
-  const res  = UrlFetchApp.fetch(url, options);
-  const code = res.getResponseCode();
-  const txt  = res.getContentText();
-  if (code !== 200) throw new Error('LINE Notify error ' + code + ': ' + txt);
-  return { sent: true, status: code, message: message };
+  const res = UrlFetchApp.fetch(url, {
+    method: 'post', headers: { 'Authorization': 'Bearer ' + token },
+    payload: 'message=' + encodeURIComponent(message), muteHttpExceptions: true
+  });
+  if (res.getResponseCode() !== 200) throw new Error('LINE error ' + res.getResponseCode());
+  return { sent: true };
 }
 
 
 // ═══════════════════════════════════════════════════════════════
-//  TEST FUNCTIONS — รันใน Apps Script editor เพื่อทดสอบโดยตรง
+//  TEST / ADMIN FUNCTIONS — รันใน editor
 // ═══════════════════════════════════════════════════════════════
+
+/** รันครั้งเดียวเพื่อสร้างฐานข้อมูล (ทางเลือกแทน ?action=setup) */
+function adminSetup() {
+  const r = setupDatabase_();
+  Logger.log(JSON.stringify(r, null, 2));
+}
+
+/** ดู SHEET_ID ปัจจุบัน */
+function adminShowDbId() {
+  Logger.log('SHEET_ID = ' + PropertiesService.getScriptProperties().getProperty('SHEET_ID'));
+}
+
+/** ⚠️ รีเซ็ต — ลบ SHEET_ID ออกจาก ScriptProperties (ไม่ลบ Spreadsheet จริง) */
+function adminResetDbId() {
+  PropertiesService.getScriptProperties().deleteProperty('SHEET_ID');
+  try { CacheService.getScriptCache().remove('api_token'); } catch (_) {}
+  Logger.log('SHEET_ID cleared');
+}
+
 function test_listPatients() {
   const r = listRows_('patients', {});
-  Logger.log('Total patients: ' + r.total);
-  Logger.log(JSON.stringify(r.rows.slice(0, 3), null, 2));
-}
-
-function test_listHerbs() {
-  const r = listRows_('herbs', {});
-  Logger.log('Total herbs: ' + r.total);
-}
-
-function test_getPatient() {
-  const r = getRow_('patients', 'HN-000001');
-  Logger.log(JSON.stringify(r, null, 2));
-}
-
-function test_createAppointment() {
-  const r = withLock_(() => createRow_('appointments', {
-    patient_id:     'HN-000001',
-    patient_name:   'Tony Stark',
-    date:           '2025-05-20',
-    time_start:     '10:00',
-    time_end:       '11:00',
-    doctor:         'Dr. Stephen Strange',
-    treatment_type: 'นวดแผนไทย',
-    note:           'ทดสอบสร้างนัด',
-    status:         'pending',
-    room:           1
-  }));
-  Logger.log(JSON.stringify(r, null, 2));
-}
-
-function test_verifyAllSheets() {
-  Object.keys(CONFIG.SHEETS).forEach(name => {
-    try {
-      const sheet = openSheet_(name);
-      const headers = getHeaders_(sheet);
-      const lastRow = sheet.getLastRow();
-      Logger.log('✓ ' + name + '  rows=' + (lastRow - 1) + '  cols=' + headers.length);
-    } catch (err) {
-      Logger.log('✗ ' + name + '  ERROR: ' + err.message);
-    }
-  });
-}
-
-/** ทดสอบ timezone serialize เวลา/วันที่ */
-function test_timezone() {
-  const r = listRows_('appointments', { limit: '5' });
-  r.rows.forEach(a => Logger.log(a.id + ' | date=' + a.date + ' | time=' + a.time_start));
+  Logger.log('Total: ' + r.total);
 }
