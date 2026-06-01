@@ -1882,6 +1882,20 @@ async function callApi(sheet, action, data=null, getId=null) {
   }
 }
 
+/* ── Face descriptor stored in separate tab "face_data" (PK=hn) ── */
+async function saveFaceDesc(hn, descJson){
+  // upsert: ลอง update ก่อน ไม่เจอค่อย create
+  try { await callApi('face_data','update',{ face_descriptor: descJson }, hn); }
+  catch(e){ await callApi('face_data','create',{ hn: hn, face_descriptor: descJson }); }
+  try { await callApi('patients','update',{ has_face:'TRUE' }, hn); } catch(_){}
+  const c=(window.allPatients||[]).find(p=>p.hn===hn); if(c) c.has_face='TRUE';
+}
+async function deleteFaceDesc(hn){
+  try { await callApi('face_data','delete', null, hn); } catch(_){}
+  try { await callApi('patients','update',{ has_face:'FALSE' }, hn); } catch(_){}
+  const c=(window.allPatients||[]).find(p=>p.hn===hn); if(c) c.has_face='FALSE';
+}
+
 /* ════════════════════════════════════════════════════════
    DATE HELPERS
 ════════════════════════════════════════════════════════ */
@@ -2251,7 +2265,7 @@ async function loadPatients(){
 
 // ── helper: avatar สีตามเพศ + มีใบหน้าหรือเปล่า ──────────────────
 function patAv(p){
-  const hf=!!p.face_descriptor;
+  const hf=(p.has_face==='TRUE');
   const male=p.gender==='M'||p.gender==='ชาย';
   const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,var(--g1),#4a9e6e)'):'rgba(200,169,107,.07)';
   const bdr=hf?(male?'2px solid rgba(96,165,250,.5)':'2px solid rgba(74,222,128,.4)'):'1.5px dashed rgba(200,169,107,.35)';
@@ -2274,7 +2288,7 @@ function patSearchInput(val){
   if(!pts.length){ dd.style.display='none'; return; }
   dd.innerHTML=pts.map(p=>{
     const name=((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')).trim();
-    const hf=!!p.face_descriptor; const male=p.gender==='M'||p.gender==='ชาย';
+    const hf=(p.has_face==='TRUE'); const male=p.gender==='M'||p.gender==='ชาย';
     const bg=hf?(male?'linear-gradient(135deg,#1e40af,#3b82f6)':'linear-gradient(135deg,var(--g1),#4a9e6e)'):'rgba(200,169,107,.1)';
     const ic=hf?'ti-user-circle':'ti-face-id';
     const safeN=name.replace(/'/g,"\\'");
@@ -2422,8 +2436,8 @@ function viewPatient(id){
         <div id="pat-hist-section-${id}" style="font-size:13px;color:#aaa;padding:8px 0;">คลิกหัวข้อเพื่อโหลดข้อมูล</div>
       </div>
       <div class="pat-detail-section">
-        <div class="pat-detail-section-title" style="cursor:default;"><span>🤖 ข้อมูลใบหน้า</span>${p.face_descriptor?'<span style="font-size:11px;background:rgba(47,93,80,.1);color:#2F5D50;padding:2px 10px;border-radius:10px;margin-left:8px;">✅ บันทึกแล้ว</span>':'<span style="font-size:11px;background:rgba(192,57,43,.08);color:#C0392B;padding:2px 10px;border-radius:10px;margin-left:8px;">ยังไม่มี</span>'}</div>
-        <div style="font-size:12px;color:#888;padding:4px 0;">${p.face_descriptor?'บันทึกข้อมูลใบหน้าแล้ว — กด "แก้ไขใบหน้า" ในปุ่มด้านล่าง':'กด "+ เพิ่มใบหน้า" ด้านล่างเพื่อบันทึกใบหน้า'}</div>
+        <div class="pat-detail-section-title" style="cursor:default;"><span>🤖 ข้อมูลใบหน้า</span>${p.has_face==='TRUE'?'<span style="font-size:11px;background:rgba(47,93,80,.1);color:#2F5D50;padding:2px 10px;border-radius:10px;margin-left:8px;">✅ บันทึกแล้ว</span>':'<span style="font-size:11px;background:rgba(192,57,43,.08);color:#C0392B;padding:2px 10px;border-radius:10px;margin-left:8px;">ยังไม่มี</span>'}</div>
+        <div style="font-size:12px;color:#888;padding:4px 0;">${p.has_face==='TRUE'?'บันทึกข้อมูลใบหน้าแล้ว — กด "แก้ไขใบหน้า" ในปุ่มด้านล่าง':'กด "+ เพิ่มใบหน้า" ด้านล่างเพื่อบันทึกใบหน้า'}</div>
       </div>
       ${(p.surgery_history||p.accident_history)?`
       <div class="pat-detail-section">
@@ -2435,7 +2449,7 @@ function viewPatient(id){
       </div>`:''}
     </div>`,
     `<button class="btn btn-outline" onclick="closeModal()" style="margin-right:auto;">ปิด</button>
-     <button class="btn btn-outline" onclick="closeModal();(function(){var _hn='${id}';var _pts=window.allPatients||[];var _pt=_pts.find(function(x){return x.hn===_hn;});var _m=_pt&&_pt.face_descriptor?'edit':'save';openFaceAdvanced(_m,_hn);})()" style="border-color:#5F8D4E;color:#5F8D4E;gap:6px;"><i class="ti ti-face-id"></i>${p.face_descriptor ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
+     <button class="btn btn-outline" onclick="closeModal();(function(){var _hn='${id}';var _pts=window.allPatients||[];var _pt=_pts.find(function(x){return x.hn===_hn;});var _m=_pt&&_pt.has_face==='TRUE'?'edit':'save';openFaceAdvanced(_m,_hn);})()" style="border-color:#5F8D4E;color:#5F8D4E;gap:6px;"><i class="ti ti-face-id"></i>${p.has_face==='TRUE' ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
      <button class="btn btn-outline" onclick="closeMedCert();(async()=>openMedCert(\'${id}\'))();" style="border-color:var(--g1);color:var(--g1);gap:6px;"><i class="ti ti-certificate"></i>ออกใบรับรองแพทย์</button>
      <button class="btn btn-green" onclick="closeModal();goRegisterWithPatient('${id}')"><i class="ti ti-clipboard-list"></i>ลงทะเบียน</button>
      <button class="btn-edit" onclick="closeModal();openEditPatient('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>`
@@ -2717,16 +2731,18 @@ async function submitAddPatient(e){
     if(m<0){y--;m+=12;}
     data.age=String(y);
   }
-  // รวม face_descriptor จาก hidden input
+  // face_descriptor เก็บแยก (บันทึกหลังสร้าง patient)
   const faceDescEl = document.getElementById('addpat-face-descriptor');
-  if(faceDescEl && faceDescEl.value) data.face_descriptor = faceDescEl.value;
+  const _faceVal = (faceDescEl && faceDescEl.value) ? faceDescEl.value : '';
+  if(_faceVal) data.has_face='TRUE';
   data.created_at=todayISO(); data.updated_at=todayISO(); data.is_active='TRUE';
   // เก็บ body map
   const bmVal = bmGetValue('addpat');
   if(bmVal){ try{ const bmd=JSON.parse(bmVal); if((bmd.front||[]).length||(bmd.back||[]).length||(bmd.side||[]).length||(bmd.head||[]).length) data.body_map=bmVal; }catch(e){} }
   try {
     const res = await callApi('patients','create',data);
-    const newId = res?.data?.id || res?.id || '';
+    const newId = res?.data?.hn || res?.data?.id || res?.id || '';
+    if(_faceVal && newId){ try{ await saveFaceDesc(newId, _faceVal); }catch(_){} }
     const fullName = `${data.first_name||''} ${data.last_name||''}`.trim();
     closeModal(); showToast(`✅ เพิ่มผู้ป่วย ${fullName} สำเร็จ`);
     await loadPatients();
@@ -5308,6 +5324,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v135', date:'01/06/2569', items:['v135 แยก face_descriptor -> tab face_data: patients list เบาลง (has_face flag), face search ใช้ face_data'] },
   { ver:'v134', date:'01/06/2569', items:['v134 cleanup: ลบ superclinic-ai, temp_clone, backup เก่า, patch scripts (-36MB) + purge repo'] },
   { ver:'v133', date:'01/06/2569', items:['v133 rebrand: Marvel -> Superclinic ทุกที่ (html comment, bodymap, docs, CLAUDE) + fix api-token selector'] },
   { ver:'v132', date:'01/06/2569', items:['v131 REBRAND: DB ใหม่ (Superclinic Database 9 tabs) + token ใหม่ SCL- + Code.gs v3.0 deployed via clasp'] },
@@ -5788,7 +5805,7 @@ async function openFaceAdvanced(initialMode, context) {
     let _hasExisting = false;
     if (ctx && ctx !== 'addpatient' && window.allPatients) {
       const _p = window.allPatients.find(x => x.hn === ctx);
-      _hasExisting = !!(_p && _p.face_descriptor);
+      _hasExisting = !!(_p && _p.has_face==='TRUE');
     }
     const labels = {
       save: _hasExisting ? 'บันทึก' : 'บันทึกใหม่',
@@ -5867,7 +5884,7 @@ async function openFaceAdvanced(initialMode, context) {
         });
         // ปรับ label ปุ่ม action ให้ชัดเจน
         const lbl = document.getElementById('fam-action-label');
-        if (lbl) lbl.textContent = (p?.face_descriptor ? 'อัพเดทใบหน้า' : 'บันทึกใบหน้า');
+        if (lbl) lbl.textContent = (p?.has_face==='TRUE' ? 'อัพเดทใบหน้า' : 'บันทึกใบหน้า');
       } catch(e) {
         console.error('โหลดชื่อผู้ป่วยล้มเหลว:', e);
         const nameEl = document.getElementById('fam-patient-name');
@@ -5999,11 +6016,11 @@ async function openFaceAdvanced(initialMode, context) {
       const btn = document.getElementById('fam-action-btn');
       if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก…'; }
       try {
-        const updateRes = await callApi('patients','update',{ face_descriptor: descriptorJson }, ctx);
+        const updateRes = await saveFaceDesc(ctx, descriptorJson);
         console.log('[FAM] update result:', updateRes);
         // ✅ update cache
         const cached = (window.allPatients||[]).find(p => p.hn === ctx);
-        if (cached) cached.face_descriptor = descriptorJson;
+        if (cached) cached.has_face = 'TRUE';
         // ✅ success UI
         const btnEl = document.getElementById('fam-action-btn');
         if (btnEl) {
@@ -6042,18 +6059,24 @@ async function openFaceAdvanced(initialMode, context) {
     if (matchList) matchList.innerHTML = '';
 
     try {
-      const resp = await callApi('patients','list');
-      const patients = (resp && resp.data && resp.data.rows ? resp.data.rows : []).filter(p =>
-        p.is_active !== 'FALSE' && p.is_active !== false && p.face_descriptor);
+      // โหลด descriptors จาก tab face_data (เบา) + ชื่อจาก allPatients
+      const [fResp, pResp] = await Promise.all([
+        callApi('face_data','list'),
+        (window.allPatients && window.allPatients.length) ? Promise.resolve(null) : callApi('patients','list')
+      ]);
+      if (pResp) window.allPatients = (pResp.data?.rows||[]).filter(p=>p.is_active!=='FALSE'&&p.is_active!==false);
+      const pmap = {}; (window.allPatients||[]).forEach(p=>{ pmap[p.hn]=p; });
+      const faces = (fResp && fResp.data && fResp.data.rows ? fResp.data.rows : []).filter(f => f.face_descriptor);
 
-      if (!patients.length) { setStatus('error','❌ ยังไม่มีข้อมูลใบหน้าในระบบ'); searching=false; return; }
+      if (!faces.length) { setStatus('error','❌ ยังไม่มีข้อมูลใบหน้าในระบบ'); resultShown=true; searching=false; return; }
 
       const THRESHOLD = 0.45;
       const results = [];
-      for (const p of patients) {
+      for (const f of faces) {
         try {
-          const arr = JSON.parse(p.face_descriptor);
+          const arr = JSON.parse(f.face_descriptor);
           const dist = faceapi.euclideanDistance(lastDescriptor, new Float32Array(arr));
+          const p = pmap[f.hn] || { hn: f.hn };
           results.push({ patient:p, dist });
         } catch(_) {}
       }
@@ -6119,7 +6142,7 @@ async function openFaceAdvanced(initialMode, context) {
     if (btn) btn.disabled = true;
     if (lbl) lbl.textContent = '⏳ กำลังอัพเดท…';
     try {
-      await callApi('patients','update',{ face_descriptor: JSON.stringify(Array.from(best.descriptor)) }, hn);
+      await saveFaceDesc(hn, JSON.stringify(Array.from(best.descriptor)));
       showToast('✅ อัพเดทใบหน้าสำเร็จ');
       closeFaceModal();
     } catch(e) {
@@ -6289,7 +6312,7 @@ window.clearFaceCapture = function(ctx) {
   }
   if (ctx && ctx !== 'addpatient') {
     if (!confirm('ยืนยันลบข้อมูลใบหน้า ' + ctx + '?')) return;
-    callApi('patients','update',{ face_descriptor:'' }, ctx)
+    deleteFaceDesc(ctx)
       .then(()=>showToast('✅ ลบใบหน้าสำเร็จ'))
       .catch(e=>showToast('❌ ' + e.message,'error'));
   }

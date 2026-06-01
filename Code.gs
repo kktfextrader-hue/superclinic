@@ -57,7 +57,8 @@ const CONFIG = {
     stock_transactions: 'stock_transactions',
     finance:            'finance',
     settings:           'settings',
-    users:              'users'
+    users:              'users',
+    face_data:          'face_data'
   },
 
   // ใช้สร้าง ID อัตโนมัติ
@@ -82,7 +83,8 @@ const CONFIG = {
     stock_transactions: 'id',
     finance:            'id',
     settings:           'key',
-    users:              'id'
+    users:              'id',
+    face_data:          'hn'
   },
 
   // ชีตที่รองรับ soft delete (มี column is_active)
@@ -98,7 +100,7 @@ const CONFIG = {
   SCHEMA: {
     patients: ['id','hn','prefix','first_name','last_name','dob','age','gender','phone','email',
                'address','blood_type','element','allergy','chronic_disease','patient_type',
-               'emergency_contact','created_at','updated_at','is_active','body_map','face_descriptor'],
+               'emergency_contact','created_at','updated_at','is_active','body_map','has_face'],
     appointments: ['id','patient_id','patient_name','date','time_start','time_end','doctor',
                    'treatment_type','note','status','room','created_at','updated_at','is_active'],
     treatments: ['id','patient_id','appointment_id','date','treatment_type','duration_min','doctor',
@@ -112,7 +114,8 @@ const CONFIG = {
     finance: ['id','date','type','category','amount','description','reference_id','payment_method',
               'receipt_no','created_by','created_at'],
     settings: ['key','value','description','updated_at'],
-    users: ['id','name','role','email','is_active','created_at','updated_at']
+    users: ['id','name','role','email','is_active','created_at','updated_at'],
+    face_data: ['hn','face_descriptor','updated_at']
   }
 };
 
@@ -163,6 +166,12 @@ function handleRequest(e, method) {
     if (action === 'migrate') {
       const r = withLock_(() => migrateFromMarvel_());
       return jsonResponse_({ ok: true, action: 'migrate', data: r }, 200);
+    }
+
+    // ── action=splitface: ย้าย face_descriptor → tab face_data (one-time) ──
+    if (action === 'splitface') {
+      const r = withLock_(() => splitFaceData_());
+      return jsonResponse_({ ok: true, action: 'splitface', data: r }, 200);
     }
 
     const sheet = (params.sheet || '').toLowerCase();
@@ -393,6 +402,53 @@ function migrateFromMarvel_() {
 /** รันใน editor (ทางเลือกแทน ?action=migrate) */
 function adminMigrate() {
   Logger.log(JSON.stringify(migrateFromMarvel_(), null, 2));
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  SPLIT FACE — ย้าย face_descriptor ออกจาก patients → tab face_data
+//  (ลดขนาด patients list ลงมหาศาล; เรียก ?action=splitface&token=<TOKEN>)
+// ═══════════════════════════════════════════════════════════════
+function splitFaceData_() {
+  const db = SpreadsheetApp.openById(getDbId_());
+
+  // 1) ensure tab face_data
+  let fd = db.getSheetByName('face_data');
+  if (!fd) fd = db.insertSheet('face_data');
+
+  // 2) อ่าน patients ปัจจุบัน (ยังมีคอลัมน์ face_descriptor)
+  const pdata = readSheet_('patients');
+  const faceRows = [];
+  pdata.rows.forEach(r => {
+    if (r.face_descriptor && String(r.face_descriptor).trim()) {
+      faceRows.push([r.hn, r.face_descriptor, nowBKK_()]);
+      r.has_face = 'TRUE';
+    } else if (r.has_face === undefined) {
+      r.has_face = 'FALSE';
+    }
+  });
+
+  // 3) เขียน face_data
+  fd.clear();
+  const fh = CONFIG.SCHEMA.face_data;
+  fd.getRange(1, 1, 1, fh.length).setValues([fh]).setFontWeight('bold');
+  fd.setFrozenRows(1);
+  if (faceRows.length) fd.getRange(2, 1, faceRows.length, fh.length).setValues(faceRows);
+
+  // 4) เขียน patients ใหม่ตาม schema ใหม่ (ไม่มี face_descriptor, มี has_face)
+  const patTab = db.getSheetByName('patients');
+  const ph = CONFIG.SCHEMA.patients;
+  const out = pdata.rows.map(r => ph.map(h => (r[h] !== undefined && r[h] !== null) ? r[h] : ''));
+  patTab.clear();
+  patTab.getRange(1, 1, 1, ph.length).setValues([ph]).setFontWeight('bold');
+  patTab.setFrozenRows(1);
+  if (out.length) patTab.getRange(2, 1, out.length, ph.length).setValues(out);
+
+  return { facesMoved: faceRows.length, patientsRewritten: out.length };
+}
+
+function adminSplitFace() {
+  Logger.log(JSON.stringify(splitFaceData_(), null, 2));
 }
 
 
