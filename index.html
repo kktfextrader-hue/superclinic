@@ -3610,6 +3610,18 @@ var qrcode = function() {
       </div>
     </div>
   </div>
+  <!-- PromptPay config (PAY-B) -->
+  <div class="card" style="margin-bottom:20px;border:1px solid rgba(200,169,107,.35);">
+    <div class="card-head"><div class="card-title"><i class="ti ti-qrcode" style="color:var(--g1);"></i>ตั้งค่าพร้อมเพย์ — รับเงินผ่าน QR ในใบเสร็จ</div></div>
+    <div class="card-body" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="form-group" style="flex:1;min-width:250px;margin:0;">
+        <label class="form-label">เบอร์พร้อมเพย์ (10 หลัก) หรือ เลขบัตรประชาชน (13 หลัก) ของคลินิก</label>
+        <input id="fin-promptpay-id" class="form-input" placeholder="เช่น 0812345678 หรือ 1234567890123" inputmode="numeric" autocomplete="off">
+      </div>
+      <button class="btn btn-green" style="background:var(--g1);" onclick="saveFinancePromptPay(this)"><i class="ti ti-device-floppy"></i>บันทึก</button>
+      <div id="fin-promptpay-status" style="width:100%;font-size:12px;color:#888;margin-top:2px;">QR จะถูกสร้างจากเลขนี้ + ยอดเงินในใบเสร็จ (สร้างในเครื่อง ฟรี) · SlipOK ตั้งได้ที่หน้าตั้งค่าระบบ</div>
+    </div>
+  </div>
   <div class="grid-4 mb-20">
     <div class="stat-card green-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(229,211,163,0.18);border-color:rgba(229,211,163,0.25);"><i class="ti ti-trending-up" style="color:#E5D3A3;"></i></div></div><div class="stat-val" style="color:#E5D3A3;">฿84,500</div><div class="stat-label" style="color:rgba(229,211,163,0.65);">รายรับเดือนนี้</div></div>
     <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="border-color:rgba(180,70,70,0.2);"><i class="ti ti-trending-down" style="color:#A04040;"></i></div></div><div class="stat-val" style="color:#A04040;">฿18,200</div><div class="stat-label">รายจ่ายเดือนนี้</div></div>
@@ -6817,6 +6829,7 @@ async function submitTreatment(e){
    FINANCE
 ════════════════════════════════════════════════════════ */
 async function loadFinance(){
+  try{ const _r=await callApi('settings','get',null,'promptpay_id'); const _pe=document.getElementById('fin-promptpay-id'); if(_pe&&_r&&_r.data&&_r.data.value) _pe.value=_r.data.value; }catch(_){}
   try {
     const res=await callApi('finance','list');
     const items=res.data?.rows||[];
@@ -6919,6 +6932,21 @@ async function savePaySettings(btn){
   if(typeof _ppCache!=='undefined') _ppCache=undefined; // ล้าง cache → QR อ่านเบอร์ใหม่
   if(fail===0) showToast('✅ บันทึกการชำระเงินสำเร็จ');
   else showToast('⚠️ บันทึกสำเร็จ '+ok+' รายการ, ล้มเหลว '+fail,'warning');
+}
+
+async function saveFinancePromptPay(btn){
+  var el=document.getElementById('fin-promptpay-id');
+  var st=document.getElementById('fin-promptpay-status');
+  var v=((el?el.value:'')||'').replace(/[^0-9]/g,'');
+  if(!v){ if(st){st.style.color='#C0392B';st.textContent='กรุณากรอกเบอร์พร้อมเพย์หรือเลขบัตรประชาชน';} return; }
+  if(!(v.length===10||v.length===13||v.length>=15)){ if(st){st.style.color='#C0392B';st.textContent='รูปแบบไม่ถูกต้อง — เบอร์มือถือ 10 หลัก หรือเลขบัตร 13 หลัก';} return; }
+  var done=(typeof showLoading==='function'&&btn)?showLoading(btn):function(){};
+  try{
+    await _upsertSetting('promptpay_id', v, 'เบอร์พร้อมเพย์คลินิก (รับเงิน QR)');
+    if(typeof _ppCache!=='undefined') _ppCache=undefined;
+    done();
+    if(st){ st.style.color='var(--ok)'; st.textContent='✅ บันทึกแล้ว ('+(v.length===13?'เลขบัตร':'เบอร์')+' ••••'+v.slice(-4)+') — เลือก "พร้อมเพย์ QR" ในใบเสร็จได้เลย'; }
+  }catch(e){ done(); if(st){ st.style.color='#C0392B'; st.textContent='บันทึกไม่สำเร็จ: '+e.message; } }
 }
 
 async function loadUsers(){
@@ -7780,6 +7808,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v144', date:'03/06/2569', items:['v144 ฟอร์มตั้งค่าพร้อมเพย์บนหน้าการเงิน (กรอกเบอร์มือถือ/เลขบัตร 13 หลัก → รับเงิน QR ในใบเสร็จ) — PAY-B'] },
   { ver:'v143', date:'03/06/2569', items:['v143 ระบบรับชำระเงิน: PromptPay QR + ยืนยันจ่าย (มือ/สลิป SlipOK) + ส่งใบเสร็จเข้าอีเมล (ในหน้าออกใบเสร็จ) + ตั้งค่าการชำระเงิน — PAY-B/m/s'] },
   { ver:'v142', date:'02/06/2569', items:['v142 ภาพรวม: เปลี่ยนหัวข้อ สมุนไพรคงเหลือ -> รายงานประจำวัน'] },
   { ver:'v141', date:'02/06/2569', items:['v141 avatar ไอคอนหน้า (สีตามเพศ) ทุก list คนไข้ แทนตัวย่อ: dashboard/นัดหมาย/ลงทะเบียน/รักษา/ใบเสร็จ'] },
