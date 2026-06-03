@@ -174,6 +174,20 @@ function handleRequest(e, method) {
       return jsonResponse_({ ok: true, action: 'splitface', data: r }, 200);
     }
 
+    // ── action=emailreceipt: ส่งใบเสร็จเข้าอีเมล (PAY-B) ──
+    if (action === 'emailreceipt') {
+      var _b = {};
+      if (e.postData && e.postData.contents) { try { _b = JSON.parse(e.postData.contents); } catch (_) {} }
+      return jsonResponse_({ ok: true, action: 'emailReceipt', data: emailReceipt_(_b) }, 200);
+    }
+
+    // ── action=verifyslip: ตรวจสลิปผ่าน SlipOK (PAY-s) ──
+    if (action === 'verifyslip') {
+      var _s = {};
+      if (e.postData && e.postData.contents) { try { _s = JSON.parse(e.postData.contents); } catch (_) {} }
+      return jsonResponse_({ ok: true, action: 'verifySlip', data: verifySlip_(_s) }, 200);
+    }
+
     const sheet = (params.sheet || '').toLowerCase();
     if (!sheet || !CONFIG.TABS[sheet]) {
       return jsonResponse_({ ok: false, error: 'Invalid or missing sheet name' }, 400);
@@ -247,7 +261,11 @@ function setupDatabase_() {
     ['finance_password', '123456',                  'รหัสผ่านหน้าการเงิน',      stamp],
     ['herb_stock_value', '0',                       'มูลค่าสต็อกยารวม (บาท)',   stamp],
     ['clinic_name',      'Superclinic',             'ชื่อคลินิก',               stamp],
-    ['line_notify_token','',                        'LINE token (deprecated)',  stamp]
+    ['line_notify_token','',                        'LINE token (deprecated)',  stamp],
+    ['promptpay_id',     '',                        'เบอร์พร้อมเพย์/เลขผู้เสียภาษีคลินิก (รับเงิน QR)', stamp],
+    ['slipok_api_key',   '',                        'SlipOK API key (ตรวจสลิป PAY-s)', stamp],
+    ['slipok_branch_id', '',                        'SlipOK Branch ID', stamp],
+    ['clinic_email',     '',                        'อีเมลคลินิก (ผู้ส่งใบเสร็จ)', stamp]
   ];
   ss.getSheetByName('settings')
     .getRange(2, 1, settingsRows.length, 4).setValues(settingsRows);
@@ -763,6 +781,63 @@ function jsonResponse_(payload, status) {
 // ═══════════════════════════════════════════════════════════════
 //  LINE NOTIFY (deprecated — คงไว้เพื่อ backward-compat)
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  PAY-B / PAY-s — ส่งใบเสร็จอีเมล (MailApp) + ตรวจสลิป (SlipOK)
+// ═══════════════════════════════════════════════════════════════
+function readSetting_(key) {
+  try {
+    var r = getRow_('settings', key);
+    if (r && r.value != null && r.value !== '') return String(r.value);
+  } catch (_) {}
+  return '';
+}
+
+/** PAY-B: ส่งใบเสร็จ (HTML) เข้าอีเมลคนไข้ */
+function emailReceipt_(body) {
+  var to = String((body && body.to) || '').trim();
+  if (!to || to.indexOf('@') < 1) throw new Error('อีเมลผู้รับไม่ถูกต้อง');
+  var html = String((body && body.html) || '');
+  if (!html) throw new Error('ไม่มีเนื้อหาใบเสร็จ (html)');
+  var subject = String((body && body.subject) || ('ใบเสร็จรับเงิน ' + ((body && body.receipt_no) || '')));
+  var fromName = String((body && body.clinicName) || readSetting_('clinic_name') || 'Superclinic');
+  MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: fromName });
+  return { sent: true, to: to, remainingQuota: MailApp.getRemainingDailyQuota() };
+}
+
+/** PAY-s: ตรวจสลิปผ่าน SlipOK API (อ่าน key/branch จาก settings) */
+function verifySlip_(body) {
+  var apiKey = readSetting_('slipok_api_key');
+  var branch = readSetting_('slipok_branch_id');
+  if (!apiKey || !branch) throw new Error('ยังไม่ได้ตั้งค่า SlipOK (api key / branch id) ในหน้าตั้งค่าระบบ');
+
+  var url = 'https://api.slipok.com/api/line/apikey/' + encodeURIComponent(branch);
+  var payload = { log: 'true' };
+  if (body && body.amount) payload.amount = String(body.amount);
+
+  if (body && body.data) {
+    payload.data = String(body.data);
+  } else if (body && body.imageB64) {
+    var bytes = Utilities.base64Decode(body.imageB64);
+    payload.files = Utilities.newBlob(bytes, String(body.mimeType || 'image/jpeg'), 'slip.jpg');
+  } else if (body && body.url) {
+    payload.url = String(body.url);
+  } else {
+    throw new Error('ต้องส่งรูปสลิป (imageB64) หรือค่า QR ของสลิป (data)');
+  }
+
+  var res = UrlFetchApp.fetch(url, {
+    method: 'post',
+    headers: { 'x-authorization': apiKey },
+    payload: payload,
+    muteHttpExceptions: true
+  });
+  var code = res.getResponseCode();
+  var txt = res.getContentText();
+  var json;
+  try { json = JSON.parse(txt); } catch (_) { json = { raw: txt }; }
+  return { httpCode: code, result: json };
+}
+
 function getLineToken_() {
   try {
     const data = readSheet_('settings');
