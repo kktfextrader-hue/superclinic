@@ -2810,6 +2810,7 @@ var qrcode = function() {
 }));
 
 </script>
+<style>.fsd-opt{width:100%;text-align:left;padding:10px 13px;border:none;background:transparent;cursor:pointer;border-radius:8px;font-size:13px;color:#6e561f;font-weight:500;display:flex;align-items:center;gap:9px;transition:all .13s;}.fsd-opt:hover{background:linear-gradient(135deg,rgba(200,169,107,0.28),rgba(200,169,107,0.18));color:#5a4416;}</style>
 </head>
 <body>
 <div class="app">
@@ -3127,7 +3128,7 @@ var qrcode = function() {
           <button class="btn btn-outline" onclick="_fsdToggle()" style="width:150px;padding:9px 14px;font-size:14px;border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));font-weight:600;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;">
             ค้นหาด้วยใบหน้า<i class="ti ti-chevron-down" style="font-size:11px;opacity:.6;"></i>
           </button>
-          <div id="fsd-menu" style="display:none;position:absolute;top:calc(100% + 5px);right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:5px;min-width:180px;box-shadow:0 6px 24px rgba(0,0,0,.13);z-index:400;">
+          <div id="fsd-menu" style="display:none;position:absolute;top:calc(100% + 7px);right:0;background:linear-gradient(180deg,#fdf9f0,#faf3e4);border:1px solid rgba(200,169,107,0.5);border-radius:11px;padding:6px;min-width:184px;box-shadow:0 8px 28px rgba(200,169,107,.28);z-index:400;">
             <button onclick="openFaceAdvanced('save');_fsdClose()" class="fsd-opt">บันทึกใบหน้าใหม่</button>
             <button onclick="openFaceAdvanced('read');_fsdClose()" class="fsd-opt">สแกนหาผู้ป่วย</button>
             <button onclick="openFaceAdvanced('edit');_fsdClose()" class="fsd-opt">แก้ไขใบหน้าเดิม</button>
@@ -7785,6 +7786,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v150', date:'04/06/2569', items:['fix(face-dd): ปุ่ม pulldown สแกนใบหน้า (patients) เมนูไม่มีสไตล์ — ROOT CAUSE .fsd-opt CSS ติดใน modal openAddAppt → ย้ายไป global head + เมนูโทนทอง (เหมือนที่แก้ scproject)'] },
   { ver:'v149', date:'04/06/2569', items:['chore: ลบ demo ส่วนที่เหลือ (reports charts + dashboard การรักษายอดนิยม) -> empty-state · MERGE-1a เสร็จสมบูรณ์ ไม่เหลือ demo เลข/ชื่อปลอมทุกหน้า · charts รอ wire real data (REPORTS-1)'] },
   { ver:'v148', date:'04/06/2569', items:['chore: ลบ demo ที่เหลือ (herbs/stock/reports stat + donut + ▲% trend ปลอม) -> placeholder ให้ load เติม · MERGE-1a ลบ demo เสร็จครบทุกหน้า'] },
   { ver:'v147', date:'04/06/2569', items:['chore: ลบ demo hardcode — dashboard (เลข/นัด Marvel) + patients (ตาราง/count 348) + finance (เลข/รายการ Marvel) -> placeholder ให้ loadXxx เติม real · ชื่อปลอมหมดแล้ว (MERGE-1a)'] },
