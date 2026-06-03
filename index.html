@@ -2984,22 +2984,22 @@ var qrcode = function() {
   <div class="grid-4 mb-20">
     <div class="stat-card green-card">
       <div class="stat-top"><div class="stat-icon" style="background:rgba(229,211,163,0.18);border-color:rgba(229,211,163,0.25);"><i class="ti ti-calendar-check" style="color:#E5D3A3;"></i></div><span class="stat-delta" style="color:#9FE1CB;">▲ 8%</span></div>
-      <div class="stat-val" style="color:#E5D3A3;">12</div>
+      <div class="stat-val" style="color:#E5D3A3;">—</div>
       <div class="stat-label" style="color:rgba(229,211,163,0.65);">นัดหมายวันนี้</div>
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-icon"><i class="ti ti-users"></i></div><span class="stat-delta">▲ 14%</span></div>
-      <div class="stat-val">348</div>
+      <div class="stat-val">—</div>
       <div class="stat-label">ผู้ป่วยทั้งหมด</div>
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-icon"><i class="ti ti-coin"></i></div><span class="stat-delta">▲ 22%</span></div>
-      <div class="stat-val">฿84k</div>
+      <div class="stat-val">—</div>
       <div class="stat-label">รายรับเดือนนี้</div>
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-icon"><i class="ti ti-star"></i></div><span class="stat-delta">▲ 3%</span></div>
-      <div class="stat-val">4.9</div>
+      <div class="stat-val">—</div>
       <div class="stat-label">ความพึงพอใจ</div>
     </div>
   </div>
@@ -3102,14 +3102,7 @@ var qrcode = function() {
           <button class="btn btn-primary btn-sm" onclick="openAddAppt()"><i class="ti ti-plus"></i>เพิ่ม</button>
         </div>
       </div>
-      <div id="appt-list-container" class="card-body">
-        <div class="appt-card"><div class="appt-time-box"><div class="appt-time-h">08:00</div></div><div class="appt-line-v" style="background:var(--g2);"></div><div class="av">TS</div><div style="flex:1;"><div style="font-size:13.5px;font-weight:500;">Anthony Stark</div><div style="font-size:12px;color:#999;">นวดเส้นประสาท • ปวดหลัง</div></div><span class="badge badge-green">เสร็จแล้ว</span></div>
-        <div class="appt-card"><div class="appt-time-box"><div class="appt-time-h">09:30</div></div><div class="appt-line-v" style="background:var(--go);"></div><div class="av">SR</div><div style="flex:1;"><div style="font-size:13.5px;font-weight:500;">Steven Rogers</div><div style="font-size:12px;color:#999;">ฝังเข็ม • ไมเกรนเรื้อรัง</div></div><span class="badge badge-gold">กำลังรักษา</span></div>
-        <div class="appt-card"><div class="appt-time-box"><div class="appt-time-h">11:00</div></div><div class="appt-line-v" style="background:var(--gs);"></div><div class="av">BB</div><div style="flex:1;"><div style="font-size:13.5px;font-weight:500;">Bruce Banner</div><div style="font-size:12px;color:#999;">อบสมุนไพร • เครียดสะสม</div></div><span class="badge badge-wait">รอ</span></div>
-        <div class="appt-card"><div class="appt-time-box"><div class="appt-time-h">13:00</div></div><div class="appt-line-v" style="background:var(--gs);"></div><div class="av">TO</div><div style="flex:1;"><div style="font-size:13.5px;font-weight:500;">Thor Odinson</div><div style="font-size:12px;color:#999;">อบลดน้ำหนัก • Thor Protocol</div></div><span class="badge badge-wait">รอ</span></div>
-        <div class="appt-card"><div class="appt-time-box"><div class="appt-time-h">14:30</div></div><div class="appt-line-v" style="background:var(--gs);"></div><div class="av">NR</div><div style="flex:1;"><div style="font-size:13.5px;font-weight:500;">Natasha Romanoff</div><div style="font-size:12px;color:#999;">ประคบร้อน • ปวดข้อเข่า</div></div><span class="badge badge-wait">รอ</span></div>
-        <div class="appt-card"><div class="appt-time-box"><div class="appt-time-h">15:30</div></div><div class="appt-line-v" style="background:var(--gs);"></div><div class="av">SW</div><div style="flex:1;"><div style="font-size:13.5px;font-weight:500;">Sam Wilson</div><div style="font-size:12px;color:#999;">นวดกดจุด • Combat PTSD</div></div><span class="badge badge-wait">รอ</span></div>
-      </div>
+      <div id="appt-list-container" class="card-body"><div style="text-align:center;padding:30px;color:#aaa;"><i class="ti ti-loader" style="font-size:20px;"></i></div></div>
     </div>
   </div>
 </section>
@@ -3152,21 +3145,14 @@ var qrcode = function() {
           </div>
         </div>
       </div>
-      <span id="patient-page-info" style="font-size:12px;color:#aaa;">แสดง 1–10 จาก 348</span>
+      <span id="patient-page-info" style="font-size:12px;color:#aaa;">—</span>
     </div>
     <table class="tbl">
       <thead><tr><th>HN</th><th>ชื่อ-นามสกุล</th><th>อายุ</th><th>โทรศัพท์</th><th>การรักษาหลัก</th><th>นัดล่าสุด</th><th>ประเภท</th><th></th></tr></thead>
-      <tbody id="patient-tbody">
-        <tr><td style="color:var(--go);font-weight:600;">AV-IM-001</td><td><div style="display:flex;align-items:center;gap:8px;"><div class="av">TS</div><div><div style="font-size:13px;font-weight:500;">Anthony Stark</div><div style="font-size:11px;color:#aaa;">tony@starkindustries.com</div></div></div></td><td>42</td><td>081-234-5678</td><td>นวดเส้นประสาท</td><td>14/05/68</td><td><span class="badge badge-green">ประจำ</span></td><td><button class="btn btn-outline btn-sm">ดูข้อมูล</button></td></tr>
-        <tr><td style="color:var(--go);font-weight:600;">AV-CA-002</td><td><div style="display:flex;align-items:center;gap:8px;"><div class="av">SR</div><div><div style="font-size:13px;font-weight:500;">Steven Rogers</div><div style="font-size:11px;color:#aaa;">cap@shield.gov</div></div></div></td><td>38</td><td>089-876-5432</td><td>ฝังเข็ม</td><td>14/05/68</td><td><span class="badge badge-green">ประจำ</span></td><td><button class="btn btn-outline btn-sm">ดูข้อมูล</button></td></tr>
-        <tr><td style="color:var(--go);font-weight:600;">AV-HK-005</td><td><div style="display:flex;align-items:center;gap:8px;"><div class="av">BB</div><div><div style="font-size:13px;font-weight:500;">Bruce Banner</div><div style="font-size:11px;color:#aaa;">—</div></div></div></td><td>55</td><td>062-111-2233</td><td>อบสมุนไพร</td><td>14/05/68</td><td><span class="badge badge-blue">ใหม่</span></td><td><button class="btn btn-outline btn-sm">ดูข้อมูล</button></td></tr>
-        <tr><td style="color:var(--go);font-weight:600;">AV-TH-003</td><td><div style="display:flex;align-items:center;gap:8px;"><div class="av">TO</div><div><div style="font-size:13px;font-weight:500;">Thor Odinson</div><div style="font-size:11px;color:#aaa;">somsak.d@email.com</div></div></div></td><td>60</td><td>091-555-6677</td><td>อบลดน้ำหนัก • Thor Protocol</td><td>14/05/68</td><td><span class="badge badge-green">ประจำ</span></td><td><button class="btn btn-outline btn-sm">ดูข้อมูล</button></td></tr>
-        <tr><td style="color:var(--go);font-weight:600;">AV-BW-004</td><td><div style="display:flex;align-items:center;gap:8px;"><div class="av">NR</div><div><div style="font-size:13px;font-weight:500;">Natasha Romanoff</div><div style="font-size:11px;color:#aaa;">—</div></div></div></td><td>29</td><td>083-999-0011</td><td>ประคบร้อน</td><td>10/05/68</td><td><span class="badge badge-blue">ใหม่</span></td><td><button class="btn btn-outline btn-sm">ดูข้อมูล</button></td></tr>
-        <tr><td style="color:var(--go);font-weight:600;">AV-WV-008</td><td><div style="display:flex;align-items:center;gap:8px;"><div class="av">WM</div><div><div style="font-size:13px;font-weight:500;">Wanda Maximoff</div><div style="font-size:11px;color:#aaa;">onrapan.t@email.com</div></div></div></td><td>47</td><td>086-333-4455</td><td>นวดแผนไทย</td><td>08/05/68</td><td><span class="badge badge-green">ประจำ</span></td><td><button class="btn btn-outline btn-sm">ดูข้อมูล</button></td></tr>
-      </tbody>
+      <tbody id="patient-tbody"><tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa;">กำลังโหลด...</td></tr></tbody>
     </table>
     <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(200,169,107,0.1);">
-      <span id="patient-page-footer" style="font-size:12px;color:#aaa;">แสดง 1–6 จาก 348 รายการ</span>
+      <span id="patient-page-footer" style="font-size:12px;color:#aaa;">—</span>
       <div id="patient-pagination" style="display:flex;gap:6px;">
         <button class="btn btn-outline btn-sm">← ก่อนหน้า</button>
         <button class="btn btn-primary btn-sm">1</button>
@@ -3618,29 +3604,19 @@ var qrcode = function() {
     </div>
   </div>
   <div class="grid-4 mb-20">
-    <div class="stat-card green-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(229,211,163,0.18);border-color:rgba(229,211,163,0.25);"><i class="ti ti-trending-up" style="color:#E5D3A3;"></i></div></div><div class="stat-val" style="color:#E5D3A3;">฿84,500</div><div class="stat-label" style="color:rgba(229,211,163,0.65);">รายรับเดือนนี้</div></div>
-    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="border-color:rgba(180,70,70,0.2);"><i class="ti ti-trending-down" style="color:#A04040;"></i></div></div><div class="stat-val" style="color:#A04040;">฿18,200</div><div class="stat-label">รายจ่ายเดือนนี้</div></div>
-    <div class="stat-card"><div class="stat-top"><div class="stat-icon"><i class="ti ti-coin"></i></div><span class="stat-delta">กำไรสุทธิ</span></div><div class="stat-val">฿66,300</div><div class="stat-label">กำไรเดือนนี้</div></div>
-    <div class="stat-card"><div class="stat-top"><div class="stat-icon"><i class="ti ti-receipt"></i></div></div><div class="stat-val">247</div><div class="stat-label">ใบเสร็จออกแล้ว</div></div>
+    <div class="stat-card green-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(229,211,163,0.18);border-color:rgba(229,211,163,0.25);"><i class="ti ti-trending-up" style="color:#E5D3A3;"></i></div></div><div class="stat-val" style="color:#E5D3A3;">—</div><div class="stat-label" style="color:rgba(229,211,163,0.65);">รายรับเดือนนี้</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="border-color:rgba(180,70,70,0.2);"><i class="ti ti-trending-down" style="color:#A04040;"></i></div></div><div class="stat-val" style="color:#A04040;">—</div><div class="stat-label">รายจ่ายเดือนนี้</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon"><i class="ti ti-coin"></i></div><span class="stat-delta">กำไรสุทธิ</span></div><div class="stat-val">—</div><div class="stat-label">กำไรเดือนนี้</div></div>
+    <div class="stat-card"><div class="stat-top"><div class="stat-icon"><i class="ti ti-receipt"></i></div></div><div class="stat-val">—</div><div class="stat-label">ใบเสร็จออกแล้ว</div></div>
   </div>
   <div class="grid-2">
     <div class="card">
       <div class="card-head"><div class="card-title"><i class="ti ti-arrow-down-circle" style="color:var(--g2);"></i>รายรับล่าสุด</div><button class="btn btn-outline btn-sm" onclick="showFinanceAll('income')">ดูทั้งหมด</button></div>
-      <div id="fin-income-list" class="card-body">
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Anthony Stark — นวดเส้นประสาท</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0247</div></div></div><strong style="color:var(--g2);">+฿800</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-needle"></i></div><div><div style="font-size:13px;font-weight:500;">Steven Rogers — ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">14/05/68 • ใบเสร็จ #0246</div></div></div><strong style="color:var(--g2);">+฿1,200</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-massage"></i></div><div><div style="font-size:13px;font-weight:500;">Wanda Maximoff — อบสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0245</div></div></div><strong style="color:var(--g2);">+฿650</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon income"><i class="ti ti-pill"></i></div><div><div style="font-size:13px;font-weight:500;">Thor Odinson — ยาสมุนไพร</div><div style="font-size:11px;color:#aaa;">13/05/68 • ใบเสร็จ #0244</div></div></div><strong style="color:var(--g2);">+฿350</strong></div>
-      </div>
+      <div id="fin-income-list" class="card-body"><div style="padding:20px;text-align:center;color:#aaa;font-size:13px;">กำลังโหลด...</div></div>
     </div>
     <div class="card">
       <div class="card-head"><div class="card-title"><i class="ti ti-arrow-up-circle" style="color:#A04040;"></i>รายจ่ายล่าสุด</div><button class="btn btn-outline btn-sm" onclick="showFinanceAll('expense')">ดูทั้งหมด</button></div>
-      <div id="fin-expense-list" class="card-body">
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-leaf"></i></div><div><div style="font-size:13px;font-weight:500;">สั่งซื้อสมุนไพรสด</div><div style="font-size:11px;color:#aaa;">10/05/68 • ผู้จำหน่าย: เชียงใหม่เฮิร์บ</div></div></div><strong style="color:#A04040;">-4,800 บาท</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-building"></i></div><div><div style="font-size:13px;font-weight:500;">ค่าเช่าสถานที่</div><div style="font-size:11px;color:#aaa;">01/05/68 • รายเดือน</div></div></div><strong style="color:#A04040;">-8,000 บาท</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-package"></i></div><div><div style="font-size:13px;font-weight:500;">ซื้ออุปกรณ์ฝังเข็ม</div><div style="font-size:11px;color:#aaa;">05/05/68 • Supplier: ThaiMedSupply</div></div></div><strong style="color:#A04040;">-2,400 บาท</strong></div>
-        <div class="fin-row"><div style="display:flex;align-items:center;gap:12px;"><div class="fin-icon expense"><i class="ti ti-bolt"></i></div><div><div style="font-size:13px;font-weight:500;">ค่าไฟฟ้า-น้ำ</div><div style="font-size:11px;color:#aaa;">07/05/68 • รายเดือน</div></div></div><strong style="color:#A04040;">-3,000 บาท</strong></div>
-      </div>
+      <div id="fin-expense-list" class="card-body"><div style="padding:20px;text-align:center;color:#aaa;font-size:13px;">กำลังโหลด...</div></div>
     </div>
   </div>
   </div><!-- /finance-content -->
@@ -7832,6 +7808,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v147', date:'04/06/2569', items:['chore: ลบ demo hardcode — dashboard (เลข/นัด Marvel) + patients (ตาราง/count 348) + finance (เลข/รายการ Marvel) -> placeholder ให้ loadXxx เติม real · ชื่อปลอมหมดแล้ว (MERGE-1a)'] },
   { ver:'v146', date:'04/06/2569', items:['style(face): ทำปุ่ม face ทุกปุ่มเป็นโทนทอง (ค้นหา×2 + dropdown + แก้ไข/เพิ่ม + ถ่ายรูป) — parity กับ scproject (MERGE-1)'] },
   { ver:'v145', date:'03/06/2569', items:['v145 UI ตั้งค่าพร้อมเพย์: เปลี่ยนเป็นปุ่มในกรอบ → เปิด popup ให้กรอก + ติ๊กถูก ✓ เมื่อตั้งค่าแล้ว (หน้าการเงิน)'] },
   { ver:'v144', date:'03/06/2569', items:['v144 ฟอร์มตั้งค่าพร้อมเพย์บนหน้าการเงิน (กรอกเบอร์มือถือ/เลขบัตร 13 หลัก → รับเงิน QR ในใบเสร็จ) — PAY-B'] },
