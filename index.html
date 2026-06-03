@@ -3010,7 +3010,7 @@ var qrcode = function() {
       <div class="card-head">
         <div class="card-title"><i class="ti ti-clock"></i>นัดหมายวันนี้ & พรุ่งนี้</div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="border-color:#5F8D4E;color:#2F5D50;gap:4px;"><i class="ti ti-face-id" style="font-size:13px;"></i>ค้นหาด้วยใบหน้า</button>
+          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));gap:4px;"><i class="ti ti-face-id" style="font-size:13px;color:#b8923f;"></i>ค้นหาด้วยใบหน้า</button>
           <button class="btn btn-outline btn-sm" onclick="showPage('appointments',null)">ดูทั้งหมด →</button>
         </div>
       </div>
@@ -3142,7 +3142,7 @@ var qrcode = function() {
         <select class="form-select" style="width:150px;padding:9px 14px;"><option>การรักษาทั้งหมด</option><option>นวดแผนไทย</option><option>ฝังเข็ม</option><option>อบสมุนไพร</option></select>
         <!-- Face scan single dropdown -->
         <div style="position:relative;" id="fsd-wrap">
-          <button class="btn btn-outline" onclick="_fsdToggle()" style="width:150px;padding:9px 14px;font-size:14px;border-color:#5F8D4E;color:#2F5D50;font-weight:500;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;">
+          <button class="btn btn-outline" onclick="_fsdToggle()" style="width:150px;padding:9px 14px;font-size:14px;border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));font-weight:600;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;">
             ค้นหาด้วยใบหน้า<i class="ti ti-chevron-down" style="font-size:11px;opacity:.6;"></i>
           </button>
           <div id="fsd-menu" style="display:none;position:absolute;top:calc(100% + 5px);right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:5px;min-width:180px;box-shadow:0 6px 24px rgba(0,0,0,.13);z-index:400;">
@@ -3190,7 +3190,7 @@ var qrcode = function() {
     <div class="card">
       <div class="card-head"><div class="card-title"><i class="ti ti-search"></i>ค้นหาผู้ป่วย</div>
         <button type="button" class="btn btn-outline btn-sm" onclick="openIdCardReader('register')" style="gap:6px;font-size:12px;border-color:var(--go);color:var(--g1);"><i class="ti ti-credit-card" style="font-size:14px;"></i>อ่านบัตร ปชช.</button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="gap:6px;font-size:12px;border-color:#5F8D4E;color:#2F5D50;"><i class="ti ti-face-id" style="font-size:14px;"></i>🔍 ค้นหาจากใบหน้า</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="gap:6px;font-size:12px;border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));"><i class="ti ti-face-id" style="font-size:14px;color:#b8923f;"></i>🔍 ค้นหาจากใบหน้า</button>
       </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
         <div class="search-wrap" style="width:100%;"><i class="ti ti-search"></i><input id="reg-search" class="search-input" style="width:100%;" placeholder="ค้นหาชื่อ / HN / เบอร์โทร..." oninput="searchRegPatient(this.value)" onkeydown="regSearchKeyNav(event)"></div>
@@ -4795,7 +4795,7 @@ function viewPatient(id){
       </div>`:''}
     </div>`,
     `<button class="btn btn-outline" onclick="closeModal()" style="margin-right:auto;">ปิด</button>
-     <button class="btn btn-outline" onclick="closeModal();(function(){var _hn='${id}';var _pts=window.allPatients||[];var _pt=_pts.find(function(x){return x.hn===_hn;});var _m=_pt&&hasFaceData(_pt)?'edit':'save';openFaceAdvanced(_m,_hn);})()" style="border-color:#5F8D4E;color:#5F8D4E;gap:6px;"><i class="ti ti-face-id"></i>${hasFaceData(p) ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
+     <button class="btn btn-outline" onclick="closeModal();(function(){var _hn='${id}';var _pts=window.allPatients||[];var _pt=_pts.find(function(x){return x.hn===_hn;});var _m=_pt&&hasFaceData(_pt)?'edit':'save';openFaceAdvanced(_m,_hn);})()" style="border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));gap:6px;"><i class="ti ti-face-id" style="color:#b8923f;"></i>${hasFaceData(p) ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
      <button class="btn btn-outline" onclick="closeMedCert();(async()=>openMedCert(\'${id}\'))();" style="border-color:var(--g1);color:var(--g1);gap:6px;"><i class="ti ti-certificate"></i>ออกใบรับรองแพทย์</button>
      <button class="btn btn-green" onclick="closeModal();goRegisterWithPatient('${id}')"><i class="ti ti-clipboard-list"></i>ลงทะเบียน</button>
      <button class="btn-edit" onclick="closeModal();openEditPatient('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>`
@@ -4964,7 +4964,7 @@ function openAddPatient(prefillName){
   openModal('➕ เพิ่มผู้ป่วยใหม่',`
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
       <button type="button" class="btn btn-outline btn-sm" onclick="openIdCardReader('addpatient')" style="gap:6px;font-size:12px;border-color:var(--go);color:var(--g1);"><i class="ti ti-credit-card" style="font-size:14px;"></i>อ่านบัตร ปชช.</button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="openFaceAdvanced('save','addpatient')" style="gap:6px;font-size:12px;border-color:#5F8D4E;color:#2F5D50;"><i class="ti ti-camera" style="font-size:14px;"></i>📷 ใบหน้า</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="openFaceAdvanced('save','addpatient')" style="gap:6px;font-size:12px;border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));"><i class="ti ti-camera" style="font-size:14px;color:#b8923f;"></i>📷 ใบหน้า</button>
     </div>
     <div id="addpat-face-preview" style="display:none;align-items:center;gap:10px;padding:8px 12px;background:rgba(47,93,80,.06);border:1px solid rgba(47,93,80,.2);border-radius:8px;margin-bottom:8px;">
       <img id="addpat-face-thumb" src="" alt="face" class="face-preview-thumb">
@@ -7832,6 +7832,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v146', date:'04/06/2569', items:['style(face): ทำปุ่ม face ทุกปุ่มเป็นโทนทอง (ค้นหา×2 + dropdown + แก้ไข/เพิ่ม + ถ่ายรูป) — parity กับ scproject (MERGE-1)'] },
   { ver:'v145', date:'03/06/2569', items:['v145 UI ตั้งค่าพร้อมเพย์: เปลี่ยนเป็นปุ่มในกรอบ → เปิด popup ให้กรอก + ติ๊กถูก ✓ เมื่อตั้งค่าแล้ว (หน้าการเงิน)'] },
   { ver:'v144', date:'03/06/2569', items:['v144 ฟอร์มตั้งค่าพร้อมเพย์บนหน้าการเงิน (กรอกเบอร์มือถือ/เลขบัตร 13 หลัก → รับเงิน QR ในใบเสร็จ) — PAY-B'] },
   { ver:'v143', date:'03/06/2569', items:['v143 ระบบรับชำระเงิน: PromptPay QR + ยืนยันจ่าย (มือ/สลิป SlipOK) + ส่งใบเสร็จเข้าอีเมล (ในหน้าออกใบเสร็จ) + ตั้งค่าการชำระเงิน — PAY-B/m/s'] },
