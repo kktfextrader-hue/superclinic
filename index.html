@@ -4445,7 +4445,7 @@ function computeDailyBrief(finance, treatments, patients, herbs, stockTx){
   var sold={};
   (stockTx||[]).forEach(function(s){ if(String(s.type||'').toUpperCase()!=='OUT') return; var dt=String(s.created_at||s.date||'').slice(0,10); if(dt && dt<D.ago) return; var id=s.herb_id||''; if(!id) return; sold[id]=(sold[id]||0)+(parseFloat(s.quantity)||0); });
   var lowSold=[];
-  (herbs||[]).forEach(function(h){ var qty=parseFloat(h.quantity)||0; var st=herbStatus(qty,h.unit); var low=(st!=='เพียงพอ'); var sales=sold[h.id]||0; if(low&&sales>0) lowSold.push({name:h.name_th||h.name_en||h.id, qty:qty, unit:h.unit||'', sold:sales, out:(qty<=0)}); });
+  (herbs||[]).forEach(function(h){ var qty=parseFloat(h.quantity)||0; var st=herbStatus(qty,h.unit,h.min_quantity); var low=(st!=='เพียงพอ'); var sales=sold[h.id]||0; if(low&&sales>0) lowSold.push({name:h.name_th||h.name_en||h.id, qty:qty, unit:h.unit||'', sold:sales, out:(qty<=0)}); });
   lowSold.sort(function(a,b){ return b.sold-a.sold; }); lowSold=lowSold.slice(0,4);
   var feed=[];
   (finance||[]).forEach(function(f){ if(dateToISO(f.date)!==D.today) return; var a=parseFloat(f.amount)||0; feed.push({ts:f.created_at||'', tm:_briefTime(f.created_at), txt:(f.type==='income'?'รับเงิน ฿'+a.toLocaleString():'จ่าย ฿'+a.toLocaleString())}); });
@@ -6237,7 +6237,7 @@ async function loadHerbs(){
     allHerbs=res.data?.rows||[];
     renderHerbs();
     const sv=document.querySelectorAll('#page-herbs .stat-val');
-    const low=allHerbs.filter(h=>herbStatus(h.quantity,h.unit)!=='เพียงพอ');
+    const low=allHerbs.filter(h=>herbStatus(h.quantity,h.unit,h.min_quantity)!=='เพียงพอ');
     if(sv[0]) sv[0].textContent=allHerbs.length;
     if(sv[1]) sv[1].textContent=low.length;
     // คำนวณมูลค่า
@@ -6328,8 +6328,8 @@ async function submitAddHerb(e){
   e.preventDefault();
   const nameTh = document.getElementById('herb-name-th').value.trim();
   const qty    = parseFloat(document.getElementById('herb-qty').value)||0;
-  const minQty = parseFloat(document.getElementById('herb-min-qty').value)||5;
-  const status = herbStatus(qty, document.getElementById('herb-unit').value);
+  const minQty = parseFloat(document.getElementById('herb-min-qty').value)||0;
+  const status = herbStatus(qty, document.getElementById('herb-unit').value, minQty);
 
   const data = {
     name_th:       nameTh,
@@ -6463,11 +6463,12 @@ function showAllFreshHerbs(){ _showAllFresh=true; renderHerbs(); }
 function showAllMediHerbs(){ _showAllMedi=true; renderHerbs(); }
 
 function herbLowThreshold(unit){ var u=String(unit||'').trim(); if(u==='เม็ด'||u==='แคปซูล') return 200; if(u==='ขวด') return 5; if(u==='ซอง') return 10; return 10; }
-function herbStatus(qty, unit){ qty=parseFloat(qty)||0; if(qty<=0) return 'หมดแล้ว'; if(qty<=herbLowThreshold(unit)) return 'ใกล้หมด'; return 'เพียงพอ'; }
+function herbStatus(qty, unit, minQ){ qty=parseFloat(qty)||0; if(qty<=0) return 'หมดแล้ว'; var m=(minQ===undefined||minQ===null||minQ==='')?0:parseFloat(minQ); if(isNaN(m)) m=0; if(m<0) return 'เพียงพอ'; var thr=(m>0)?m:herbLowThreshold(unit); if(qty<=thr) return 'ใกล้หมด'; return 'เพียงพอ'; }
+function herbAlertText(h){ var m=parseFloat(h&&h.min_quantity); if(m<0) return '<span style="color:#aaa;">ไม่เตือน</span>'; if(m>0) return m+' '+((h&&h.unit)||''); return '<span style="color:#aaa;">ค่าเริ่มต้น</span>'; }
 function herbRowHtml(h){
   const emojis={'สมุนไพรสด':'🌿','ยาสำเร็จรูป':'🫙','ยาแผนไทยตำรับ':'🫙','ยาสตรี':'🌸','ยาภายนอก / กายภาพ':'💊','อุปกรณ์':'🪡'};
   const em=emojis[h.category]||'🌿';
-  const _st=herbStatus(h.quantity,h.unit); const isLow=(_st==='ใกล้หมด'||_st==='หมดแล้ว');
+  const _st=herbStatus(h.quantity,h.unit,h.min_quantity); const isLow=(_st==='ใกล้หมด'||_st==='หมดแล้ว');
   const hid=(h.id||'').replace(/'/g,"\\'");
   return `<div class="herb-item-row" data-herb-id="${hid}" onclick="viewHerb('${hid}')">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -6500,7 +6501,7 @@ function viewHerb(id){
       <div class="form-group"><label class="form-label">ชื่อไทย</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${h.name_th||'—'}</div></div>
       <div class="form-group"><label class="form-label">ชื่ออังกฤษ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${h.name_en||'—'}</div></div>
       <div class="form-group"><label class="form-label">ชื่อวิทยาศาสตร์</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;font-style:italic;">${h.name_sci||'—'}</div></div>
-      <div class="form-group"><label class="form-label">สถานะ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${badgeHerb(herbStatus(h.quantity,h.unit))}</div></div>
+      <div class="form-group"><label class="form-label">สถานะ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${badgeHerb(herbStatus(h.quantity,h.unit,h.min_quantity))}</div></div>
       <div class="form-group"><label class="form-label">คงเหลือ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;font-size:16px;font-weight:600;color:var(--g1);">${h.quantity||0} ${h.unit||''}</div></div>
       <div class="form-group"><label class="form-label">ขั้นต่ำ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${h.min_quantity||0} ${h.unit||''}</div></div>
       <div class="form-group"><label class="form-label">ราคาต่อหน่วย</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">฿${h.cost_per_unit||0}/${h.unit||''}</div></div>
@@ -6515,17 +6516,25 @@ function viewHerb(id){
 
 function openAdjStock(herbId){
   const h=allHerbs.find(x=>x.id===herbId); if(!h) return;
+  const _mq=parseFloat(h.min_quantity); const _none=_mq<0; const _custom=_mq>0; const _def=!(_none||_custom); const _thr=herbLowThreshold(h.unit);
   openModal(`📦 ปรับสต็อก — ${h.name_th}`,`
-    <form id="fp-stock" style="display:grid;gap:14px;" onsubmit="submitStock(event,'${herbId}')">
+    <form id="fp-stock" style="display:grid;gap:13px;" onsubmit="submitStock(event,'${herbId}')">
       <div style="padding:12px 16px;background:#f9f6f0;border-radius:12px;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:13px;color:#666;">คงเหลือปัจจุบัน</span>
         <strong style="font-size:16px;color:var(--g1);">${h.quantity||0} ${h.unit||''}</strong>
       </div>
       <div class="form-group"><label class="form-label">ประเภท</label>
         <select class="form-select" name="type"><option value="IN">รับเข้า (IN)</option><option value="OUT">เบิกออก (OUT)</option></select></div>
-      <div class="form-group"><label class="form-label">จำนวน *</label><input class="form-input" type="number" name="quantity" min="0.01" step="0.01" required placeholder="ระบุจำนวน"></div>
+      <div class="form-group"><label class="form-label">จำนวน <span style="font-size:11px;color:#aaa;font-weight:400;">(เว้นว่างได้ ถ้าแค่ตั้งค่าแจ้งเตือน)</span></label><input class="form-input" type="number" name="quantity" min="0.01" step="0.01" placeholder="ระบุจำนวน"></div>
+      <div class="form-group"><label class="form-label">ราคาทุน/หน่วย (บาท) <span style="font-size:11px;color:#aaa;">— แก้เพื่ออัปเดตราคาทุน</span></label><input class="form-input" type="number" name="cost_per_unit" step="0.01" value="${h.cost_per_unit||''}" placeholder="—"></div>
       <div class="form-group"><label class="form-label">เหตุผล</label><input class="form-input" name="reason" placeholder="เช่น: สั่งซื้อเพิ่ม / ใช้รักษา"></div>
       <div class="form-group"><label class="form-label">ราคา (บาท)</label><input class="form-input" type="number" name="price" step="0.01" placeholder="0.00"></div>
+      <div style="border:1.5px solid rgba(200,169,107,.4);border-radius:12px;padding:11px 13px;background:rgba(200,169,107,.05);">
+        <div style="font-size:12.5px;font-weight:700;color:#7a5e23;margin-bottom:7px;">🔔 การแจ้งเตือนสต็อกยานี้</div>
+        <label style="display:flex;align-items:center;gap:7px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="radio" name="alertmode" value="default" ${_def?'checked':''} onclick="var a=document.getElementById('adj-alertval');if(a)a.disabled=true;"> ใช้ค่าเริ่มต้นตามหน่วย <span style="color:#999;font-size:11.5px;">(${h.unit||'หน่วย'} ≤ ${_thr})</span></label>
+        <label style="display:flex;align-items:center;gap:7px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="radio" name="alertmode" value="custom" id="adj-rcustom" ${_custom?'checked':''} onclick="var a=document.getElementById('adj-alertval');if(a)a.disabled=false;"> แจ้งเตือนเมื่อเหลือน้อยกว่า <input id="adj-alertval" class="form-input" type="number" name="alertval" min="1" value="${_custom?h.min_quantity:''}" ${_custom?'':'disabled'} style="width:88px;padding:5px 9px;"> ${h.unit||'หน่วย'} <span style="color:#aaa;font-size:11px;">(เว้นว่าง=ไม่เตือน)</span></label>
+        <label style="display:flex;align-items:center;gap:7px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="radio" name="alertmode" value="none" ${_none?'checked':''} onclick="var a=document.getElementById('adj-alertval');if(a)a.disabled=true;"> ไม่แจ้งเตือนยานี้</label>
+      </div>
     </form>`,
     `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
      <button class="btn btn-primary" onclick="document.getElementById('fp-stock').requestSubmit()"><i class="ti ti-check"></i>บันทึก</button>`
@@ -6534,18 +6543,27 @@ function openAdjStock(herbId){
 
 async function submitStock(e, herbId){
   e.preventDefault();
-  const fd=new FormData(e.target), data={herb_id:herbId, created_at:todayISO(), created_by:'Dr. Strange'};
-  fd.forEach((v,k)=>{ if(v) data[k]=v; });
+  const fd=new FormData(e.target);
+  const h=allHerbs.find(x=>x.id===herbId); if(!h){ closeModal(); return; }
+  const amode=fd.get('alertmode')||'default';
+  let newMin='0';
+  if(amode==='custom'){ const av=parseFloat(fd.get('alertval')); newMin=(av>0)?String(av):'-1'; }
+  else if(amode==='none'){ newMin='-1'; }
+  const qStr=fd.get('quantity');
   try {
-    await callApi('stock_transactions','create',data);
-    const h=allHerbs.find(x=>x.id===herbId);
-    if(h){
-      const q=parseFloat(h.quantity||0), adj=parseFloat(data.quantity);
-      const nq=data.type==='IN' ? q+adj : Math.max(0,q-adj);
-      const ns=herbStatus(nq, h.unit);
-      await callApi('herbs','update',{id:herbId, quantity:String(nq), status:ns, updated_at:todayISO()});
+    let nq=parseFloat(h.quantity||0)||0;
+    if(qStr && parseFloat(qStr)>0){
+      const data={herb_id:herbId, created_at:todayISO(), created_by:'Dr. Strange', type:fd.get('type')||'IN', quantity:qStr};
+      const _r=fd.get('reason'); if(_r) data.reason=_r;
+      const _p=fd.get('price'); if(_p) data.price=_p;
+      await callApi('stock_transactions','create',data);
+      const adj=parseFloat(qStr);
+      nq=(data.type==='IN') ? nq+adj : Math.max(0,nq-adj);
     }
-    closeModal(); showToast('✅ ปรับสต็อกสำเร็จ');
+    const _upd={id:herbId, quantity:String(nq), status:herbStatus(nq,h.unit,newMin), min_quantity:newMin, updated_at:todayISO()};
+    const cpu=fd.get('cost_per_unit'); if(cpu!==null && cpu!=='') _upd.cost_per_unit=String(cpu);
+    await callApi('herbs','update',_upd);
+    closeModal(); showToast('✅ บันทึกสำเร็จ');
     loadHerbs(); if(document.getElementById('page-stock').classList.contains('active')) loadStock();
   } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
@@ -6567,19 +6585,19 @@ function renderStockTable(filter){
   let data=allHerbs;
   if(_stockFilter){ const q=_stockFilter.toLowerCase(); data=data.filter(h=>(h.name_th||'').toLowerCase().includes(q)||(h.category||'').toLowerCase().includes(q)); }
   const sv=document.querySelectorAll('#page-stock .stat-val');
-  const low=data.filter(h=>herbStatus(h.quantity,h.unit)!=='เพียงพอ');
+  const low=data.filter(h=>herbStatus(h.quantity,h.unit,h.min_quantity)!=='เพียงพอ');
   if(sv[0]) sv[0].textContent=data.length;
   if(sv[1]) sv[1].textContent=low.length;
   if(!data.length){ tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa;">ไม่พบข้อมูล</td></tr>`; return; }
   tb.innerHTML=data.map(h=>{
-    const _st=herbStatus(h.quantity,h.unit); const isLow=(_st==='ใกล้หมด'||_st==='หมดแล้ว');
+    const _st=herbStatus(h.quantity,h.unit,h.min_quantity); const isLow=(_st==='ใกล้หมด'||_st==='หมดแล้ว');
     const hid=(h.id||'').replace(/'/g,"\\'");
     return `<tr>
       <td style="color:var(--go);font-weight:600;">${h.id}</td>
       <td>${h.name_th||'—'}</td>
       <td><span class="badge badge-wait">${h.category||'—'}</span></td>
       <td><strong ${isLow?'style="color:#C05050;"':''}>${h.quantity||0} ${h.unit||''}</strong></td>
-      <td>${h.min_quantity||0} ${h.unit||''}</td>
+      <td>${herbAlertText(h)}</td>
       <td>฿${h.cost_per_unit||0}/${h.unit||''}</td>
       <td>${badgeHerb(_st)}</td>
       <td style="white-space:nowrap;">
@@ -8527,6 +8545,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v182', date:'04/06/2569', items:['feat(สต็อก): ตั้งค่าแจ้งเตือนต่อยา (โมดอลปรับสต็อก) — ใช้ค่าเริ่มต้นตามหน่วย / เตือนเมื่อ<N / ไม่แจ้งเตือน · เก็บใน min_quantity · จำนวน optional + เพิ่มช่องราคาทุนใต้จำนวน'] },
   { ver:'v181', date:'04/06/2569', items:['style(face): ปุ่มค้นหาด้วยใบหน้าทุกที่ ใส่ไอคอนหน้ายิ้ม (faceVec SVG) แบบ avatar หน้าแรก'] },
   { ver:'v180', date:'04/06/2569', items:['feat(สต็อก): สถานะยาตามหน่วย — 0=หมด · ใกล้หมด เม็ด/แคปซูล≤200, ขวด≤5, ซอง≤10 (แทน min_quantity) · ใช้ทั้ง list/สต็อก/stat/แจ้งเตือน/บรีฟ'] },
   { ver:'v179', date:'04/06/2569', items:['fix(แจ้งเตือน): toast ยาใกล้หมด แจ้งเฉพาะยาขายบ่อยที่เริ่มขาด (ไม่เด้งทุกตัวที่ stock ต่ำ) + เด้งครั้งเดียวต่อ session'] },
