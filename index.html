@@ -6781,6 +6781,7 @@ async function submitTreatment(e){
   if(p) data.patient_name=`${p.first_name||''} ${p.last_name||''}`.trim();
   data.doctor='Dr. Stephen Strange';
   // timestamps จัดการโดย server (Code.gs)
+  const now = new Date().toISOString();   // FIX: now ไม่ถูกนิยาม → "now is not defined" ตอนบันทึก (notes/stock/นัด/รายรับ) ปุ่มค้าง
 
   // body map
   const bmVal = bmGetValue('treat');
@@ -8219,6 +8220,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v161', date:'04/06/2569', items:['fix(บันทึกรักษา): "now is not defined" ตอนบันทึกการรักษา (มีอาการ/ยา/นัด) → ปุ่มค้าง · นิยาม now ใน submitTreatment'] },
   { ver:'v160', date:'04/06/2569', items:['fix(ui): คอลัมน์รายชื่อผู้ป่วย เปลี่ยนจากแสดงธาตุ → แสดง อาการหลัก จริง + ตัดข้อความยาว'] },
   { ver:'v159', date:'04/06/2569', items:['feat(backup): banner คลิก → เลือก ดาวน์โหลด zip เข้ารหัส / ส่งเข้าอีเมล (ผ่าน Apps Script MailApp) · backend action emailbackup'] },
   { ver:'v158', date:'04/06/2569', items:['feat(ux): แสดง pill "กำลังบันทึก..." กลางบนจอ ระหว่างรอ save (เพิ่ม/แก้ไข/ลบ) ก่อนขึ้นผลสำเร็จ/ล้มเหลว'] },
