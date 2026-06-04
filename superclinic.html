@@ -3395,7 +3395,7 @@ var qrcode = function() {
               <button type="button" class="btn btn-outline btn-sm" onclick="bmTreatSave()" style="font-size:12px;"><i class="ti ti-device-floppy"></i> บันทึกจุดปวด</button>
             </div>
           </div>
-          <div class="form-group" style="grid-column:1/-1;"><label class="form-label">ผลการรักษาและคำแนะนำ</label><textarea class="form-textarea" name="result" rows="3" placeholder="บันทึกผลการรักษา, คำแนะนำ..."></textarea></div>
+          <div class="form-group" style="grid-column:1/-1;"><label class="form-label">ผลการรักษาและคำแนะนำ</label><textarea class="form-textarea" name="result" rows="3" placeholder="บันทึกการรักษา"></textarea></div>
 
           <!-- ยาที่จ่าย — 5 บรรทัด autocomplete -->
           <div class="form-group" style="grid-column:1/-1;">
@@ -4014,10 +4014,17 @@ async function bmPatSave(id){
 }
 
 
-function bmTreatSave(){
+async function bmTreatSave(){
+  if(!selTreatPat){ showToast('เลือกผู้ป่วยก่อนบันทึกจุดปวด','warning'); return; }
   const val = bmGetValue('treat');
-  const pts = Object.values(JSON.parse(val)).flat();
-  showToast(`✅ บันทึก ${pts.length} จุดในฟอร์มแล้ว — จะถูกส่งพร้อมบันทึกการรักษา`,'success');
+  const p = (typeof allPatients!=='undefined'?allPatients:[]).find(x=>x.id===selTreatPat||x.hn===selTreatPat);
+  const hn = p ? (p.hn||p.id||selTreatPat) : selTreatPat;
+  try {
+    await callApi('patients','update',{ body_map: val }, hn);
+    if(p) p.body_map = val;
+    let _n=0; try{ _n=Object.values(JSON.parse(val)).flat().length; }catch(_){}
+    showToast('✅ บันทึกจุดปวด '+_n+' จุด ลงข้อมูลคนไข้แล้ว','success');
+  } catch(e){ showToast('บันทึกจุดปวดไม่สำเร็จ: '+(e.message||e),'error'); }
 }
 
 function bmAddpatSave(){
@@ -8221,6 +8228,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v163', date:'04/06/2569', items:['fix(บันทึกรักษา): placeholder ผลการรักษา → "บันทึกการรักษา" · ปุ่มบันทึกจุดปวด = เซฟแผนที่จุดเจ็บลงข้อมูลคนไข้ (DB) ทันที'] },
   { ver:'v162', date:'04/06/2569', items:['fix(บันทึกรักษา): ปุ่มค้างหลังบันทึกสำเร็จ — submitTreatment ไม่เรียก _done() → เพิ่ม finally{_done()} ปลดล็อกปุ่ม'] },
   { ver:'v161', date:'04/06/2569', items:['fix(บันทึกรักษา): "now is not defined" ตอนบันทึกการรักษา (มีอาการ/ยา/นัด) → ปุ่มค้าง · นิยาม now ใน submitTreatment'] },
   { ver:'v160', date:'04/06/2569', items:['fix(ui): คอลัมน์รายชื่อผู้ป่วย เปลี่ยนจากแสดงธาตุ → แสดง อาการหลัก จริง + ตัดข้อความยาว'] },
