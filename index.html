@@ -3418,12 +3418,15 @@ var qrcode = function() {
 
           <!-- นัดครั้งต่อไป -->
           <div class="form-group" style="grid-column:1/-1;">
-            <label class="form-label">📅 นัดครั้งต่อไป</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-              <div><label style="font-size:11px;color:#888;">วันที่</label><div class="dp-wrap" style="display:inline-block;width:100%;"><input type="text" id="next-appt-date-disp" class="form-input dp-input" placeholder="วว/ดด/ปปปป" readonly><input type="hidden" id="next-appt-date" name="next_date" value=""></div></div>
-              <div><label style="font-size:11px;color:#888;">เวลานัด</label><select name="next_time_start" class="form-input"><option value="00:00">00:00</option><option value="00:30">00:30</option><option value="01:00">01:00</option><option value="01:30">01:30</option><option value="02:00">02:00</option><option value="02:30">02:30</option><option value="03:00">03:00</option><option value="03:30">03:30</option><option value="04:00">04:00</option><option value="04:30">04:30</option><option value="05:00">05:00</option><option value="05:30">05:30</option><option value="06:00">06:00</option><option value="06:30">06:30</option><option value="07:00">07:00</option><option value="07:30">07:30</option><option value="08:00">08:00</option><option value="08:30">08:30</option><option value="09:00" selected>09:00</option><option value="09:30">09:30</option><option value="10:00">10:00</option><option value="10:30">10:30</option><option value="11:00">11:00</option><option value="11:30">11:30</option><option value="12:00">12:00</option><option value="12:30">12:30</option><option value="13:00">13:00</option><option value="13:30">13:30</option><option value="14:00">14:00</option><option value="14:30">14:30</option><option value="15:00">15:00</option><option value="15:30">15:30</option><option value="16:00">16:00</option><option value="16:30">16:30</option><option value="17:00">17:00</option><option value="17:30">17:30</option><option value="18:00">18:00</option><option value="18:30">18:30</option><option value="19:00">19:00</option><option value="19:30">19:30</option><option value="20:00">20:00</option><option value="20:30">20:30</option><option value="21:00">21:00</option><option value="21:30">21:30</option><option value="22:00">22:00</option><option value="22:30">22:30</option><option value="23:00">23:00</option><option value="23:30">23:30</option></select></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <label class="form-label" style="margin:0;">📅 นัดครั้งต่อไป</label>
+              <button type="button" id="next-appt-toggle-btn" class="btn btn-outline btn-sm" onclick="toggleNextAppt()"><i class="ti ti-calendar-plus"></i> สร้างนัด</button>
+            </div>
+            <div id="next-appt-fields" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;opacity:.45;transition:opacity .2s;">
+              <div><label style="font-size:11px;color:#888;">วันที่</label><div class="dp-wrap" style="display:inline-block;width:100%;"><input type="text" id="next-appt-date-disp" class="form-input dp-input" placeholder="วว/ดด/ปปปป" readonly disabled><input type="hidden" id="next-appt-date" name="next_date" value="" disabled></div></div>
+              <div><label style="font-size:11px;color:#888;">เวลานัด</label><select name="next_time_start" class="form-input" disabled><option value="00:00">00:00</option><option value="00:30">00:30</option><option value="01:00">01:00</option><option value="01:30">01:30</option><option value="02:00">02:00</option><option value="02:30">02:30</option><option value="03:00">03:00</option><option value="03:30">03:30</option><option value="04:00">04:00</option><option value="04:30">04:30</option><option value="05:00">05:00</option><option value="05:30">05:30</option><option value="06:00">06:00</option><option value="06:30">06:30</option><option value="07:00">07:00</option><option value="07:30">07:30</option><option value="08:00">08:00</option><option value="08:30">08:30</option><option value="09:00" selected>09:00</option><option value="09:30">09:30</option><option value="10:00">10:00</option><option value="10:30">10:30</option><option value="11:00">11:00</option><option value="11:30">11:30</option><option value="12:00">12:00</option><option value="12:30">12:30</option><option value="13:00">13:00</option><option value="13:30">13:30</option><option value="14:00">14:00</option><option value="14:30">14:30</option><option value="15:00">15:00</option><option value="15:30">15:30</option><option value="16:00">16:00</option><option value="16:30">16:30</option><option value="17:00">17:00</option><option value="17:30">17:30</option><option value="18:00">18:00</option><option value="18:30">18:30</option><option value="19:00">19:00</option><option value="19:30">19:30</option><option value="20:00">20:00</option><option value="20:30">20:30</option><option value="21:00">21:00</option><option value="21:30">21:30</option><option value="22:00">22:00</option><option value="22:30">22:30</option><option value="23:00">23:00</option><option value="23:30">23:30</option></select></div>
               <div><label style="font-size:11px;color:#888;">ประเภทการรักษา</label>
-                <select class="form-select" name="next_treatment_type">
+                <select class="form-select" name="next_treatment_type" disabled>
                   <option value="">— เหมือนเดิม —</option>
                   <option>นวดแผนไทย</option><option>ประคบสมุนไพร</option><option>อบสมุนไพร</option>
                   <option>ฝังเข็ม</option><option>ครอบแก้ว</option><option>ปรึกษาแพทย์</option>
@@ -6546,8 +6549,34 @@ async function loadTreatmentPatients(){
   } catch(e){ showToast('ไม่สามารถโหลดข้อมูลได้','error'); }
 }
 
+function toggleNextAppt(){
+  const wrap=document.getElementById('next-appt-fields'); if(!wrap) return;
+  const ctrls=[...wrap.querySelectorAll('input,select')];
+  const enabling = ctrls.length ? ctrls[0].disabled : true;
+  ctrls.forEach(el=>{ el.disabled=!enabling; });
+  wrap.style.opacity = enabling ? '1' : '.45';
+  const btn=document.getElementById('next-appt-toggle-btn');
+  if(btn){ btn.innerHTML = enabling ? '<i class="ti ti-calendar-off"></i> ยกเลิกนัด' : '<i class="ti ti-calendar-plus"></i> สร้างนัด'; btn.classList.toggle('btn-primary',enabling); btn.classList.toggle('btn-outline',!enabling); }
+  if(enabling){
+    const d=document.getElementById('next-appt-date');
+    if(d && !d.value && typeof dpSetValue==='function' && typeof todayISO==='function') dpSetValue('next-appt-date','next-appt-date-disp', todayISO());
+  } else {
+    const d=document.getElementById('next-appt-date'); if(d) d.value='';
+    const dd=document.getElementById('next-appt-date-disp'); if(dd) dd.value='';
+  }
+}
+function setNextApptOff(){
+  const wrap=document.getElementById('next-appt-fields'); if(!wrap) return;
+  wrap.querySelectorAll('input,select').forEach(el=> el.disabled=true);
+  wrap.style.opacity='.45';
+  const btn=document.getElementById('next-appt-toggle-btn');
+  if(btn){ btn.innerHTML='<i class="ti ti-calendar-plus"></i> สร้างนัด'; btn.classList.add('btn-outline'); btn.classList.remove('btn-primary'); }
+  const d=document.getElementById('next-appt-date'); if(d) d.value='';
+  const dd=document.getElementById('next-appt-date-disp'); if(dd) dd.value='';
+}
 function resetTreatForm(){
   document.getElementById('form-treatment').reset();
+  setNextApptOff();
   // init date picker รักษา (2)
   setTimeout(()=>{ dpInit('treat-date-disp','treat-date', todayISO()); }, 50);
   const d=document.getElementById('treat-date'); if(d) d.value=todayISO();
@@ -8295,6 +8324,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v167', date:'04/06/2569', items:['feat(บันทึกรักษา): นัดครั้งต่อไป เพิ่มปุ่ม "สร้างนัด" — ช่องวันที่/เวลา/ประเภท disable+จาง จนกว่าจะกด (กดแล้ววันที่เด้งเป็นวันนี้)'] },
   { ver:'v166', date:'04/06/2569', items:['feat(ui): พื้นหลังหลัก (.main) ลายดอก luxury แบบจาง + เพิ่มหน้าโหลด (splash) ลายดอก auto-fade ~2 วิ'] },
   { ver:'v165', date:'04/06/2569', items:['feat(ประวัติรักษา): แต่ละแถวโชว์ 5 ช่องคงที่ (อาการ/วินิจฉัย/หัตถการ/ยาที่จ่าย/ผล-คำแนะนำ) ช่องว่าง=ไม่มีข้อมูล + เวลา/ราคา/ประเภทว่าง=ไม่ระบุ'] },
   { ver:'v164', date:'04/06/2569', items:['feat(ประวัติรักษา): โซนประวัติในหน้าบันทึกรักษา + ช่องค้นหา (เฉพาะโซนนี้) + แบ่งหน้า 5 รายการ/หน้า'] },
