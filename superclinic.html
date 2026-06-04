@@ -212,6 +212,15 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 .bkb.s-done{background:#27ae60;color:#fff;border-color:#27ae60;animation:bkb-pop .3s ease}
 .bkb.s-done .bkb-dot{display:none}
 @keyframes bkb-pop{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+.cz-acts{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.cz-act{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;border:1.5px solid;cursor:pointer;background:#fff;transition:transform .12s,box-shadow .15s;text-align:left;font-family:inherit;width:100%}
+.cz-act:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.cz-act .czi{font-size:19px;width:24px;text-align:center;flex-shrink:0}
+.cz-act .czt{font-size:13px;font-weight:700;line-height:1.2}
+.cz-act .czd{font-size:10.5px;color:#888;margin-top:2px;line-height:1.3;font-weight:400}
+.cz-act.demo{border-color:rgba(95,141,78,.5);color:#2F5D50}
+.cz-act.reset{border-color:rgba(192,57,43,.5);color:#C0392B}
+.cz-act.load{border-color:rgba(200,169,107,.6);color:#7a5e23}
 .tb-btn{width:36px;height:36px;border-radius:10px;border:1px solid rgba(200,169,107,0.28);background:rgba(255,255,255,0.7);color:#5F8D4E;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:all 0.15s;}
 .tb-btn:hover{background:var(--gs);border-color:var(--go);box-shadow:0 0 10px rgba(200,169,107,0.22);}
 .notif-pos{position:relative;}
@@ -3772,6 +3781,17 @@ var qrcode = function() {
       </div>
     </div>
   </div>
+  <div class="card" style="margin-top:16px;">
+    <div class="card-head"><div class="card-title" style="color:var(--er);"><i class="ti ti-database-cog"></i>จัดการข้อมูล (ต้องใส่รหัส 2 รอบ)</div></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button type="button" class="btn btn-outline btn-sm" onclick="czSetPassword()">🔑 ตั้ง/เปลี่ยนรหัส</button></div>
+      <div class="cz-acts">
+        <button type="button" class="cz-act demo" onclick="czOpenGate('demo')"><span class="czi">🧪</span><span><span class="czt">ทดลองใช้ด้วยข้อมูลตัวอย่าง</span><span class="czd">สร้างผู้ป่วยสมมติ 20 คน + นัด + ประวัติรักษา + รายรับ (คลังยาคงเดิม)</span></span></button>
+        <button type="button" class="cz-act reset" onclick="czOpenGate('reset')"><span class="czi">♻️</span><span><span class="czt">ล้างข้อมูลเริ่มใหม่</span><span class="czd">สำรองลง softbackup.zip (ดาวน์โหลด) ก่อน → ลบข้อมูลจริง (เก็บคลังยา+ตั้งค่า)</span></span></button>
+        <button type="button" class="cz-act load" onclick="czOpenGate('restore')"><span class="czi">📥</span><span><span class="czt">กู้คืนจากไฟล์สำรอง</span><span class="czd">เลือกไฟล์ softbackup.zip กลับมา</span></span></button>
+      </div>
+    </div>
+  </div>
 </section>
 
 
@@ -3801,10 +3821,11 @@ const titles = {
   settings:'⚙️ ตั้งค่าระบบ'
 };
 
-function checkFinancePw(){
+async function checkFinancePw(){
   const input = document.getElementById('finance-pw-input');
   const pw = input ? input.value : '';
-  if(pw === '123456'){
+  const _real = (typeof czGetFinancePw==='function') ? await czGetFinancePw() : '123456';
+  if(pw === _real){
     const lock = document.getElementById('finance-lock');
     const content = document.getElementById('finance-content');
     if(lock) lock.style.display = 'none';
@@ -7924,10 +7945,205 @@ window.addEventListener('load', () => {
   setTimeout(() => { if(typeof callApi === 'function') bkbLoadState(); }, 1500);
 });
 
+/* ════ CLINIC-TOOLS (superclinic) — gate/demo/reset/restore + recovery escrow ════ */
+async function _upsertSetting(key, value, desc){
+  try { await callApi('settings','update',{ value:value }, key); }
+  catch(e){ await callApi('settings','create',{ key:key, value:value, description:desc||'' }); }
+}
+let _czZip=null;
+async function loadZipJsLib(){
+  if(_czZip) return _czZip;
+  await new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='https://unpkg.com/@zip.js/zip.js@2.7.40/dist/zip.min.js'; sc.onload=res; sc.onerror=()=>rej(new Error('โหลด zip.js ไม่ได้')); document.head.appendChild(sc); });
+  _czZip=window.zip; return _czZip;
+}
+async function czGetFinancePw(){
+  try { const r=await callApi('settings','get',null,'finance_password'); const v=(r&&r.data&&r.data.row&&r.data.row.value); return v||'123456'; }
+  catch(_){ return '123456'; }
+}
+const ADMIN_RECOVERY_PUBKEY = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtZ0j+KshTuVZtVs8JJzsFTexvk78yYSGT4sSDO6yVi09XunSghnfvzB6Fl++vhjS1zHes+oYyRdbehDby++QZzNI5Dke2MBEYQa5N/0XlLvamNkTFUd0kPuKDSwf9bCKVil4dkcwY8LA7VaKGQIyvZ6AJ3/GZY88iLrdYcH9bzeS0SfYtYBXXDE+H6g+VPTGUpkn9eugc1dhT6f34RBWOKMRg0tbkCq8Su0HSMpKXFwnO57xwrx70vifcrNoSWQWdYtp6xjYhNV2FSmQ11OfjJ09sTMnDLnLFEX8fg2olxn+icEY6dDUBFcqs0RJU2oeo97Bx42oMsV+pJg3ceUCeQIDAQAB';
+async function czEncryptForAdmin(plain){
+  try {
+    if(!window.crypto||!crypto.subtle||!plain) return '';
+    const der=Uint8Array.from(atob(ADMIN_RECOVERY_PUBKEY), c=>c.charCodeAt(0));
+    const key=await crypto.subtle.importKey('spki', der.buffer, {name:'RSA-OAEP',hash:'SHA-256'}, false, ['encrypt']);
+    const ct=await crypto.subtle.encrypt({name:'RSA-OAEP'}, key, new TextEncoder().encode(plain));
+    let bin=''; const a=new Uint8Array(ct); for(let i=0;i<a.length;i++) bin+=String.fromCharCode(a[i]);
+    return btoa(bin);
+  } catch(e){ return ''; }
+}
+function czCloseGate(){ const m=document.getElementById('cz-gate'); if(m) m.remove(); }
+function czProgress(txt,pct){
+  let el=document.getElementById('cz-prog');
+  if(!el){ document.body.insertAdjacentHTML('beforeend','<div id="cz-prog" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:99996;font-family:Sarabun,sans-serif"><div style="background:#fff;border-radius:14px;padding:24px 30px;min-width:280px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.3)"><div id="cz-prog-txt" style="font-size:14px;color:#2F5D50;font-weight:600;margin-bottom:12px"></div><div style="height:8px;background:#eee;border-radius:6px;overflow:hidden"><div id="cz-prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#5F8D4E,#C8A96B);transition:width .2s"></div></div></div></div>'); el=document.getElementById('cz-prog'); }
+  if(txt!==undefined) document.getElementById('cz-prog-txt').innerHTML=txt;
+  if(pct!==undefined) document.getElementById('cz-prog-bar').style.width=Math.max(0,Math.min(100,pct))+'%';
+}
+function czProgressDone(){ const el=document.getElementById('cz-prog'); if(el) el.remove(); }
+async function czOpenGate(action){
+  const META={ demo:{t:'🧪 ยืนยันโหลดข้อมูลตัวอย่าง',warn:'จะ<b>เพิ่มผู้ป่วยสมมติ 20 คน</b> + นัด/ประวัติ/รายรับ · คลังยาและข้อมูลเดิมยังอยู่ครบ',btn:'เพิ่มข้อมูลตัวอย่าง',danger:false},
+    reset:{t:'♻️ ยืนยันล้างข้อมูลทั้งหมด',warn:'⚠️ ระบบจะ<b>สำรองลง softbackup.zip (ดาวน์โหลด)</b>ก่อน แล้ว<b>ลบข้อมูลคนไข้/นัด/รักษา/การเงินจริง</b><br>คลังยา + ตั้งค่า ถูกเก็บไว้ · กู้คืนได้ด้วยปุ่ม "กู้คืนจากไฟล์สำรอง"',btn:'ยืนยันล้างข้อมูล',danger:true},
+    restore:{t:'📥 ยืนยันกู้คืนจากไฟล์สำรอง',warn:'เลือกไฟล์ <b>softbackup.zip</b> — <b>ข้อมูลปัจจุบันจะถูกแทนที่</b>',btn:'เลือกไฟล์กู้คืน',danger:true} }[action];
+  czCloseGate();
+  const dc=META.danger?'#C0392B':'#2F5D50';
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="cz-gate" style="position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:99995;padding:20px" onclick="if(event.target===this)czCloseGate()">
+    <div style="background:#fff;border-radius:14px;max-width:400px;width:100%;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3);font-family:Sarabun,sans-serif">
+      <h3 style="font-size:16px;color:${dc};margin:0 0 4px">${META.t}</h3>
+      <div style="background:${META.danger?'#fff4f4':'#eef6f2'};border-left:3px solid ${dc};border-radius:8px;padding:10px 12px;font-size:12.5px;color:#444;margin:10px 0 14px;line-height:1.5">${META.warn}</div>
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">รหัสผ่าน <span style="font-weight:400;color:#888">— ใช้รหัสเดียวกับหน้าข้อมูลการเงิน (เริ่มต้น 123456)</span></label>
+      <input id="cz-gate-pw1" type="password" placeholder="พิมพ์รหัส" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;font-family:monospace;box-sizing:border-box">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin:8px 0 4px">ยืนยันรหัสผ่านอีกครั้ง</label>
+      <input id="cz-gate-pw2" type="password" placeholder="พิมพ์รหัสซ้ำ" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;font-family:monospace;box-sizing:border-box">
+      <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
+        <button onclick="czCloseGate()" style="padding:9px 16px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;color:#374151;font-weight:600;cursor:pointer;font-family:inherit">ยกเลิก</button>
+        <button onclick="czGateConfirm('${action}')" style="padding:9px 18px;border:none;border-radius:9px;background:${META.danger?'#C0392B':'linear-gradient(135deg,#2F5D50,#1f4036)'};color:#fff;font-weight:600;cursor:pointer;font-family:inherit">${META.btn}</button>
+      </div>
+    </div>
+  </div>`);
+  setTimeout(()=>{ const el=document.getElementById('cz-gate-pw1'); if(el) el.focus(); }, 60);
+}
+async function czGateConfirm(action){
+  const p1=(document.getElementById('cz-gate-pw1')||{}).value||'';
+  const p2=(document.getElementById('cz-gate-pw2')||{}).value||'';
+  if(p1.length<4){ showToast('รหัสผ่านอย่างน้อย 4 ตัว','error'); return; }
+  if(p1!==p2){ showToast('รหัสผ่านไม่ตรงกัน','error'); return; }
+  const cur=await czGetFinancePw();
+  if(p1!==cur){ showToast('รหัสผ่านไม่ถูกต้อง (ใช้รหัสเดียวกับข้อมูลการเงิน)','error'); return; }
+  czCloseGate();
+  if(action==='demo') czRunDemo();
+  else if(action==='reset') czRunReset(p1);
+  else if(action==='restore') czRunRestore(p1);
+}
+async function czSetPassword(){
+  const cur=await czGetFinancePw(); czCloseGate();
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="cz-gate" style="position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:99995;padding:20px" onclick="if(event.target===this)czCloseGate()">
+    <div style="background:#fff;border-radius:14px;max-width:400px;width:100%;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3);font-family:Sarabun,sans-serif">
+      <h3 style="font-size:16px;color:#2F5D50;margin:0 0 4px">🔑 ตั้ง/เปลี่ยนรหัสผ่าน</h3>
+      <div style="background:#eef6f2;border-left:3px solid #2F5D50;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#444;margin:10px 0 14px;line-height:1.5">รหัสนี้ใช้ทั้ง <b>ปลดล็อกหน้าข้อมูลการเงิน</b> และ <b>ยืนยันจัดการข้อมูล</b> (ค่าเริ่มต้น <b>123456</b>)</div>
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">รหัสปัจจุบัน</label>
+      <input id="cz-pw-old" type="password" placeholder="รหัสปัจจุบัน (เริ่มต้น 123456)" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;font-family:monospace;box-sizing:border-box">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin:8px 0 4px">รหัสใหม่</label>
+      <input id="cz-pw-new1" type="password" placeholder="รหัสใหม่ (อย่างน้อย 4 ตัว)" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;font-family:monospace;box-sizing:border-box">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin:8px 0 4px">ยืนยันรหัสใหม่</label>
+      <input id="cz-pw-new2" type="password" placeholder="พิมพ์รหัสใหม่ซ้ำ" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;font-family:monospace;box-sizing:border-box">
+      <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px">
+        <button onclick="czCloseGate()" style="padding:9px 16px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;color:#374151;font-weight:600;cursor:pointer;font-family:inherit">ยกเลิก</button>
+        <button onclick="czSavePassword()" style="padding:9px 18px;border:none;border-radius:9px;background:linear-gradient(135deg,#2F5D50,#1f4036);color:#fff;font-weight:600;cursor:pointer;font-family:inherit">บันทึกรหัส</button>
+      </div>
+    </div>
+  </div>`);
+  setTimeout(()=>{ const el=document.getElementById('cz-pw-old'); if(el) el.focus(); }, 60);
+}
+async function czSavePassword(){
+  const old=(document.getElementById('cz-pw-old')||{}).value||'';
+  const n1=(document.getElementById('cz-pw-new1')||{}).value||'';
+  const n2=(document.getElementById('cz-pw-new2')||{}).value||'';
+  const cur=await czGetFinancePw();
+  if(old!==cur){ showToast('รหัสปัจจุบันไม่ถูกต้อง','error'); return; }
+  if(n1.length<4){ showToast('รหัสใหม่อย่างน้อย 4 ตัว','error'); return; }
+  if(n1!==n2){ showToast('รหัสใหม่ไม่ตรงกัน','error'); return; }
+  try { await _upsertSetting('finance_password', n1, 'Finance + data-tools password'); }
+  catch(e){ showToast('บันทึกรหัสไม่สำเร็จ: '+(e.message||e),'error'); return; }
+  try { const _enc=await czEncryptForAdmin(n1); if(_enc) await _upsertSetting('recovery_pw_enc', _enc, 'RSA-encrypted recovery copy'); } catch(_){}
+  czCloseGate();
+  showToast('✓ เปลี่ยนรหัสผ่านแล้ว (เก็บสำเนากู้คืนแบบเข้ารหัส)','success');
+}
+const CZ_DEMO = [
+  ['นาย','สมชาย','ใจดี',45,'03-12','ชาย','ไฟ','ปวดเมื่อยกล้ามเนื้อ คอ บ่า ไหล่','0812345671','นวดแผนไทย',350,3,'10:00','ห้อง 1'],
+  ['นาง','ปราณี','ศรีสุข',52,'07-25','หญิง','ดิน','ปวดเข่า ข้อเข่าเสื่อม','0823456712','ประคบสมุนไพร',300,5,'09:30','ห้อง 2'],
+  ['นางสาว','ศิริพร','ทองคำ',28,'11-03','หญิง','ลม','ออฟฟิศซินโดรม ปวดคอ บ่า','0834567123','นวดแผนไทย',400,1,'13:00','ห้อง 1'],
+  ['นาย','วิชัย','มั่นคง',60,'01-18','ชาย','น้ำ','ปวดหลังส่วนล่างเรื้อรัง','0845671234','ฝังเข็ม',600,8,'11:00','ห้อง 3'],
+  ['นาง','มาลี','บุญมี',48,'05-09','หญิง','ไฟ','นอนไม่หลับ เครียดสะสม','0856712345','อบสมุนไพร',200,2,'15:00','ห้อง 2'],
+  ['นาย','ธนากร','แสงทอง',35,'09-21','ชาย','ลม','ปวดศีรษะไมเกรน','0867123456','นวดแผนไทย',350,6,'14:30','ห้อง 1'],
+  ['นางสาว','รัตนา','เจริญพร',31,'02-14','หญิง','ดิน','ปวดประจำเดือน','0878901234','ประคบสมุนไพร',300,4,'10:30','ห้อง 2'],
+  ['นาย','ประสิทธิ์','วงศ์ไทย',55,'12-02','ชาย','น้ำ','ชาปลายมือปลายเท้า','0889012345','ฝังเข็ม',600,10,'09:00','ห้อง 3'],
+  ['นาง','สุดารัตน์','พูนสุข',42,'06-27','หญิง','ไฟ','ภูมิแพ้ คัดจมูกเรื้อรัง','0890123456','อบสมุนไพร',250,7,'16:00','ห้อง 2'],
+  ['นาย','อนุชา','สุขสันต์',38,'08-15','ชาย','ลม','ปวดข้อนิ้วมือ','0801234567','ครอบแก้ว',300,9,'13:30','ห้อง 1'],
+  ['นางสาว','กาญจนา','ไพบูลย์',26,'04-30','หญิง','ดิน','ปวดเมื่อยจากการนั่งนาน','0811112222','นวดแผนไทย',350,2,'11:30','ห้อง 1'],
+  ['นาย','ณัฐพงษ์','รักษาสุข',49,'10-08','ชาย','ไฟ','ปวดหลังร้าวลงขา','0822223333','ฝังเข็ม',600,12,'10:00','ห้อง 3'],
+  ['นาง','วันเพ็ญ','ศรีสุข',58,'03-22','หญิง','น้ำ','เหน็บชา ปลายเท้าเย็น','0833334444','ประคบสมุนไพร',300,14,'09:30','ห้อง 2'],
+  ['นาย','สุรชัย','ทองคำ',63,'07-11','ชาย','ดิน','ข้อเข่าเสื่อม เดินลำบาก','0844445555','ฝังเข็ม',600,15,'14:00','ห้อง 3'],
+  ['นางสาว','พรทิพย์','บุญมี',24,'09-05','หญิง','ลม','ปวดคอ บ่า จากมือถือ','0855556666','',0,0,'',''],
+  ['นาย','พิชัย','แสงทอง',41,'11-19','ชาย','ไฟ','ปวดไหล่ ยกแขนไม่ขึ้น','0866667777','',0,0,'',''],
+  ['นาง','นงนุช','มั่นคง',50,'01-29','หญิง','ดิน','ปวดเข่าทั้งสองข้าง','0877778888','',0,0,'',''],
+  ['นาย','ชัยวัฒน์','เจริญพร',33,'05-16','ชาย','น้ำ','ปวดหลังจากยกของหนัก','0888889999','',0,0,'',''],
+  ['นางสาว','สมหญิง','พูนสุข',29,'08-23','หญิง','ลม','ปวดศีรษะ ตึงท้ายทอย','0899990000','',0,0,'',''],
+  ['นาย','กิตติ','สุขสันต์',47,'12-14','ชาย','ไฟ','ออฟฟิศซินโดรม ปวดหลังเรื้อรัง','0800001111','',0,0,'','']
+];
+async function czRunDemo(){
+  function pad(n){ return n<10?'0'+n:''+n; }
+  function daysAgo(d){ const t=new Date(Date.now()-d*86400000); return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate()); }
+  const Y=(new Date()).getFullYear();
+  const patRows=CZ_DEMO.map(d=>({ prefix:d[0],first_name:d[1],last_name:d[2],dob:(Y-d[3])+'-'+d[4],gender:d[5],phone:d[8],element:d[6],chronic_disease:d[7],patient_type:'ผู้ป่วยทั่วไป',is_active:'TRUE' }));
+  try {
+    czProgress('กำลังโหลดผู้ป่วย '+patRows.length+' คน...', 18);
+    const r1=await callApi('patients','bulkcreate',{ rows:patRows });
+    const hns=(r1&&r1.data&&r1.data.ids)||[];
+    if(!hns.length) throw new Error('bulkcreate ไม่คืน id (ตรวจ backend)');
+    const appts=[],treats=[],fins=[];
+    for(let i=0;i<CZ_DEMO.length;i++){
+      const d=CZ_DEMO[i], hn=hns[i]; if(!hn||!d[9]) continue;
+      const dt=daysAgo(d[11]||(i+2)); const name=d[0]+d[1]+' '+d[2];
+      appts.push({ patient_id:hn,patient_name:name,date:dt,time_start:d[12]||'10:00',time_end:'',doctor:'แพทย์แผนไทย',treatment_type:d[9],status:'เสร็จสิ้น',room:d[13]||'ห้อง 1' });
+      treats.push({ patient_id:hn,date:dt,type:d[9],symptoms:d[7],diagnosis:d[7],herbs_used:'',price:String(d[10]),doctor:'แพทย์แผนไทย' });
+      fins.push({ date:dt,type:'income',category:'ค่ารักษา',amount:String(d[10]),payment_method:'เงินสด',receipt_no:'' });
+    }
+    czProgress('กำลังโหลดนัดหมาย...', 55); if(appts.length) await callApi('appointments','bulkcreate',{ rows:appts });
+    czProgress('กำลังโหลดประวัติการรักษา...', 72); if(treats.length) await callApi('treatments','bulkcreate',{ rows:treats });
+    czProgress('กำลังโหลดรายรับ...', 88); if(fins.length) await callApi('finance','bulkcreate',{ rows:fins });
+    czProgress('เสร็จแล้ว!', 100); setTimeout(czProgressDone, 600);
+    showToast('✓ โหลดข้อมูลตัวอย่าง '+patRows.length+' คน + นัด/ประวัติ/รายรับ สำเร็จ','success');
+    try { allPatients=[]; window.allPatients=[]; } catch(_){}
+    setTimeout(()=>{ try{ if(typeof loadPatients==='function') loadPatients(); }catch(_){} try{ if(typeof loadDashboard==='function') loadDashboard(); }catch(_){} }, 800);
+  } catch(e){ czProgressDone(); showToast('โหลดข้อมูลตัวอย่างล้มเหลว: '+(e.message||e),'error'); }
+}
+const CZ_DATA_SHEETS=['patients','appointments','treatments','treatment_notes','finance','stock_transactions','users'];
+async function czFetchAll(p0){
+  const dump={ app:'superclinic', exported_at:(new Date()).toISOString(), data:{} };
+  for(let i=0;i<CZ_DATA_SHEETS.length;i++){ const sn=CZ_DATA_SHEETS[i];
+    try{ const r=await callApi(sn,'list'); dump.data[sn]=(r&&r.data&&r.data.rows)||[]; }catch(e){ dump.data[sn]=[]; }
+    czProgress('สำรอง: '+sn+' ...',(p0||5)+Math.floor((i+1)/CZ_DATA_SHEETS.length*40)); }
+  return dump;
+}
+async function czMakeZip(obj,pw){ const z=await loadZipJsLib(); const bw=new z.BlobWriter('application/zip'); const zw=new z.ZipWriter(bw,{password:pw,encryptionStrength:3}); await zw.add('softbackup.json', new z.TextReader(JSON.stringify(obj))); await zw.close(); return await bw.getData(); }
+async function czRunReset(pw){
+  if(window._czBusy) return; window._czBusy=true;
+  try {
+    czProgress('กำลังสำรองข้อมูล...', 5); const dump=await czFetchAll(5);
+    czProgress('กำลังบีบอัด+เข้ารหัส softbackup.zip...', 52); const zipBlob=await czMakeZip(dump,pw);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(zipBlob); a.download='softbackup.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    czProgress('กำลังล้างข้อมูล (เก็บคลังยา+ตั้งค่า)...', 72); await callApi('patients','cleardata',{ sheets:CZ_DATA_SHEETS });
+    czProgress('เสร็จแล้ว!', 100); setTimeout(czProgressDone, 700);
+    showToast('✓ ล้างข้อมูลแล้ว — สำรองใน softbackup.zip (ดาวน์โหลด) เก็บไฟล์+รหัสไว้ให้ดี','success');
+    try { allPatients=[]; window.allPatients=[]; } catch(_){}
+    setTimeout(()=>{ try{ if(typeof loadPatients==='function') loadPatients(); }catch(_){} try{ if(typeof loadDashboard==='function') loadDashboard(); }catch(_){} }, 800);
+  } catch(e){ czProgressDone(); showToast('ล้างข้อมูลล้มเหลว: '+(e.message||e),'error'); } finally { window._czBusy=false; }
+}
+async function czRunRestore(pw){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.zip,application/zip';
+  inp.onchange=async ()=>{ const f=inp.files&&inp.files[0]; if(!f) return; if(window._czBusy) return; window._czBusy=true;
+    try {
+      czProgress('กำลังเปิด softbackup.zip...', 8); const z=await loadZipJsLib();
+      const zr=new z.ZipReader(new z.BlobReader(f),{password:pw}); const entries=await zr.getEntries();
+      const ent=entries.find(e=>/\.json$/i.test(e.filename))||entries[0]; if(!ent) throw new Error('ไม่พบข้อมูลในไฟล์');
+      const txt=await ent.getData(new z.TextWriter()); await zr.close(); const dump=JSON.parse(txt);
+      czProgress('กำลังล้างข้อมูลเดิม...', 28); await callApi('patients','cleardata',{ sheets:CZ_DATA_SHEETS });
+      let done=0; for(const sn of CZ_DATA_SHEETS){ const rows=(dump.data&&dump.data[sn])||[]; if(rows.length) await callApi(sn,'bulkcreate',{ rows:rows }); done++; czProgress('กู้คืน: '+sn+' ...', 35+Math.floor(done/CZ_DATA_SHEETS.length*58)); }
+      czProgress('เสร็จแล้ว!', 100); setTimeout(czProgressDone, 700);
+      showToast('✓ กู้คืนข้อมูลจาก softbackup.zip สำเร็จ','success');
+      try { allPatients=[]; window.allPatients=[]; } catch(_){}
+      setTimeout(()=>{ try{ if(typeof loadPatients==='function') loadPatients(); }catch(_){} try{ if(typeof loadDashboard==='function') loadDashboard(); }catch(_){} }, 800);
+    } catch(e){ czProgressDone(); showToast('กู้คืนล้มเหลว: '+(e.message||e)+' (รหัสถูกไหม?)','error'); } finally { window._czBusy=false; }
+  };
+  inp.click();
+}
+
 const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v157', date:'04/06/2569', items:['feat(clinic-tools): การ์ดจัดการข้อมูลในหน้าตั้งค่า — 3 ปุ่ม (demo 20 คน bulk / ล้างข้อมูล+softbackup.zip / กู้คืน) + gate รหัส 2 รอบ (=รหัสการเงิน) + ตั้ง/เปลี่ยนรหัส + recovery escrow (RSA) · backend bulkcreate/cleardata (Code.gs v10)'] },
   { ver:'v156', date:'04/06/2569', items:['fix(ui): toast แจ้งผลเคยโผล่หลัง modal จางอ่านไม่ออก → ดัน z-index เหนือทุก popup'] },
   { ver:'v155', date:'04/06/2569', items:['fix(ui): icon หัวข้อ "ข้อมูลใบหน้า" ใส่ใบหน้าในวงกลมเขียว (มินิ-avatar) ให้ชัด เหมือน avatar คนไข้'] },
   { ver:'v154', date:'04/06/2569', items:['fix(bodymap): หน้าคนไข้ กดขยายแผนที่จุดเจ็บปวด → โชว์ map ทันที (เดิมต้องกดปุ่ม ▼ ขยาย ซ้ำอีกที)'] },

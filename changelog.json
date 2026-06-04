@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v157",
+    "date": "04/06/2569",
+    "items": [
+      "feat(clinic-tools): การ์ดจัดการข้อมูลในหน้าตั้งค่า — 3 ปุ่ม (demo 20 คน bulk / ล้างข้อมูล+softbackup.zip / กู้คืน) + gate รหัส 2 รอบ (=รหัสการเงิน) + ตั้ง/เปลี่ยนรหัส + recovery escrow (RSA) · backend bulkcreate/cleardata (Code.gs v10)"
+    ]
+  },
+  {
     "ver": "v156",
     "date": "04/06/2569",
     "items": [
