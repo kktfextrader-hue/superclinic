@@ -7919,8 +7919,64 @@ async function bkbLoadState(){
 
 function onBackupBannerClick(){
   if(window.BKB.inFlight) return;
-  if(!confirm('ดาวน์โหลดไฟล์สำรองข้อมูลคลินิก (.json) ?\n\nไฟล์จะรวมข้อมูลทุกตาราง — เก็บไว้ที่ปลอดภัย/Google Drive')) return;
-  bkbDownloadBackup();
+  bkbBackupChooser();
+}
+function bkbBackupChooser(){
+  const old=document.getElementById('bkb-chooser'); if(old) old.remove();
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="bkb-chooser" style="position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:99995;padding:20px" onclick="if(event.target===this)this.remove()">
+    <div style="background:#fff;border-radius:14px;max-width:400px;width:100%;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3);font-family:Sarabun,sans-serif">
+      <h3 style="font-size:16px;color:#2F5D50;margin:0 0 12px">💾 สำรองข้อมูล</h3>
+      <button onclick="document.getElementById('bkb-chooser').remove();bkbDownloadZip()" style="width:100%;padding:12px;border:1.5px solid rgba(95,141,78,.5);border-radius:10px;background:#fff;color:#2F5D50;font-weight:700;font-size:13.5px;cursor:pointer;text-align:left;margin-bottom:10px;font-family:inherit">📥 ดาวน์โหลดไฟล์<div style="font-size:11px;color:#888;font-weight:400;margin-top:2px">zip เข้ารหัส เก็บในเครื่อง</div></button>
+      <div style="border:1.5px solid rgba(200,169,107,.5);border-radius:10px;padding:11px 12px">
+        <div style="font-size:13.5px;font-weight:700;color:#7a5e23;margin-bottom:7px">📧 ส่งเข้าอีเมล <span style="font-size:11px;color:#888;font-weight:400">(เก็บนอกเครื่อง)</span></div>
+        <input id="bkb-email" type="email" placeholder="your@email.com" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:8px">
+        <button onclick="bkbDoEmailFromChooser()" style="width:100%;padding:9px;border:none;border-radius:8px;background:linear-gradient(135deg,#2F5D50,#1f4036);color:#fff;font-weight:600;cursor:pointer;font-family:inherit">ส่งอีเมล</button>
+      </div>
+      <div style="text-align:right;margin-top:12px"><button onclick="document.getElementById('bkb-chooser').remove()" style="padding:8px 16px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;color:#374151;font-weight:600;cursor:pointer;font-family:inherit">ปิด</button></div>
+    </div>
+  </div>`);
+}
+function bkbDoEmailFromChooser(){
+  const e=((document.getElementById('bkb-email')||{}).value||'').trim();
+  if(!e){ showToast('กรอกอีเมล','error'); return; }
+  const m=document.getElementById('bkb-chooser'); if(m) m.remove();
+  bkbEmailBackup(e);
+}
+function _zipToB64(ab){ const u=new Uint8Array(ab); let s=''; const CH=0x8000; for(let i=0;i<u.length;i+=CH){ s+=String.fromCharCode.apply(null,u.subarray(i,i+CH)); } return btoa(s); }
+async function bkbDownloadZip(){
+  if(window.BKB.inFlight) return; window.BKB.inFlight=true; const prev=window.BKB.lastSentAt;
+  try {
+    bkbSetState('progress',5); const dump=await czFetchAll(5); const pw=await czGetFinancePw();
+    bkbSetState('progress',60); const zipBlob=await czMakeZip(dump, pw);
+    const today=(new Date()).toISOString().slice(0,10);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(zipBlob); a.download='softbackup-'+today+'.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    bkbSetState('progress',90); const nowISO=(new Date()).toISOString();
+    try { await _upsertSetting('backup_last_sent_at', nowISO, 'Last backup'); } catch(_){}
+    window.BKB.lastSentAt=nowISO; bkbSetState('progress',100);
+    const now=new Date(); bkbSetState('done', String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'));
+    showToast('✓ ดาวน์โหลด backup สำเร็จ (เปิด zip ด้วยรหัสการเงิน)','success');
+    setTimeout(()=>bkbRenderFromTimestamp(window.BKB.lastSentAt), 5000);
+  } catch(e){ showToast('สำรองข้อมูลล้มเหลว: '+(e.message||e),'error'); bkbRenderFromTimestamp(prev); }
+  finally { window.BKB.inFlight=false; }
+}
+async function bkbEmailBackup(toEmail){
+  if(window.BKB.inFlight) return; window.BKB.inFlight=true; const prev=window.BKB.lastSentAt;
+  try {
+    bkbSetState('progress',5); const dump=await czFetchAll(5); const pw=await czGetFinancePw();
+    bkbSetState('progress',55); const zipBlob=await czMakeZip(dump, pw);
+    bkbSetState('progress',72); const ab=await zipBlob.arrayBuffer(); const b64=_zipToB64(ab);
+    const today=(new Date()).toISOString().slice(0,10);
+    bkbSetState('progress',85);
+    await callApi('settings','emailbackup',{ to:toEmail, filename:'softbackup-'+today+'.zip', zip_base64:b64, subject:'[Superclinic] Backup '+today, text:'ไฟล์สำรองข้อมูลคลินิก '+today+' (zip เข้ารหัสด้วยรหัสการเงิน) — เปิดด้วยรหัสการเงินของคลินิก' });
+    const nowISO=(new Date()).toISOString();
+    try { await _upsertSetting('backup_last_sent_at', nowISO, 'Last backup (email)'); } catch(_){}
+    window.BKB.lastSentAt=nowISO; bkbSetState('progress',100);
+    const now=new Date(); bkbSetState('done', String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'));
+    showToast('✓ ส่ง backup เข้าอีเมล '+toEmail+' สำเร็จ','success');
+    setTimeout(()=>bkbRenderFromTimestamp(window.BKB.lastSentAt), 5000);
+  } catch(e){ showToast('ส่งอีเมลล้มเหลว: '+(e.message||e)+' (ตรวจ re-auth MailApp)','error'); bkbRenderFromTimestamp(prev); }
+  finally { window.BKB.inFlight=false; }
 }
 
 async function bkbDownloadBackup(){
@@ -8163,6 +8219,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v159', date:'04/06/2569', items:['feat(backup): banner คลิก → เลือก ดาวน์โหลด zip เข้ารหัส / ส่งเข้าอีเมล (ผ่าน Apps Script MailApp) · backend action emailbackup'] },
   { ver:'v158', date:'04/06/2569', items:['feat(ux): แสดง pill "กำลังบันทึก..." กลางบนจอ ระหว่างรอ save (เพิ่ม/แก้ไข/ลบ) ก่อนขึ้นผลสำเร็จ/ล้มเหลว'] },
   { ver:'v157', date:'04/06/2569', items:['feat(clinic-tools): การ์ดจัดการข้อมูลในหน้าตั้งค่า — 3 ปุ่ม (demo 20 คน bulk / ล้างข้อมูล+softbackup.zip / กู้คืน) + gate รหัส 2 รอบ (=รหัสการเงิน) + ตั้ง/เปลี่ยนรหัส + recovery escrow (RSA) · backend bulkcreate/cleardata (Code.gs v10)'] },
   { ver:'v156', date:'04/06/2569', items:['fix(ui): toast แจ้งผลเคยโผล่หลัง modal จางอ่านไม่ออก → ดัน z-index เหนือทุก popup'] },

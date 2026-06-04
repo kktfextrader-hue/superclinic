@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v159",
+    "date": "04/06/2569",
+    "items": [
+      "feat(backup): banner คลิก → เลือก ดาวน์โหลด zip เข้ารหัส / ส่งเข้าอีเมล (ผ่าน Apps Script MailApp) · backend action emailbackup"
+    ]
+  },
+  {
     "ver": "v158",
     "date": "04/06/2569",
     "items": [
