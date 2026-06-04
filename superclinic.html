@@ -6774,7 +6774,7 @@ function fieldLabel(f){ return {symptoms:'อาการ',diagnosis:'วิน�
 async function submitTreatment(e){
   e.preventDefault();
   const _done = showLoading(e.submitter);
-  if(!selTreatPat){ showToast('กรุณาเลือกผู้ป่วยก่อน','warning'); return; }
+  if(!selTreatPat){ _done(); showToast('กรุณาเลือกผู้ป่วยก่อน','warning'); return; }
   const fd=new FormData(e.target), data={patient_id:selTreatPat};
   fd.forEach((v,k)=>{ if(v && !['next_date','next_time_start','next_treatment_type'].includes(k)) data[k]=v; });
   const p=allPatients.find(x=>x.id===selTreatPat);
@@ -6859,6 +6859,7 @@ async function submitTreatment(e){
     resetTreatForm();
     selectTreatPat(selTreatPat);
   } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
+  finally { if(typeof _done==='function') _done(); }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -8220,6 +8221,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v162', date:'04/06/2569', items:['fix(บันทึกรักษา): ปุ่มค้างหลังบันทึกสำเร็จ — submitTreatment ไม่เรียก _done() → เพิ่ม finally{_done()} ปลดล็อกปุ่ม'] },
   { ver:'v161', date:'04/06/2569', items:['fix(บันทึกรักษา): "now is not defined" ตอนบันทึกการรักษา (มีอาการ/ยา/นัด) → ปุ่มค้าง · นิยาม now ใน submitTreatment'] },
   { ver:'v160', date:'04/06/2569', items:['fix(ui): คอลัมน์รายชื่อผู้ป่วย เปลี่ยนจากแสดงธาตุ → แสดง อาการหลัก จริง + ตัดข้อความยาว'] },
   { ver:'v159', date:'04/06/2569', items:['feat(backup): banner คลิก → เลือก ดาวน์โหลด zip เข้ารหัส / ส่งเข้าอีเมล (ผ่าน Apps Script MailApp) · backend action emailbackup'] },
