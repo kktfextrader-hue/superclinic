@@ -3272,7 +3272,7 @@ var qrcode = function() {
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">อาการที่มา / ความต้องการ <span style="color:var(--er)">*</span></label>
+            <label class="form-label">อาการป่วยที่เป็นอยู่ <span style="color:var(--er)">*</span></label>
             <textarea id="reg-symptoms" class="form-control" rows="3" placeholder="ระบุอาการหรือความต้องการของผู้ป่วย..." style="resize:vertical;min-height:80px;"></textarea>
           </div>
           <div class="form-group">
@@ -8324,6 +8324,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v169', date:'04/06/2569', items:['fix(ui): หน้าลงทะเบียน เปลี่ยน label "อาการที่มา / ความต้องการ" → "อาการป่วยที่เป็นอยู่"'] },
   { ver:'v168', date:'04/06/2569', items:['feat(สมุนไพร): list ยาสำเร็จรูป&ตำรับ + สมุนไพรสด เรียงตาม stock มาก→น้อย (ของที่มีของขึ้นก่อน) + โชว์ 8 รายการแรก'] },
   { ver:'v167', date:'04/06/2569', items:['feat(บันทึกรักษา): นัดครั้งต่อไป เพิ่มปุ่ม "สร้างนัด" — ช่องวันที่/เวลา/ประเภท disable+จาง จนกว่าจะกด (กดแล้ววันที่เด้งเป็นวันนี้)'] },
   { ver:'v166', date:'04/06/2569', items:['feat(ui): พื้นหลังหลัก (.main) ลายดอก luxury แบบจาง + เพิ่มหน้าโหลด (splash) ลายดอก auto-fade ~2 วิ'] },
