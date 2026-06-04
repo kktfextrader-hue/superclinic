@@ -3078,12 +3078,7 @@ var qrcode = function() {
         <div class="card-title" style="color:#E5D3A3;"><i class="ti ti-leaf" style="color:var(--go);"></i>รายงานประจำวัน</div>
         <button class="btn btn-outline btn-sm" style="color:#E5D3A3;border-color:rgba(229,211,163,0.3);" onclick="showPage('herbs',null)">จัดการ →</button>
       </div>
-      <div id="dash-herb-list" class="card-body">
-        <div class="herb-item-row" style="background:rgba(255,255,255,0.07);border-color:rgba(229,211,163,0.12);"><span style="color:rgba(229,211,163,0.9);font-size:13px;">🫚 ขมิ้นชัน (Turmeric)</span><span class="badge" style="background:rgba(95,141,78,0.35);color:#9FE1CB;">เพียงพอ</span></div>
-        <div class="herb-item-row" style="background:rgba(255,255,255,0.07);border-color:rgba(229,211,163,0.12);"><span style="color:rgba(229,211,163,0.9);font-size:13px;">🌱 ไพล (Plai)</span><span class="badge" style="background:rgba(95,141,78,0.35);color:#9FE1CB;">เพียงพอ</span></div>
-        <div class="herb-item-row" style="background:rgba(255,255,255,0.07);border-color:rgba(229,211,163,0.12);"><span style="color:rgba(229,211,163,0.9);font-size:13px;">🌿 ใบมะขาม (Tamarind Leaf)</span><span class="badge" style="background:rgba(200,169,107,0.3);color:#E5D3A3;">ใกล้หมด</span></div>
-        <div class="herb-item-row" style="background:rgba(255,255,255,0.07);border-color:rgba(229,211,163,0.12);"><span style="color:rgba(229,211,163,0.9);font-size:13px;">🍃 กระชาย (Fingerroot)</span><span class="badge" style="background:rgba(200,169,107,0.3);color:#E5D3A3;">ใกล้หมด</span></div>
-      </div>
+      <div id="dash-brief" class="card-body" style="padding:6px 16px 16px;max-height:360px;overflow-y:auto;"><div style="padding:14px;color:rgba(229,211,163,.6);font-size:12px;">กำลังโหลด...</div></div>
     </div>
     <!-- Quick actions -->
     <div class="card">
@@ -4431,7 +4426,71 @@ function closeModal(){ if(_modal){ _modal.remove(); _modal=null; } }
 /* ════════════════════════════════════════════════════════
    DASHBOARD
 ════════════════════════════════════════════════════════ */
+function _briefDates(){
+  var t=todayISO(); var d=new Date(t+'T00:00:00');
+  var iso=function(x){ return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+  var y=new Date(d); y.setDate(y.getDate()-1);
+  var w=new Date(d); w.setDate(w.getDate()-6);
+  var a=new Date(d); a.setDate(a.getDate()-30);
+  return { today:t, yest:iso(y), week:iso(w), ago:iso(a), month:t.slice(0,7) };
+}
+function _briefTime(iso){ if(!iso) return '--:--'; try{ var d=new Date(iso); if(isNaN(d.getTime())) return '--:--'; return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }catch(e){ return '--:--'; } }
+function _briefPatName(patients,pid){ if(!pid) return ''; var p=(patients||[]).find(function(x){ return x.hn===pid||x.id===pid; }); return p?((p.first_name||'')+' '+(p.last_name||'')).trim():''; }
+function computeDailyBrief(finance, treatments, patients, herbs, stockTx){
+  var D=_briefDates();
+  function fsum(pred){ var inc=0,exp=0; (finance||[]).forEach(function(f){ var dt=dateToISO(f.date); if(!dt||!pred(dt)) return; var a=parseFloat(f.amount)||0; if(f.type==='income') inc+=a; else if(f.type==='expense') exp+=a; }); return {inc:inc,exp:exp,net:inc-exp}; }
+  var fin={ y:fsum(function(dt){return dt===D.yest;}), w:fsum(function(dt){return dt>=D.week&&dt<=D.today;}), m:fsum(function(dt){return dt.slice(0,7)===D.month;}) };
+  var setY={}, setT={};
+  (treatments||[]).forEach(function(t){ var dt=dateToISO(t.date); var pid=t.patient_id||''; if(!pid) return; if(dt===D.yest) setY[pid]=1; if(dt===D.today) setT[pid]=1; });
+  var sold={};
+  (stockTx||[]).forEach(function(s){ if(String(s.type||'').toUpperCase()!=='OUT') return; var dt=String(s.created_at||s.date||'').slice(0,10); if(dt && dt<D.ago) return; var id=s.herb_id||''; if(!id) return; sold[id]=(sold[id]||0)+(parseFloat(s.quantity)||0); });
+  var lowSold=[];
+  (herbs||[]).forEach(function(h){ var qty=parseFloat(h.quantity)||0; var mn=parseFloat(h.min_quantity)||0; var low=(h.status==='ใกล้หมด'||h.status==='หมดแล้ว'||(mn>0&&qty<=mn)||qty<=0); var sales=sold[h.id]||0; if(low&&sales>0) lowSold.push({name:h.name_th||h.name_en||h.id, qty:qty, unit:h.unit||'', sold:sales, out:(qty<=0||h.status==='หมดแล้ว')}); });
+  lowSold.sort(function(a,b){ return b.sold-a.sold; }); lowSold=lowSold.slice(0,4);
+  var feed=[];
+  (finance||[]).forEach(function(f){ if(dateToISO(f.date)!==D.today) return; var a=parseFloat(f.amount)||0; feed.push({ts:f.created_at||'', tm:_briefTime(f.created_at), txt:(f.type==='income'?'รับเงิน ฿'+a.toLocaleString():'จ่าย ฿'+a.toLocaleString())}); });
+  (treatments||[]).forEach(function(t){ if(dateToISO(t.date)!==D.today) return; var nm=_briefPatName(patients,t.patient_id); feed.push({ts:t.created_at||'', tm:_briefTime(t.created_at), txt:'บันทึกการรักษา'+(t.type?(' ('+t.type+')'):'')+(nm?(' — '+nm):'')}); });
+  (patients||[]).forEach(function(p){ if(String(p.created_at||'').slice(0,10)!==D.today) return; feed.push({ts:p.created_at||'', tm:_briefTime(p.created_at), txt:'ผู้ป่วยใหม่ — '+((p.first_name||'')+' '+(p.last_name||'')).trim()}); });
+  feed.sort(function(a,b){ return String(b.ts).localeCompare(String(a.ts)); }); feed=feed.slice(0,8);
+  return { fin:fin, patY:Object.keys(setY).length, patT:Object.keys(setT).length, herbs:lowSold, feed:feed };
+}
+function renderDailyBrief(el, d){
+  if(!el) return;
+  var nc=function(n){ return n>=0?'#9FE1CB':'#FFB7A2'; };
+  var ns=function(n){ return (n>=0?'+':'-')+'฿'+Math.abs(Math.round(n)).toLocaleString(); };
+  var f=d.fin; var h='';
+  h+='<div style="margin-top:6px;"><div style="font-size:11px;font-weight:700;color:var(--go);margin-bottom:6px;">💰 การเงิน (สุทธิ)</div><div style="display:flex;flex-wrap:wrap;gap:14px;">';
+  h+='<span style="font-size:12px;color:rgba(229,211,163,.7);">เมื่อวาน <b style="font-size:16px;color:'+nc(f.y.net)+';">'+ns(f.y.net)+'</b></span>';
+  h+='<span style="font-size:12px;color:rgba(229,211,163,.7);">สัปดาห์ <b style="font-size:16px;color:'+nc(f.w.net)+';">'+ns(f.w.net)+'</b></span>';
+  h+='<span style="font-size:12px;color:rgba(229,211,163,.7);">เดือน <b style="font-size:16px;color:'+nc(f.m.net)+';">'+ns(f.m.net)+'</b></span>';
+  h+='</div><div style="font-size:10.5px;color:rgba(229,211,163,.45);margin-top:3px;">เมื่อวาน: รับ ฿'+Math.round(f.y.inc).toLocaleString()+' · จ่าย ฿'+Math.round(f.y.exp).toLocaleString()+'</div></div>';
+  h+='<div style="margin-top:11px;font-size:12.5px;color:rgba(229,211,163,.9);">👥 ผู้ป่วยเมื่อวาน <b style="color:#fff;font-size:16px;">'+d.patY+'</b> คน · วันนี้ '+d.patT+'</div>';
+  h+='<div style="margin-top:11px;"><div style="font-size:11px;font-weight:700;color:var(--go);margin-bottom:5px;">💊 ยาขายดีที่เริ่มขาด</div>';
+  if(d.herbs.length){ d.herbs.forEach(function(x){ var dot=x.out?'#FF6B6B':'#E6B655'; h+='<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(229,211,163,.92);padding:3px 0;"><span style="width:8px;height:8px;border-radius:50%;background:'+dot+';flex-shrink:0;"></span><span style="font-weight:600;color:#fff;">'+x.name+'</span> เหลือ '+x.qty+' '+x.unit+'<span style="font-size:11px;color:rgba(229,211,163,.55);margin-left:auto;">ขาย '+x.sold+'/ด.</span></div>'; }); }
+  else { h+='<div style="font-size:11.5px;color:#9FE1CB;">✓ ยาขายดีสต็อกเพียงพอ</div>'; }
+  h+='</div>';
+  h+='<div style="height:1px;background:rgba(229,211,163,.13);margin:12px 0 0;"></div><div style="margin-top:10px;"><div style="font-size:11px;font-weight:700;color:var(--go);margin-bottom:5px;">🔔 ความเคลื่อนไหววันนี้</div>';
+  if(d.feed.length){ h+='<div style="max-height:130px;overflow-y:auto;">'; d.feed.forEach(function(x){ h+='<div style="display:flex;gap:8px;font-size:12px;color:rgba(229,211,163,.85);padding:3px 0;border-bottom:1px dashed rgba(229,211,163,.1);"><span style="color:var(--go);font-weight:600;white-space:nowrap;">'+x.tm+'</span><span>'+x.txt+'</span></div>'; }); h+='</div>'; }
+  else { h+='<div style="font-size:11.5px;color:rgba(229,211,163,.5);">ยังไม่มีความเคลื่อนไหววันนี้</div>'; }
+  h+='</div>';
+  el.innerHTML=h;
+}
+async function loadDailyBrief(){
+  var el=document.getElementById('dash-brief'); if(!el) return;
+  try{
+    var R=await Promise.all([
+      callApi('finance','list').catch(function(){return {data:{rows:[]}};}),
+      callApi('treatments','list').catch(function(){return {data:{rows:[]}};}),
+      callApi('patients','list').catch(function(){return {data:{rows:[]}};}),
+      callApi('herbs','list').catch(function(){return {data:{rows:[]}};}),
+      callApi('stock_transactions','list').catch(function(){return {data:{rows:[]}};})
+    ]);
+    var g=function(r){ return (r&&r.data&&r.data.rows)||[]; };
+    renderDailyBrief(el, computeDailyBrief(g(R[0]),g(R[1]),g(R[2]),g(R[3]),g(R[4])));
+  }catch(e){ el.innerHTML='<div style="padding:14px;color:rgba(229,211,163,.6);font-size:12px;">โหลดรายงานไม่ได้</div>'; }
+}
 async function loadDashboard(){
+  try{ loadDailyBrief(); }catch(_){}
   try {
     const today = todayISO();
     const _tmTH = nowTH(); _tmTH.setUTCDate(_tmTH.getUTCDate()+1);
@@ -8466,6 +8525,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v178', date:'04/06/2569', items:['feat(ภาพรวม): รายงานประจำวันใหม่ — การเงินสุทธิ เมื่อวาน/สัปดาห์/เดือน + ผู้ป่วยเมื่อวาน(มารับบริการ) + ยาขายดีที่เริ่มขาด + ฟีดความเคลื่อนไหววันนี้'] },
   { ver:'v177', date:'04/06/2569', items:['ui: label "ผลการรักษาและคำแนะนำ" → "บันทึกการรักษาครั้งนี้" · QR รับเงินเพิ่มหมายเหตุ "เกิน 3 นาทีเช็ควิธีอื่น" + ขยาย poll เป็น 3 นาที'] },
   { ver:'v176', date:'04/06/2569', items:['feat(PAYVERIFY): match ยอดอีเมลแบบ OR (500 หรือ 500.00) · เลขล้วนใช้ boundary กันชนเลขอื่น (Code.gs @14)'] },
   { ver:'v175', date:'04/06/2569', items:['fix(PAYVERIFY): จับยอดอีเมลเฉพาะรูปแบบมีทศนิยม (500.00/1,500.00) กัน false positive (Code.gs @13)'] },
