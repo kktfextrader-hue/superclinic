@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v153",
+    "date": "04/06/2569",
+    "items": [
+      "feat(BACKUP-V1): เตือน backup ใน topbar (banner 6 สถานะตามอายุ backup) + คลิกดาวน์โหลดสำรองข้อมูลทุกตาราง (.json) — standalone client-side"
+    ]
+  },
+  {
     "ver": "v152",
     "date": "04/06/2569",
     "items": [

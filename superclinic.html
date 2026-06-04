@@ -190,6 +190,28 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 }
 .topbar-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--g1);}
 .topbar-right{display:flex;align-items:center;gap:8px;}
+/* BACKUP-V1 — Backup status banner (6 states) */
+.bkb{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;font-family:'Sarabun',sans-serif;cursor:pointer;border:1.5px solid transparent;white-space:nowrap;position:relative;overflow:hidden;transition:transform .12s,box-shadow .15s;user-select:none}
+.bkb:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.bkb .bkb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.bkb .bkb-text{position:relative;z-index:1}
+.bkb .bkb-fill{position:absolute;top:0;left:0;bottom:0;background:linear-gradient(90deg,rgba(95,141,78,.22),rgba(200,169,107,.3));transition:width .25s ease;z-index:0;width:0%}
+.bkb .bkb-spin{display:inline-block;animation:bkb-spin 1s linear infinite}
+@keyframes bkb-spin{to{transform:rotate(360deg)}}
+.bkb.s-fresh{background:rgba(39,174,96,.1);color:#27ae60;border-color:rgba(39,174,96,.3)}
+.bkb.s-fresh .bkb-dot{background:#27ae60}
+.bkb.s-normal{background:rgba(200,169,107,.13);color:#7a5e23;border-color:rgba(200,169,107,.4)}
+.bkb.s-normal .bkb-dot{background:#C8A96B}
+.bkb.s-warn{background:rgba(192,57,43,.1);color:#c0392b;border-color:rgba(192,57,43,.4)}
+.bkb.s-warn .bkb-dot{background:#c0392b}
+.bkb.s-crit{background:#c0392b;color:#fff;border-color:#c0392b;animation:bkb-blink 1s ease-in-out infinite}
+.bkb.s-crit .bkb-dot{display:none}
+@keyframes bkb-blink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(192,57,43,.4)}50%{opacity:.55;box-shadow:0 0 0 6px rgba(192,57,43,0)}}
+.bkb.s-progress{background:rgba(47,93,80,.08);color:#2F5D50;border-color:rgba(47,93,80,.35);cursor:default;min-width:170px;justify-content:center}
+.bkb.s-progress .bkb-dot{display:none}
+.bkb.s-done{background:#27ae60;color:#fff;border-color:#27ae60;animation:bkb-pop .3s ease}
+.bkb.s-done .bkb-dot{display:none}
+@keyframes bkb-pop{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 .tb-btn{width:36px;height:36px;border-radius:10px;border:1px solid rgba(200,169,107,0.28);background:rgba(255,255,255,0.7);color:#5F8D4E;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:all 0.15s;}
 .tb-btn:hover{background:var(--gs);border-color:var(--go);box-shadow:0 0 10px rgba(200,169,107,0.22);}
 .notif-pos{position:relative;}
@@ -2961,9 +2983,10 @@ var qrcode = function() {
   <button id="hamburger-btn" title="เมนู" aria-label="เปิด/ปิดเมนู"><i class="ti ti-menu-2"></i></button>
   <div class="topbar-title" id="topbar-title" style="font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:0.04em;background:linear-gradient(135deg,#F5DFA0,#C8A96B,#E8C97A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">✦ Superclinic</div>
   <div class="topbar-right">
-    <button class="tb-btn notif-pos" title="การแจ้งเตือน"><i class="ti ti-bell"></i></button>
-    <button class="tb-btn" title="ค้นหา"><i class="ti ti-search"></i></button>
-    <button class="tb-btn" title="ข้อความ"><i class="ti ti-message-circle"></i></button>
+    <!-- BACKUP-V1 — backup status banner (แทน 3 ไอคอนที่ยังไม่มีฟังก์ชัน) -->
+    <div id="bkb-banner" class="bkb" onclick="onBackupBannerClick()" title="คลิกเพื่อดาวน์โหลดสำรองข้อมูล" style="display:none">
+      <span class="bkb-dot"></span><span class="bkb-text">—</span>
+    </div>
     <div style="width:1px;height:24px;background:rgba(200,169,107,0.25);margin:0 4px;"></div>
     <div class="user-av" style="width:34px;height:34px;font-size:12px;">พ</div>
   </div>
@@ -7803,10 +7826,108 @@ function exportFinance(){
 /* ════════════════════════════════════════════════════════
    SIDEBAR CHANGELOG
 ════════════════════════════════════════════════════════ */
+/* ════ BACKUP-V1 (superclinic) — เตือน backup + ดาวน์โหลดสำรองข้อมูล ════
+ * standalone: ไม่มี OAuth/Drive → backup = ดึงทุกชีตผ่าน callApi → JSON download + เก็บ backup_last_sent_at ใน settings
+ */
+window.BKB = { freshHrs:24, warnDays:7, critDays:10, lastSentAt:null, inFlight:false };
+
+function bkbSetState(state, payload){
+  const el = document.getElementById('bkb-banner');
+  if(!el) return;
+  el.classList.remove('s-fresh','s-normal','s-warn','s-crit','s-progress','s-done');
+  if(state === 'progress'){
+    el.classList.add('s-progress');
+    const pct = Math.max(0, Math.min(100, payload || 0));
+    el.innerHTML = `<div class="bkb-fill" style="width:${pct}%"></div><span class="bkb-text"><span class="bkb-spin">⟳</span> กำลังสำรอง ${pct}%</span>`;
+    return;
+  }
+  if(state === 'done'){
+    el.classList.add('s-done');
+    el.innerHTML = `<span class="bkb-text">✓ สำรองข้อมูลแล้ว ${payload || ''}</span>`;
+    return;
+  }
+  const days = payload;
+  let cls, html;
+  if(days === 0){ cls='s-fresh'; html='<span class="bkb-dot"></span><span class="bkb-text">✓ สำรองล่าสุด วันนี้</span>'; }
+  else if(days <= 6){ cls='s-normal'; html=`<span class="bkb-dot"></span><span class="bkb-text">สำรองล่าสุด ${days} วันที่ผ่านมา</span>`; }
+  else if(days <= 9){ cls='s-warn'; html=`<span class="bkb-dot"></span><span class="bkb-text">สำรองล่าสุด ${days} วันที่ผ่านมา</span>`; }
+  else { cls='s-crit'; html=`<span class="bkb-text">⚠ สำรองล่าสุด ${days} วันที่ผ่านมา</span>`; }
+  el.classList.add(cls);
+  el.innerHTML = html;
+}
+
+function bkbRenderFromTimestamp(iso){
+  const el = document.getElementById('bkb-banner');
+  if(!el) return;
+  el.style.display = 'inline-flex';
+  if(!iso){ bkbSetState('age', 99); return; }
+  const ms = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(ms / 86400000);
+  bkbSetState('age', Math.max(0, days));
+}
+
+async function bkbLoadState(){
+  try {
+    const r = await callApi('settings','get',null,'backup_last_sent_at');
+    const v = r && r.data && r.data.row && r.data.row.value;
+    window.BKB.lastSentAt = v || null;
+    bkbRenderFromTimestamp(v);
+  } catch(e){ bkbRenderFromTimestamp(null); }
+}
+
+function onBackupBannerClick(){
+  if(window.BKB.inFlight) return;
+  if(!confirm('ดาวน์โหลดไฟล์สำรองข้อมูลคลินิก (.json) ?\n\nไฟล์จะรวมข้อมูลทุกตาราง — เก็บไว้ที่ปลอดภัย/Google Drive')) return;
+  bkbDownloadBackup();
+}
+
+async function bkbDownloadBackup(){
+  if(window.BKB.inFlight) return;
+  window.BKB.inFlight = true;
+  const prev = window.BKB.lastSentAt;
+  try {
+    const sheets = ['patients','appointments','treatments','treatment_notes','herbs','stock_transactions','finance','settings','users'];
+    const dump = { app:'superclinic', exported_at:(new Date()).toISOString(), data:{} };
+    bkbSetState('progress', 3);
+    for(let i=0;i<sheets.length;i++){
+      try { const r = await callApi(sheets[i],'list'); dump.data[sheets[i]] = (r && r.data && r.data.rows) || []; }
+      catch(e){ dump.data[sheets[i]] = []; }
+      bkbSetState('progress', 3 + Math.floor((i+1)/sheets.length*82));
+    }
+    const todayStr = (new Date()).toISOString().slice(0,10);
+    const blob = new Blob([JSON.stringify(dump,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'superclinic-backup-' + todayStr + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    bkbSetState('progress', 92);
+    const nowISO = (new Date()).toISOString();
+    try { await callApi('settings','update',{ key:'backup_last_sent_at', value: nowISO, description:'Last backup download' }); }
+    catch(e){ try { await callApi('settings','create',{ key:'backup_last_sent_at', value: nowISO, description:'Last backup download' }); } catch(_){} }
+    window.BKB.lastSentAt = nowISO;
+    bkbSetState('progress', 100);
+    const now = new Date();
+    const hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    bkbSetState('done', hhmm);
+    if(typeof showToast === 'function') showToast('✓ ดาวน์โหลดสำรองข้อมูลสำเร็จ', 'success');
+    setTimeout(() => bkbRenderFromTimestamp(window.BKB.lastSentAt), 5000);
+  } catch(e){
+    console.error('[BKB] backup failed:', e);
+    if(typeof showToast === 'function') showToast('สำรองข้อมูลล้มเหลว: ' + e.message, 'error');
+    bkbRenderFromTimestamp(prev);
+  } finally { window.BKB.inFlight = false; }
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => { if(typeof callApi === 'function') bkbLoadState(); }, 1500);
+});
+
 const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v153', date:'04/06/2569', items:['feat(BACKUP-V1): เตือน backup ใน topbar (banner 6 สถานะตามอายุ backup) + คลิกดาวน์โหลดสำรองข้อมูลทุกตาราง (.json) — standalone client-side'] },
   { ver:'v152', date:'04/06/2569', items:['feat(ui): เปลี่ยนไอคอนใบหน้าจาก face-id (หน้ากาก) เป็น vector ใบหน้าเส้นเรียบ (ยิ้ม) — avatar คนไข้ (รายชื่อ+ค้นหา) + หัวข้อ "ข้อมูลใบหน้า"'] },
   { ver:'v151', date:'04/06/2569', items:['fix(บั๊ก A): กดชื่อคนไข้แล้วชื่อไม่ขึ้น (เห็นแต่ HN+เบอร์) — viewPatient ค้น allPatients 2 แหล่ง (lexical/window) เลือกตัวมีชื่อ','feat(bodymap): แผนที่จุดเจ็บปวดในหน้าคนไข้ = lazy load พับไว้ก่อน กดค่อยโหลด+วาด'] },
   { ver:'v150', date:'04/06/2569', items:['fix(face-dd): ปุ่ม pulldown สแกนใบหน้า (patients) เมนูไม่มีสไตล์ — ROOT CAUSE .fsd-opt CSS ติดใน modal openAddAppt → ย้ายไป global head + เมนูโทนทอง (เหมือนที่แก้ scproject)'] },
