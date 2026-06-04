@@ -3880,6 +3880,31 @@ function bodyMapHTML(uid, initialData){
 }
 
 
+function bmPatToggle(id){
+  const bmWrap = document.getElementById(`patview-bodymap-wrap-${id}`);
+  if(!bmWrap) return;
+  // โหลดแล้ว → แค่ย่อ/ขยาย (ไม่โหลดซ้ำ)
+  if(bmWrap.dataset.loaded==='1'){
+    const collapsed = bmWrap.style.display==='none';
+    bmWrap.style.display = collapsed ? '' : 'none';
+    const h=document.getElementById(`bm-toggle-hint-${id}`);
+    if(h) h.textContent = collapsed ? '(คลิกเพื่อย่อ)' : '(คลิกเพื่อขยาย)';
+    return;
+  }
+  // ครั้งแรก → สร้างกล่อง + โหลด+วาด (lazy)
+  bmWrap.dataset.loaded='1';
+  bmWrap.innerHTML = `
+    <div style="background:#f9f6f0;border-radius:16px;padding:16px;border:1px solid rgba(200,169,107,0.2);margin-top:8px;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="bmPatSave('${id}')" id="bm-save-btn-${id}" style="font-size:12px;display:none;"><i class="ti ti-device-floppy"></i> บันทึกจุด</button>
+      </div>
+      <div id="bm-map-area-${id}"></div>
+    </div>`;
+  const h=document.getElementById(`bm-toggle-hint-${id}`);
+  if(h) h.textContent='(คลิกเพื่อย่อ)';
+  bmPatLoad(id);
+}
+
 async function bmPatLoad(id){
   const bmWrap = document.getElementById(`patview-bodymap-wrap-${id}`);
   if(!bmWrap) return;
@@ -4659,7 +4684,10 @@ function renderPatPag(total){
 }
 
 function viewPatient(id){
-  const p=allPatients.find(x=>(x.hn===id||x.id===id)); if(!p) return;
+  /* FIX-PAT-NAME-V1 (บั๊ก A): lexical allPatients กับ window.allPatients diverge ได้ (face flow เซ็ตแค่ window) → ค้น 2 แหล่ง เลือก record ที่มีชื่อจริงก่อน → detail ไม่โชว์ "—" ทั้งที่ list มีชื่อ */
+  const _pool=[].concat(window.allPatients||[], allPatients||[]);
+  const p=_pool.find(x=>(x.hn===id||x.id===id)&&(x.first_name||x.last_name||x.prefix))||_pool.find(x=>(x.hn===id||x.id===id));
+  if(!p) return;
   const name=`${p.prefix||''} ${p.first_name||''} ${p.last_name||''}`.trim();
   const fullName=`${p.first_name||''} ${p.last_name||''}`.trim();
 
@@ -4711,8 +4739,9 @@ function viewPatient(id){
           ${p.address?field('ที่อยู่',p.address,true):''}
         </div>
       </div>
-      <!-- Body Map ผู้ป่วย -->
+      <!-- Body Map ผู้ป่วย (FIX-BM-LAZY-V1: พับไว้ก่อน กดค่อยโหลด+วาด) -->
       <div class="pat-detail-section">
+        <div class="pat-detail-section-title" onclick="bmPatToggle('${id}')" style="cursor:pointer;"><i class="ti ti-body-scan"></i> แผนที่จุดเจ็บปวด <span id="bm-toggle-hint-${id}" style="font-size:11px;color:#aaa;font-weight:400;">(คลิกเพื่อดู/แก้ไข)</span></div>
         <div id="patview-bodymap-wrap-${id}"></div>
       </div>
       <!-- ส่วนที่ 2: ข้อมูลอาการ -->
@@ -4754,24 +4783,7 @@ function viewPatient(id){
      <button class="btn btn-green" onclick="closeModal();goRegisterWithPatient('${id}')"><i class="ti ti-clipboard-list"></i>ลงทะเบียน</button>
      <button class="btn-edit" onclick="closeModal();openEditPatient('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>`
   );
-  // render body map ใน patient view — ใช้ปุ่มโหลด/บันทึกแทน auto-load
-  setTimeout(()=>{
-    const bmWrap = document.getElementById(`patview-bodymap-wrap-${id}`);
-    if(bmWrap){
-      const existingData = p.body_map ? (typeof p.body_map==='string' ? JSON.parse(p.body_map) : p.body_map) : null;
-      // Store data for later use
-      bmWrap.innerHTML = `
-        <div style="background:#f9f6f0;border-radius:16px;padding:16px;border:1px solid rgba(200,169,107,0.2);">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:13px;font-weight:600;color:var(--g1);"><i class="ti ti-body-scan"></i> แผนที่จุดเจ็บปวด</div>
-            <button type="button" class="btn btn-primary btn-sm" onclick="bmPatSave('${id}')" id="bm-save-btn-${id}" style="font-size:12px;display:none;"><i class="ti ti-device-floppy"></i> บันทึกจุด</button>
-          </div>
-          <div id="bm-map-area-${id}"></div>
-        </div>`;
-      // auto-load body map
-      bmPatLoad(id);
-    }
-  }, 50);
+  // FIX-BM-LAZY-V1: ไม่ auto-load แล้ว — body map โหลด+วาดตอนกดหัวข้อ (bmPatToggle) เท่านั้น
 }
 
 async function loadPatHistorySection(patId){
@@ -7786,6 +7798,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v151', date:'04/06/2569', items:['fix(บั๊ก A): กดชื่อคนไข้แล้วชื่อไม่ขึ้น (เห็นแต่ HN+เบอร์) — viewPatient ค้น allPatients 2 แหล่ง (lexical/window) เลือกตัวมีชื่อ','feat(bodymap): แผนที่จุดเจ็บปวดในหน้าคนไข้ = lazy load พับไว้ก่อน กดค่อยโหลด+วาด'] },
   { ver:'v150', date:'04/06/2569', items:['fix(face-dd): ปุ่ม pulldown สแกนใบหน้า (patients) เมนูไม่มีสไตล์ — ROOT CAUSE .fsd-opt CSS ติดใน modal openAddAppt → ย้ายไป global head + เมนูโทนทอง (เหมือนที่แก้ scproject)'] },
   { ver:'v149', date:'04/06/2569', items:['chore: ลบ demo ส่วนที่เหลือ (reports charts + dashboard การรักษายอดนิยม) -> empty-state · MERGE-1a เสร็จสมบูรณ์ ไม่เหลือ demo เลข/ชื่อปลอมทุกหน้า · charts รอ wire real data (REPORTS-1)'] },
   { ver:'v148', date:'04/06/2569', items:['chore: ลบ demo ที่เหลือ (herbs/stock/reports stat + donut + ▲% trend ปลอม) -> placeholder ให้ load เติม · MERGE-1a ลบ demo เสร็จครบทุกหน้า'] },

@@ -1,5 +1,83 @@
 [
   {
+    "ver": "v151",
+    "date": "04/06/2569",
+    "items": [
+      "fix(บั๊ก A): กดชื่อคนไข้แล้วชื่อไม่ขึ้น (เห็นแต่ HN+เบอร์) — viewPatient ค้น allPatients 2 แหล่ง (lexical/window) เลือกตัวมีชื่อ",
+      "feat(bodymap): แผนที่จุดเจ็บปวดในหน้าคนไข้ = lazy load พับไว้ก่อน กดค่อยโหลด+วาด"
+    ]
+  },
+  {
+    "ver": "v150",
+    "date": "04/06/2569",
+    "items": [
+      "fix(face-dd): ปุ่ม pulldown สแกนใบหน้า (patients) เมนูไม่มีสไตล์ — ROOT CAUSE .fsd-opt CSS ติดใน modal openAddAppt → ย้ายไป global head + เมนูโทนทอง (เหมือนที่แก้ scproject)"
+    ]
+  },
+  {
+    "ver": "v149",
+    "date": "04/06/2569",
+    "items": [
+      "chore: ลบ demo ส่วนที่เหลือ (reports charts + dashboard การรักษายอดนิยม) -> empty-state · MERGE-1a เสร็จสมบูรณ์ ไม่เหลือ demo เลข/ชื่อปลอมทุกหน้า · charts รอ wire real data (REPORTS-1)"
+    ]
+  },
+  {
+    "ver": "v148",
+    "date": "04/06/2569",
+    "items": [
+      "chore: ลบ demo ที่เหลือ (herbs/stock/reports stat + donut + ▲% trend ปลอม) -> placeholder ให้ load เติม · MERGE-1a ลบ demo เสร็จครบทุกหน้า"
+    ]
+  },
+  {
+    "ver": "v147",
+    "date": "04/06/2569",
+    "items": [
+      "chore: ลบ demo hardcode — dashboard (เลข/นัด Marvel) + patients (ตาราง/count 348) + finance (เลข/รายการ Marvel) -> placeholder ให้ loadXxx เติม real · ชื่อปลอมหมดแล้ว (MERGE-1a)"
+    ]
+  },
+  {
+    "ver": "v146",
+    "date": "04/06/2569",
+    "items": [
+      "style(face): ทำปุ่ม face ทุกปุ่มเป็นโทนทอง (ค้นหา×2 + dropdown + แก้ไข/เพิ่ม + ถ่ายรูป) — parity กับ scproject (MERGE-1)"
+    ]
+  },
+  {
+    "ver": "v145",
+    "date": "03/06/2569",
+    "items": [
+      "v145 UI ตั้งค่าพร้อมเพย์: เปลี่ยนเป็นปุ่มในกรอบ → เปิด popup ให้กรอก + ติ๊กถูก ✓ เมื่อตั้งค่าแล้ว (หน้าการเงิน)"
+    ]
+  },
+  {
+    "ver": "v144",
+    "date": "03/06/2569",
+    "items": [
+      "v144 ฟอร์มตั้งค่าพร้อมเพย์บนหน้าการเงิน (กรอกเบอร์มือถือ/เลขบัตร 13 หลัก → รับเงิน QR ในใบเสร็จ) — PAY-B"
+    ]
+  },
+  {
+    "ver": "v143",
+    "date": "03/06/2569",
+    "items": [
+      "v143 ระบบรับชำระเงิน: PromptPay QR + ยืนยันจ่าย (มือ/สลิป SlipOK) + ส่งใบเสร็จเข้าอีเมล (ในหน้าออกใบเสร็จ) + ตั้งค่าการชำระเงิน — PAY-B/m/s"
+    ]
+  },
+  {
+    "ver": "v142",
+    "date": "02/06/2569",
+    "items": [
+      "v142 ภาพรวม: เปลี่ยนหัวข้อ สมุนไพรคงเหลือ -> รายงานประจำวัน"
+    ]
+  },
+  {
+    "ver": "v141",
+    "date": "02/06/2569",
+    "items": [
+      "v141 avatar ไอคอนหน้า (สีตามเพศ) ทุก list คนไข้ แทนตัวย่อ: dashboard/นัดหมาย/ลงทะเบียน/รักษา/ใบเสร็จ"
+    ]
+  },
+  {
     "ver": "v140",
     "date": "01/06/2569",
     "items": [
@@ -102,6 +180,13 @@
     "date": "01/06/2569",
     "items": [
       "update"
+    ]
+  },
+  {
+    "ver": "v126",
+    "date": "01/06/2569",
+    "items": [
+      "v126 timezone fix (Code.gs force plain text), เวลานัดเปลี่ยนเป็น dropdown 24h"
     ]
   },
   {
@@ -287,146 +372,6 @@
     ]
   },
   {
-    "ver": "v99",
-    "date": "31/05/2569",
-    "items": [
-      "v99 auto-open 52% with margin guard"
-    ]
-  },
-  {
-    "ver": "v98",
-    "date": "31/05/2569",
-    "items": [
-      "v98 read mode auto-search"
-    ]
-  },
-  {
-    "ver": "v97",
-    "date": "31/05/2569",
-    "items": [
-      "v94 camera first + no stop on search"
-    ]
-  },
-  {
-    "ver": "v96",
-    "date": "31/05/2569",
-    "items": [
-      "v94 camera first + no stop search"
-    ]
-  },
-  {
-    "ver": "v95",
-    "date": "31/05/2569",
-    "items": [
-      "v94 fix camera black + show camera first"
-    ]
-  },
-  {
-    "ver": "v94",
-    "date": "31/05/2569",
-    "items": [
-      "v94 fix camera black on search"
-    ]
-  },
-  {
-    "ver": "v93",
-    "date": "31/05/2569",
-    "items": [
-      "v93 keep camera on during face search"
-    ]
-  },
-  {
-    "ver": "v92",
-    "date": "31/05/2569",
-    "items": [
-      "v92 fix face model URL + search bug + revert avatar"
-    ]
-  },
-  {
-    "ver": "v91",
-    "date": "31/05/2569",
-    "items": [
-      "v90+v91 fix face search + revert avatar"
-    ]
-  },
-  {
-    "ver": "v90",
-    "date": "31/05/2569",
-    "items": [
-      "v89 face icon in avatar + scan fix"
-    ]
-  },
-  {
-    "ver": "v89",
-    "date": "30/05/2569",
-    "items": [
-      "v89 face icon replaces avatar in patient table"
-    ]
-  },
-  {
-    "ver": "v88",
-    "date": "30/05/2569",
-    "items": [
-      "v88 refresh patient view after face save"
-    ]
-  },
-  {
-    "ver": "v87",
-    "date": "30/05/2569",
-    "items": [
-      "v87 face save debug + success "
-    ]
-  },
-  {
-    "ver": "v86",
-    "date": "30/05/2569",
-    "items": [
-      "fix face save HN format bug"
-    ]
-  },
-  {
-    "ver": "v85",
-    "date": "30/05/2569",
-    "items": [
-      "fix face save hn"
-    ]
-  },
-  {
-    "ver": "v84",
-    "date": "30/05/2569",
-    "items": [
-      "face recognition UI improvements"
-    ]
-  },
-  {
-    "ver": "v83",
-    "date": "30/05/2569",
-    "items": [
-      "face recognition UI improvements"
-    ]
-  },
-  {
-    "ver": "v82",
-    "date": "30/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v81",
-    "date": "30/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v80",
-    "date": "30/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
     "ver": "v79",
     "date": "30/05/2569",
     "items": [
@@ -525,153 +470,108 @@
     ]
   },
   {
-    "ver": "v65",
-    "date": "30/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v64",
-    "date": "29/05/2569",
-    "items": [
-      "ลบ spectrum bar ออก"
-    ]
-  },
-  {
-    "ver": "v63",
-    "date": "29/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v62",
-    "date": "28/05/2569",
-    "items": [
-      "face modal spectrum bar + video margin"
-    ]
-  },
-  {
-    "ver": "v61",
-    "date": "28/05/2569",
-    "items": [
-      "face modal UI redesign - white text, status+save row, no strip"
-    ]
-  },
-  {
-    "ver": "v60",
-    "date": "28/05/2569",
-    "items": [
-      "fix face modal layout + ลบกรอบ bounding box"
-    ]
-  },
-  {
-    "ver": "v59",
-    "date": "28/05/2569",
-    "items": [
-      "fix face modal center popup inline style"
-    ]
-  },
-  {
-    "ver": "v58",
-    "date": "28/05/2569",
-    "items": [
-      "face modal popup กลางจอ + auto best-frame"
-    ]
-  },
-  {
-    "ver": "v57",
-    "date": "28/05/2569",
-    "items": [
-      "face modal popup กลางจอ + max-height",
-      "auto best-frame capture พร้อม thumbnail strip",
-      "ปุ่ม Reset Features ใน Settings"
-    ]
-  },
-  {
-    "ver": "v56",
-    "date": "28/05/2569",
-    "items": [
-      "face modal แสดงกลางจอ ไม่ล้นออกข้างล่าง",
-      "video max-height + scroll",
-      "initFeatures force-enable default"
-    ]
-  },
-  {
-    "ver": "v55",
-    "date": "28/05/2569",
-    "items": [
-      "fix feature toggle reset",
-      "face auto best-frame + preview strip"
-    ]
-  },
-  {
-    "ver": "v54",
-    "date": "28/05/2569",
-    "items": [
-      "fix face-api script src → gh CDN"
-    ]
-  },
-  {
     "ver": "v53",
     "date": "28/05/2569",
     "items": [
-      "fix face-api weights URL ใช้งานได้จริง",
-      "changelog modal ดูทั้งหมด",
-      "logo 160px",
-      "bodymap collapsible"
-    ]
-  },
-  {
-    "ver": "v52",
-    "date": "28/05/2569",
-    "items": [
-      "fix bodymap collapsible + raw-NL SyntaxError",
-      "sidebar changelog แสดง 3 รายการล่าสุด"
-    ]
-  },
-  {
-    "ver": "v51",
-    "date": "28/05/2569",
-    "items": [
-      "fix SyntaxError openAddUserModal",
-      "medcert logo 160px",
-      "fix ESC/POS rawNL"
-    ]
-  },
-  {
-    "ver": "v50",
-    "date": "28/05/2569",
-    "items": [
-      "logo คลินิกในใบรับรองแพทย์",
-      "changelog.json แยกไฟล์",
-      "sidebar ดู 3 รายการล่าสุด + modal ดูทั้งหมด"
-    ]
-  },
-  {
-    "ver": "v49",
-    "date": "28/05/2569",
-    "items": [
-      "fix bodymap collapsible ย่อ/ขยายได้",
-      "fix SyntaxError ESC/POS rawNL"
-    ]
-  },
-  {
-    "ver": "v48",
-    "date": "28/05/2569",
-    "items": [
-      "fix SyntaxError openAddUserModal",
-      "medcert print Windows Driver",
-      "body map collapsible"
+      "update"
     ]
   },
   {
     "ver": "v42",
     "date": "28/05/2569",
     "items": [
-      "rebuild จาก v34 แก้ไฟล์ truncated",
-      "integrity guard push-now.bat"
+      "update"
+    ]
+  },
+  {
+    "ver": "v34",
+    "date": "28/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v33",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v32",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v31",
+    "date": "26/05/2569",
+    "items": [
+      "cd C:UsersacerDesktopClaudesuperclinic"
+    ]
+  },
+  {
+    "ver": "v30",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v29",
+    "date": "26/05/2569",
+    "items": [
+      "[System.Environment]::SetEnvironmentVariable(PYTHONUTF8, 1, User)"
+    ]
+  },
+  {
+    "ver": "v28",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v26",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v27",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v26",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v25",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v24",
+    "date": "26/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v23",
+    "date": "26/05/2569",
+    "items": [
+      "update"
     ]
   },
   {
