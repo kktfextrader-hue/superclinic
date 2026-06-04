@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v173",
+    "date": "04/06/2569",
+    "items": [
+      "feat(รับชำระเงิน): log บันทึก source (topbar/หน้าบันทึกรักษา) + วิธียืนยัน (กดเอง) · (Gmail auto-verify เฉพาะ scproject)"
+    ]
+  },
+  {
     "ver": "v172",
     "date": "04/06/2569",
     "items": [

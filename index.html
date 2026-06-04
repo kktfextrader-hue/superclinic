@@ -7089,7 +7089,7 @@ function openCollectPay(opts){
   if(opts.patName){ patName=opts.patName; patId=opts.patId||patId; }
   var preAmt='';
   if(opts.fromTreat){ try{ var pe=document.querySelector('#form-treatment [name="price"]'); if(pe){ var pv=parseFloat(pe.value); if(pv>0) preAmt=String(pv); } }catch(_){} }
-  window._CPAY={ patName:patName, patId:patId, amount:0, method:'' };
+  window._CPAY={ patName:patName, patId:patId, amount:0, method:'', source:(opts.fromTreat?'หน้าบันทึกรักษา':'topbar'), via:'manual', emailRef:'' };
   var ov=document.createElement('div'); ov.id='cpay-overlay';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10030;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Sarabun,sans-serif;';
   var sub = patName? '<div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:2px;"><i class="ti ti-user" style="font-size:11px;"></i> '+patName+'</div>' : '';
@@ -7109,7 +7109,7 @@ function openCollectPay(opts){
   ov.addEventListener('click',function(e){ if(e.target===ov) closeCollectPay(); });
   setTimeout(function(){ var el=document.getElementById('cpay-amount'); if(el) el.focus(); },60);
 }
-function closeCollectPay(){ var el=document.getElementById('cpay-overlay'); if(el) el.remove(); }
+function closeCollectPay(){ if(typeof cpayStopEmailPoll==='function') cpayStopEmailPoll(); var el=document.getElementById('cpay-overlay'); if(el) el.remove(); }
 function _cpayAmt(){ var el=document.getElementById('cpay-amount'); var a=el?parseFloat(el.value):0; return a>0?a:0; }
 function cpayPickCash(){
   var amt=_cpayAmt(); if(!amt){ if(typeof showToast==='function') showToast('กรอกยอดเงินก่อน','warning'); var e=document.getElementById('cpay-amount'); if(e) e.focus(); return; }
@@ -7128,11 +7128,13 @@ async function cpayPickQR(){
   var ppid=_ppCache||'';
   if(!ppid){ body.innerHTML='<div style="text-align:center;"><div style="font-size:13.5px;color:#8a6d1a;background:#fff5e0;border:1px solid #f0d28a;border-radius:10px;padding:12px;margin-bottom:14px;">&#9888; ยังไม่ได้ตั้งเบอร์พร้อมเพย์</div><button class="btn btn-green" style="background:var(--g1);" onclick="closeCollectPay();openPromptPaySetup();">ตั้งค่าพร้อมเพย์</button> <button class="btn btn-outline" onclick="cpayReopen()">&larr; กลับ</button></div>'; return; }
   var qrUrl=''; try{ var qr=qrcode(0,'M'); qr.addData(promptPayPayload(ppid,amt)); qr.make(); qrUrl=qr.createDataURL(6,9); }catch(e){}
+  setTimeout(function(){ if(typeof cpayStartEmailPoll==='function') cpayStartEmailPoll(amt); },60);
   body.innerHTML='<div style="text-align:center;"><div style="background:linear-gradient(135deg,#001b94,#0030d0);color:#fff;border-radius:8px;padding:6px;font-weight:700;font-size:12px;margin-bottom:10px;">PromptPay</div>'
     +(qrUrl?'<img src="'+qrUrl+'" style="width:210px;height:210px;max-width:100%;border:1px solid #eee;border-radius:10px;">':'<div style="color:#C0392B;">สร้าง QR ไม่ได้</div>')
     +'<div style="font-size:11px;color:#888;margin-top:6px;">รับเงินเข้า: '+ppid+'</div>'
     +'<div style="font-size:26px;font-weight:700;color:var(--g1);margin:2px 0 8px;">&#3647;'+amt.toLocaleString()+'</div>'
-    +'<div style="font-size:11.5px;color:#2f7d4f;background:#eefaf1;border:1px solid #bfe6cd;border-radius:8px;padding:7px 9px;margin-bottom:10px;line-height:1.5;">&#128161; หากได้รับอีเมลยืนยันเงินเข้า หน้านี้จะปิดให้อัตโนมัติ &mdash; หรือกด ชำระแล้ว เมื่อยืนยันเอง</div>'
+    +'<div style="font-size:11.5px;color:#2f7d4f;background:#eefaf1;border:1px solid #bfe6cd;border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.5;">&#128161; หากได้รับอีเมลยืนยันเงินเข้า หน้านี้จะปิดให้อัตโนมัติ &mdash; หรือกด ชำระแล้ว เมื่อยืนยันเอง</div>'
+    +'<div id="cpay-email-status" style="font-size:11.5px;margin-bottom:8px;min-height:15px;"></div>'
     +'<button class="btn btn-green" style="width:100%;justify-content:center;background:var(--ok);font-weight:700;padding:13px;" onclick="cpayConfirm()">&#10003; ชำระแล้ว (บันทึกรายได้)</button>'
     +'<button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;" onclick="cpayReopen()">&larr; กลับ</button></div>';
 }
@@ -7140,8 +7142,11 @@ function cpayReopen(){ var o=window._CPAY||{}; closeCollectPay(); openCollectPay
 async function cpayConfirm(){
   var o=window._CPAY||{}; var amt=parseFloat(o.amount)||0; var method=o.method||'cash';
   if(!(amt>0)){ if(typeof showToast==='function') showToast('ยอดไม่ถูกต้อง','error'); return; }
+  if(typeof cpayStopEmailPoll==='function') cpayStopEmailPoll();
   var body=document.getElementById('cpay-body');
-  var rec={type:'income',category:'รับชำระเงิน',date:todayISO(),description:'รับชำระเงิน ('+(method==='cash'?'เงินสด':'พร้อมเพย์ QR')+')'+(o.patName?(' — '+o.patName):''),amount:String(amt),payment_method:method};
+  var srcTxt=(o.source==='หน้าบันทึกรักษา'?'หน้าบันทึกรักษา':'topbar');
+  var viaTxt=((o.via==='email')?'ยืนยันอัตโนมัติ(อีเมล)':'กดยืนยันเอง');
+  var rec={type:'income',category:'รับชำระเงิน',date:todayISO(),description:'รับชำระเงิน ('+(method==='cash'?'เงินสด':'พร้อมเพย์ QR')+') · จาก '+srcTxt+' · '+viaTxt+(o.patName?(' — '+o.patName):'')+(o.emailRef?(' [ref '+o.emailRef+']'):''),amount:String(amt),payment_method:method};
   if(o.patId) rec.patient_id=o.patId;
   if(o.patName) rec.patient_name=o.patName;
   try{
@@ -8441,6 +8446,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v173', date:'04/06/2569', items:['feat(รับชำระเงิน): log บันทึก source (topbar/หน้าบันทึกรักษา) + วิธียืนยัน (กดเอง) · (Gmail auto-verify เฉพาะ scproject)'] },
   { ver:'v172', date:'04/06/2569', items:['feat(การเงิน): จุดรับชำระเงิน — ปุ่มบน topbar + ในฟอร์มบันทึกรักษา (ผูกชื่อผู้ป่วย+prefill ยอด) · เลือกเงินสด/QR → ชำระแล้ว → เข้ารายได้ → ✅ ปิดเอง 3 วิ'] },
   { ver:'v171', date:'04/06/2569', items:['feat(การเงิน): ปุ่ม "แสดง QR รับเงิน" — โชว์ QR PromptPay บนจอให้ลูกค้าสแกน (ไม่ต้องออกบิล) + กรอกยอด/เว้นว่างให้ลูกค้ากรอกเอง'] },
   { ver:'v170', date:'04/06/2569', items:['feat(การเงิน): ป๊อปอัพตั้งค่า PromptPay เพิ่มช่อง "อีเมลรับแจ้งเตือนจากธนาคาร" (เก็บ setting promptpay_verify_email สำหรับอ้างอิงตรวจสอบยอด)'] },
