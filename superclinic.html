@@ -4798,7 +4798,7 @@ function viewPatient(id){
         <div id="pat-hist-section-${id}" style="font-size:13px;color:#aaa;padding:8px 0;">คลิกหัวข้อเพื่อโหลดข้อมูล</div>
       </div>
       <div class="pat-detail-section">
-        <div class="pat-detail-section-title" style="cursor:default;"><span style="display:inline-flex;align-items:center;gap:6px;">${faceVec(16)}ข้อมูลใบหน้า</span>${hasFaceData(p)?'<span style="font-size:11px;background:rgba(47,93,80,.1);color:#2F5D50;padding:2px 10px;border-radius:10px;margin-left:8px;">✅ บันทึกแล้ว</span>':'<span style="font-size:11px;background:rgba(192,57,43,.08);color:#C0392B;padding:2px 10px;border-radius:10px;margin-left:8px;">ยังไม่มี</span>'}</div>
+        <div class="pat-detail-section-title" style="cursor:default;"><span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${faceVec(15)}</span>ข้อมูลใบหน้า</span>${hasFaceData(p)?'<span style="font-size:11px;background:rgba(47,93,80,.1);color:#2F5D50;padding:2px 10px;border-radius:10px;margin-left:8px;">✅ บันทึกแล้ว</span>':'<span style="font-size:11px;background:rgba(192,57,43,.08);color:#C0392B;padding:2px 10px;border-radius:10px;margin-left:8px;">ยังไม่มี</span>'}</div>
         <div style="font-size:12px;color:#888;padding:4px 0;">${hasFaceData(p)?'บันทึกข้อมูลใบหน้าแล้ว — กด "แก้ไขใบหน้า" ในปุ่มด้านล่าง':'กด "+ เพิ่มใบหน้า" ด้านล่างเพื่อบันทึกใบหน้า'}</div>
       </div>
       ${(p.surgery_history||p.accident_history)?`
@@ -7928,6 +7928,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v155', date:'04/06/2569', items:['fix(ui): icon หัวข้อ "ข้อมูลใบหน้า" ใส่ใบหน้าในวงกลมเขียว (มินิ-avatar) ให้ชัด เหมือน avatar คนไข้'] },
   { ver:'v154', date:'04/06/2569', items:['fix(bodymap): หน้าคนไข้ กดขยายแผนที่จุดเจ็บปวด → โชว์ map ทันที (เดิมต้องกดปุ่ม ▼ ขยาย ซ้ำอีกที)'] },
   { ver:'v153', date:'04/06/2569', items:['feat(BACKUP-V1): เตือน backup ใน topbar (banner 6 สถานะตามอายุ backup) + คลิกดาวน์โหลดสำรองข้อมูลทุกตาราง (.json) — standalone client-side'] },
   { ver:'v152', date:'04/06/2569', items:['feat(ui): เปลี่ยนไอคอนใบหน้าจาก face-id (หน้ากาก) เป็น vector ใบหน้าเส้นเรียบ (ยิ้ม) — avatar คนไข้ (รายชื่อ+ค้นหา) + หัวข้อ "ข้อมูลใบหน้า"'] },
