@@ -3170,7 +3170,7 @@ var qrcode = function() {
       <span id="patient-page-info" style="font-size:12px;color:#aaa;">—</span>
     </div>
     <table class="tbl">
-      <thead><tr><th>HN</th><th>ชื่อ-นามสกุล</th><th>อายุ</th><th>โทรศัพท์</th><th>การรักษาหลัก</th><th>นัดล่าสุด</th><th>ประเภท</th><th></th></tr></thead>
+      <thead><tr><th>HN</th><th>ชื่อ-นามสกุล</th><th>อายุ</th><th>โทรศัพท์</th><th>อาการหลัก</th><th>นัดล่าสุด</th><th>ประเภท</th><th></th></tr></thead>
       <tbody id="patient-tbody"><tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa;">กำลังโหลด...</td></tr></tbody>
     </table>
     <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(200,169,107,0.1);">
@@ -4729,7 +4729,7 @@ function renderPatients(filter){
       </div></td>
       <td>${p.age||'—'}</td>
       <td>${p.phone||'—'}</td>
-      <td>${p.element||'—'}</td>
+      <td style="max-width:175px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(p.chronic_disease||'').replace(/"/g,'&quot;')}">${p.chronic_disease||'—'}</td>
       <td>${toThaiDisplay(p.updated_at||p.created_at)}</td>
       <td>${badgePatientType(p.patient_type,p.hn||p.id)}</td>
       <td style="white-space:nowrap;">
@@ -8219,6 +8219,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v160', date:'04/06/2569', items:['fix(ui): คอลัมน์รายชื่อผู้ป่วย เปลี่ยนจากแสดงธาตุ → แสดง อาการหลัก จริง + ตัดข้อความยาว'] },
   { ver:'v159', date:'04/06/2569', items:['feat(backup): banner คลิก → เลือก ดาวน์โหลด zip เข้ารหัส / ส่งเข้าอีเมล (ผ่าน Apps Script MailApp) · backend action emailbackup'] },
   { ver:'v158', date:'04/06/2569', items:['feat(ux): แสดง pill "กำลังบันทึก..." กลางบนจอ ระหว่างรอ save (เพิ่ม/แก้ไข/ลบ) ก่อนขึ้นผลสำเร็จ/ล้มเหลว'] },
   { ver:'v157', date:'04/06/2569', items:['feat(clinic-tools): การ์ดจัดการข้อมูลในหน้าตั้งค่า — 3 ปุ่ม (demo 20 คน bulk / ล้างข้อมูล+softbackup.zip / กู้คืน) + gate รหัส 2 รอบ (=รหัสการเงิน) + ตั้ง/เปลี่ยนรหัส + recovery escrow (RSA) · backend bulkcreate/cleardata (Code.gs v10)'] },
