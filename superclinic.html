@@ -7077,6 +7077,26 @@ async function savePaySettings(btn){
   else showToast('⚠️ บันทึกสำเร็จ '+ok+' รายการ, ล้มเหลว '+fail,'warning');
 }
 
+/* ===== PAYVERIFY — Gmail auto-verify (superclinic, ผ่าน backend GmailApp) ===== */
+var _cpayPoll=null, _cpayPollEnd=0;
+function cpayStopEmailPoll(){ if(_cpayPoll){ clearInterval(_cpayPoll); _cpayPoll=null; } }
+function cpayStartEmailPoll(amount){
+  cpayStopEmailPoll();
+  _cpayPollEnd=Date.now()+150*1000;
+  var setStat=function(html){ var e=document.getElementById('cpay-email-status'); if(e) e.innerHTML=html; };
+  setStat('<span style="color:#2f7d4f;">📧 กำลังเฝ้าดูอีเมลยืนยันเงินเข้า...</span>');
+  var tick=async function(){
+    if(!document.getElementById('cpay-overlay')){ cpayStopEmailPoll(); return; }
+    if(Date.now()>_cpayPollEnd){ cpayStopEmailPoll(); setStat('<span style="color:#999;">⌛ ยังไม่พบอีเมลยืนยัน — ถ้าได้รับเงินแล้วกด ชำระแล้ว</span>'); return; }
+    try{
+      var r=await callApi('finance','checkpayment',{amount:amount,minutes:10});
+      var d=r&&r.data;
+      if(d&&d.matched){ cpayStopEmailPoll(); if(window._CPAY){ window._CPAY.via='email'; window._CPAY.emailRef=d.ref||''; } setStat('<span style="color:#27AE60;font-weight:700;">✅ พบอีเมลยืนยันเงินเข้า — กำลังบันทึก</span>'); cpayConfirm(); }
+    }catch(err){ /* keep polling เงียบ ๆ — ถ้า backend ยังไม่ authorize Gmail จะ error จนหมดเวลา */ }
+  };
+  setTimeout(tick, 1500);
+  _cpayPoll=setInterval(tick, 15000);
+}
 function openCollectPay(opts){
   if(document.getElementById('cpay-overlay')) return;
   opts=opts||{};
@@ -8446,6 +8466,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v174', date:'04/06/2569', items:['feat(รับชำระเงิน): Gmail auto-verify ที่ superclinic ด้วย — ผ่าน Apps Script GmailApp (action checkpayment) อ่านอีเมลเจ้าของสคริปต์ จับยอด+ใน 10 นาที · poll 15 วิ/2.5 นาที'] },
   { ver:'v173', date:'04/06/2569', items:['feat(รับชำระเงิน): log บันทึก source (topbar/หน้าบันทึกรักษา) + วิธียืนยัน (กดเอง) · (Gmail auto-verify เฉพาะ scproject)'] },
   { ver:'v172', date:'04/06/2569', items:['feat(การเงิน): จุดรับชำระเงิน — ปุ่มบน topbar + ในฟอร์มบันทึกรักษา (ผูกชื่อผู้ป่วย+prefill ยอด) · เลือกเงินสด/QR → ชำระแล้ว → เข้ารายได้ → ✅ ปิดเอง 3 วิ'] },
   { ver:'v171', date:'04/06/2569', items:['feat(การเงิน): ปุ่ม "แสดง QR รับเงิน" — โชว์ QR PromptPay บนจอให้ลูกค้าสแกน (ไม่ต้องออกบิล) + กรอกยอด/เว้นว่างให้ลูกค้ากรอกเอง'] },

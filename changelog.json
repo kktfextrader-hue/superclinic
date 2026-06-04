@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v174",
+    "date": "04/06/2569",
+    "items": [
+      "feat(รับชำระเงิน): Gmail auto-verify ที่ superclinic ด้วย — ผ่าน Apps Script GmailApp (action checkpayment) อ่านอีเมลเจ้าของสคริปต์ จับยอด+ใน 10 นาที · poll 15 วิ/2.5 นาที"
+    ]
+  },
+  {
     "ver": "v173",
     "date": "04/06/2569",
     "items": [
