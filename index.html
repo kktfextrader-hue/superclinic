@@ -4168,7 +4168,7 @@ function showToast(msg, type='success') {
   if(!box){
     box = document.createElement('div');
     box.id = 'toast-box';
-    box.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+    box.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999999;display:flex;flex-direction:column;gap:8px;';
     document.body.appendChild(box);
   }
   const colors = {success:'#27AE60',error:'#C0392B',warning:'#E67E22',info:'#2980B9'};
@@ -7928,6 +7928,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v156', date:'04/06/2569', items:['fix(ui): toast แจ้งผลเคยโผล่หลัง modal จางอ่านไม่ออก → ดัน z-index เหนือทุก popup'] },
   { ver:'v155', date:'04/06/2569', items:['fix(ui): icon หัวข้อ "ข้อมูลใบหน้า" ใส่ใบหน้าในวงกลมเขียว (มินิ-avatar) ให้ชัด เหมือน avatar คนไข้'] },
   { ver:'v154', date:'04/06/2569', items:['fix(bodymap): หน้าคนไข้ กดขยายแผนที่จุดเจ็บปวด → โชว์ map ทันที (เดิมต้องกดปุ่ม ▼ ขยาย ซ้ำอีกที)'] },
   { ver:'v153', date:'04/06/2569', items:['feat(BACKUP-V1): เตือน backup ใน topbar (banner 6 สถานะตามอายุ backup) + คลิกดาวน์โหลดสำรองข้อมูลทุกตาราง (.json) — standalone client-side'] },
