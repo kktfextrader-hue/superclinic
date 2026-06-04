@@ -6740,30 +6740,77 @@ async function selectTreatPat(id){
     ]);
     const items=(tRes.data?.rows||[]).filter(t=>t.patient_id===id).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
     const notes=nRes.data?.rows||[];
-    if(hist){
-      hist.innerHTML=items.length ? `<div class="timeline">${items.map(t=>{
-        const tNotes=notes.filter(n=>n.treatment_id===t.id);
-        const updatedAt=t.updated_at||t.created_at||'';
-        const updStr=updatedAt?`<em style="font-size:10px;color:#bbb;display:block;margin-top:6px;">แก้ไขล่าสุด ${fmtDateTime(updatedAt)}</em>`:'';
-        const notesHtml=tNotes.map(n=>`
-          <div style="margin-top:6px;font-size:12px;background:rgba(200,169,107,.06);padding:8px 12px;border-radius:8px;border-left:3px solid var(--go);">
-            <span style="font-weight:600;color:#888;font-size:10px;">${fieldLabel(n.field_name)}</span><br>
-            ${n.content||'—'}
-            <em style="font-size:10px;color:#ccc;display:block;margin-top:3px;">แก้ไขล่าสุด ${fmtDateTime(n.updated_at||n.created_at)}</em>
-          </div>`).join('');
-        return `<div class="tl-item"><div class="tl-dot"></div><div class="tl-content">
-          <div class="tl-title">${t.type||'—'}${t.procedure?' + '+t.procedure:''}</div>
-          <div class="tl-sub">${toThaiDisplay(t.date)} • ${t.doctor||'Dr. Strange'} • ${t.duration||'—'} นาที • ฿${t.price||0}</div>
-          ${t.herbs_used?`<div style="font-size:12px;color:#888;margin-top:4px;">💊 ${t.herbs_used}</div>`:''}
-          ${notesHtml||( t.result?`<div style="margin-top:6px;font-size:12px;background:rgba(200,169,107,.08);padding:8px 12px;border-radius:8px;border-left:3px solid var(--go);">${t.result}</div>`:'')}
-          ${updStr}
-        </div></div>`;
-      }).join('')}</div>`
-      : `<div style="padding:20px;text-align:center;color:#aaa;">ยังไม่มีประวัติการรักษา</div>`;
-    }
+    window._TH={ items, notes, page:1, q:'', perPage:5 };
+    thMount();
   } catch(e){ if(hist) hist.innerHTML='<div style="padding:20px;color:#aaa;">ไม่สามารถโหลดประวัติได้</div>'; }
 }
 
+// ===== ประวัติการรักษา: ค้นหา + แบ่งหน้า (เฉพาะโซนนี้) =====
+function thItemHtml(t){
+  const notes=(window._TH&&window._TH.notes)||[];
+  const tNotes=notes.filter(n=>n.treatment_id===t.id);
+  const updatedAt=t.updated_at||t.created_at||'';
+  const updStr=updatedAt?`<em style="font-size:10px;color:#bbb;display:block;margin-top:6px;">แก้ไขล่าสุด ${fmtDateTime(updatedAt)}</em>`:'';
+  const notesHtml=tNotes.map(n=>`
+    <div style="margin-top:6px;font-size:12px;background:rgba(200,169,107,.06);padding:8px 12px;border-radius:8px;border-left:3px solid var(--go);">
+      <span style="font-weight:600;color:#888;font-size:10px;">${fieldLabel(n.field_name)}</span><br>${n.content||'—'}
+      <em style="font-size:10px;color:#ccc;display:block;margin-top:3px;">แก้ไขล่าสุด ${fmtDateTime(n.updated_at||n.created_at)}</em>
+    </div>`).join('');
+  return `<div class="tl-item"><div class="tl-dot"></div><div class="tl-content">
+    <div class="tl-title">${t.type||'—'}${t.procedure?' + '+t.procedure:''}</div>
+    <div class="tl-sub">${toThaiDisplay(t.date)} • ${t.doctor||'Dr. Strange'} • ${t.duration||'—'} นาที • ฿${t.price||0}</div>
+    ${t.herbs_used?`<div style="font-size:12px;color:#888;margin-top:4px;">💊 ${t.herbs_used}</div>`:''}
+    ${notesHtml||( t.result?`<div style="margin-top:6px;font-size:12px;background:rgba(200,169,107,.08);padding:8px 12px;border-radius:8px;border-left:3px solid var(--go);">${t.result}</div>`:'')}
+    ${updStr}
+  </div></div>`;
+}
+function thMatch(t,q){
+  const notes=((window._TH&&window._TH.notes)||[]).filter(n=>n.treatment_id===t.id).map(n=>(n.content||'')+' '+fieldLabel(n.field_name)).join(' ');
+  const hay=[t.type,t.procedure,t.symptoms,t.diagnosis,t.herbs_used,t.result,t.doctor,toThaiDisplay(t.date),notes].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+function thMount(){
+  const hist=document.getElementById('treat-history'); if(!hist) return;
+  hist.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <div style="position:relative;flex:1;">
+        <i class="ti ti-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#bbb;font-size:14px;"></i>
+        <input id="th-search" oninput="thSearch(this.value)" placeholder="ค้นหาในประวัติการรักษา (อาการ/ยา/วันที่/คำแนะนำ)" style="width:100%;padding:8px 28px 8px 32px;border:1px solid #e5ddd0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+        <i id="th-clear" class="ti ti-x" onclick="var s=document.getElementById('th-search');if(s)s.value='';thSearch('')" style="display:none;position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#bbb;font-size:14px;cursor:pointer;"></i>
+      </div>
+      <span id="th-count" style="font-size:11px;color:#aaa;white-space:nowrap;"></span>
+    </div>
+    <div id="th-results"></div>`;
+  thRender();
+}
+function thRender(){
+  const S=window._TH||{items:[],notes:[],page:1,q:'',perPage:5};
+  const box=document.getElementById('th-results'); if(!box) return;
+  const q=(S.q||'').trim().toLowerCase();
+  const all=S.items||[];
+  const filtered=q?all.filter(t=>thMatch(t,q)):all;
+  const per=S.perPage||5;
+  const pages=Math.max(1,Math.ceil(filtered.length/per));
+  if(S.page>pages)S.page=pages; if(S.page<1)S.page=1;
+  const pageItems=filtered.slice((S.page-1)*per,(S.page-1)*per+per);
+  const cEl=document.getElementById('th-count'); if(cEl) cEl.textContent=q?`${filtered.length}/${all.length} รายการ`:`${all.length} รายการ`;
+  const xEl=document.getElementById('th-clear'); if(xEl) xEl.style.display=S.q?'block':'none';
+  let body;
+  if(!all.length) body=`<div style="padding:20px;text-align:center;color:#aaa;">ยังไม่มีประวัติการรักษา</div>`;
+  else if(!filtered.length) body=`<div style="padding:18px;text-align:center;color:#aaa;font-size:13px;">ไม่พบประวัติที่ตรงกับคำค้น</div>`;
+  else body=`<div class="timeline">${pageItems.map(thItemHtml).join('')}</div>`;
+  let pager='';
+  if(pages>1){
+    pager=`<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button onclick="thGoto(${S.page-1})" ${S.page<=1?'disabled':''} style="padding:6px 13px;border:1px solid #e5ddd0;border-radius:9px;background:#fff;font-size:12.5px;cursor:pointer;${S.page<=1?'opacity:.4;cursor:not-allowed;':''}">← ก่อนหน้า</button>
+      <span style="font-size:12.5px;color:#888;">หน้า ${S.page} / ${pages}</span>
+      <button onclick="thGoto(${S.page+1})" ${S.page>=pages?'disabled':''} style="padding:6px 13px;border:1px solid #e5ddd0;border-radius:9px;background:#fff;font-size:12.5px;cursor:pointer;${S.page>=pages?'opacity:.4;cursor:not-allowed;':''}">ถัดไป →</button>
+    </div>`;
+  }
+  box.innerHTML=body+pager;
+}
+function thSearch(v){ if(!window._TH)return; window._TH.q=v; window._TH.page=1; thRender(); }
+function thGoto(n){ if(!window._TH)return; window._TH.page=n; thRender(); }
 function fmtDateTime(iso){
   if(!iso) return '—';
   try {
@@ -8228,6 +8275,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v164', date:'04/06/2569', items:['feat(ประวัติรักษา): โซนประวัติในหน้าบันทึกรักษา + ช่องค้นหา (เฉพาะโซนนี้) + แบ่งหน้า 5 รายการ/หน้า'] },
   { ver:'v163', date:'04/06/2569', items:['fix(บันทึกรักษา): placeholder ผลการรักษา → "บันทึกการรักษา" · ปุ่มบันทึกจุดปวด = เซฟแผนที่จุดเจ็บลงข้อมูลคนไข้ (DB) ทันที'] },
   { ver:'v162', date:'04/06/2569', items:['fix(บันทึกรักษา): ปุ่มค้างหลังบันทึกสำเร็จ — submitTreatment ไม่เรียก _done() → เพิ่ม finally{_done()} ปลดล็อกปุ่ม'] },
   { ver:'v161', date:'04/06/2569', items:['fix(บันทึกรักษา): "now is not defined" ตอนบันทึกการรักษา (มีอาการ/ยา/นัด) → ปุ่มค้าง · นิยาม now ใน submitTreatment'] },
