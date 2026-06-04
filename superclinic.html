@@ -8466,6 +8466,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v175', date:'04/06/2569', items:['fix(PAYVERIFY): จับยอดอีเมลเฉพาะรูปแบบมีทศนิยม (500.00/1,500.00) กัน false positive (Code.gs @13)'] },
   { ver:'v174', date:'04/06/2569', items:['feat(รับชำระเงิน): Gmail auto-verify ที่ superclinic ด้วย — ผ่าน Apps Script GmailApp (action checkpayment) อ่านอีเมลเจ้าของสคริปต์ จับยอด+ใน 10 นาที · poll 15 วิ/2.5 นาที'] },
   { ver:'v173', date:'04/06/2569', items:['feat(รับชำระเงิน): log บันทึก source (topbar/หน้าบันทึกรักษา) + วิธียืนยัน (กดเอง) · (Gmail auto-verify เฉพาะ scproject)'] },
   { ver:'v172', date:'04/06/2569', items:['feat(การเงิน): จุดรับชำระเงิน — ปุ่มบน topbar + ในฟอร์มบันทึกรักษา (ผูกชื่อผู้ป่วย+prefill ยอด) · เลือกเงินสด/QR → ชำระแล้ว → เข้ารายได้ → ✅ ปิดเอง 3 วิ'] },
