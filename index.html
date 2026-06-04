@@ -3056,7 +3056,7 @@ var qrcode = function() {
       <div class="card-head">
         <div class="card-title"><i class="ti ti-clock"></i>นัดหมายวันนี้ & พรุ่งนี้</div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));gap:4px;"><i class="ti ti-face-id" style="font-size:13px;color:#b8923f;"></i>ค้นหาด้วยใบหน้า</button>
+          <button class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));gap:4px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;flex-shrink:0;"><circle cx="12" cy="12" r="9.2"/><circle cx="8.8" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><circle cx="15.2" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><path d="M8.4 14.3 C9.9 16.4 14.1 16.4 15.6 14.3"/></svg>ค้นหาด้วยใบหน้า</button>
           <button class="btn btn-outline btn-sm" onclick="showPage('appointments',null)">ดูทั้งหมด →</button>
         </div>
       </div>
@@ -3166,7 +3166,7 @@ var qrcode = function() {
         <!-- Face scan single dropdown -->
         <div style="position:relative;" id="fsd-wrap">
           <button class="btn btn-outline" onclick="_fsdToggle()" style="width:150px;padding:9px 14px;font-size:14px;border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));font-weight:600;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;">
-            ค้นหาด้วยใบหน้า<i class="ti ti-chevron-down" style="font-size:11px;opacity:.6;"></i>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;flex-shrink:0;"><circle cx="12" cy="12" r="9.2"/><circle cx="8.8" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><circle cx="15.2" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><path d="M8.4 14.3 C9.9 16.4 14.1 16.4 15.6 14.3"/></svg>ค้นหาด้วยใบหน้า<i class="ti ti-chevron-down" style="font-size:11px;opacity:.6;"></i>
           </button>
           <div id="fsd-menu" style="display:none;position:absolute;top:calc(100% + 7px);right:0;background:linear-gradient(180deg,#fdf9f0,#faf3e4);border:1px solid rgba(200,169,107,0.5);border-radius:11px;padding:6px;min-width:184px;box-shadow:0 8px 28px rgba(200,169,107,.28);z-index:400;">
             <button onclick="openFaceAdvanced('save');_fsdClose()" class="fsd-opt">บันทึกใบหน้าใหม่</button>
@@ -8527,6 +8527,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v181', date:'04/06/2569', items:['style(face): ปุ่มค้นหาด้วยใบหน้าทุกที่ ใส่ไอคอนหน้ายิ้ม (faceVec SVG) แบบ avatar หน้าแรก'] },
   { ver:'v180', date:'04/06/2569', items:['feat(สต็อก): สถานะยาตามหน่วย — 0=หมด · ใกล้หมด เม็ด/แคปซูล≤200, ขวด≤5, ซอง≤10 (แทน min_quantity) · ใช้ทั้ง list/สต็อก/stat/แจ้งเตือน/บรีฟ'] },
   { ver:'v179', date:'04/06/2569', items:['fix(แจ้งเตือน): toast ยาใกล้หมด แจ้งเฉพาะยาขายบ่อยที่เริ่มขาด (ไม่เด้งทุกตัวที่ stock ต่ำ) + เด้งครั้งเดียวต่อ session'] },
   { ver:'v178', date:'04/06/2569', items:['feat(ภาพรวม): รายงานประจำวันใหม่ — การเงินสุทธิ เมื่อวาน/สัปดาห์/เดือน + ผู้ป่วยเมื่อวาน(มารับบริการ) + ยาขายดีที่เริ่มขาด + ฟีดความเคลื่อนไหววันนี้'] },
