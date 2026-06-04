@@ -6375,7 +6375,7 @@ function renderHerbs(filter){
   if(filter !== undefined){ _showAllFresh=false; _showAllMedi=false; }
   const fl=document.getElementById('herb-fresh-list'), ml=document.getElementById('herb-medi-list');
   // sort by updated_at desc
-  const sortByDate = arr => [...arr].sort((a,b)=>(b.updated_at||b.id||'').localeCompare(a.updated_at||a.id||''));
+  const sortByDate = arr => [...arr].sort((a,b)=>{ const qa=parseFloat(a.quantity)||0, qb=parseFloat(b.quantity)||0; if(qb!==qa) return qb-qa; return (b.updated_at||b.id||'').localeCompare(a.updated_at||a.id||''); });
   // สมุนไพรสด
   let freshData = sortByDate(allHerbs.filter(h=>h.category==='สมุนไพรสด'));
   if(_freshFilter){ const q=_freshFilter; freshData=freshData.filter(h=>(h.name_th||'').toLowerCase().includes(q)||(h.name_en||'').toLowerCase().includes(q)||(h.id||'').toLowerCase().includes(q)); }
@@ -6386,8 +6386,8 @@ function renderHerbs(filter){
   const renderList = (data, showAll, toggleFn, el) => {
     if(!el) return;
     if(!data.length){ el.innerHTML='<div style="padding:20px;text-align:center;color:#aaa;">ไม่พบข้อมูล</div>'; return; }
-    const display = showAll ? data : data.slice(0,20);
-    const moreCount = data.length - 20;
+    const display = showAll ? data : data.slice(0,8);
+    const moreCount = data.length - 8;
     el.innerHTML = display.map(herbRowHtml).join('') +
       (!showAll && moreCount > 0 ? `<div style="padding:10px 16px;text-align:center;">
         <button class="btn btn-outline btn-sm" style="font-size:12px;" onclick="${toggleFn}()">
@@ -8324,6 +8324,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v168', date:'04/06/2569', items:['feat(สมุนไพร): list ยาสำเร็จรูป&ตำรับ + สมุนไพรสด เรียงตาม stock มาก→น้อย (ของที่มีของขึ้นก่อน) + โชว์ 8 รายการแรก'] },
   { ver:'v167', date:'04/06/2569', items:['feat(บันทึกรักษา): นัดครั้งต่อไป เพิ่มปุ่ม "สร้างนัด" — ช่องวันที่/เวลา/ประเภท disable+จาง จนกว่าจะกด (กดแล้ววันที่เด้งเป็นวันนี้)'] },
   { ver:'v166', date:'04/06/2569', items:['feat(ui): พื้นหลังหลัก (.main) ลายดอก luxury แบบจาง + เพิ่มหน้าโหลด (splash) ลายดอก auto-fade ~2 วิ'] },
   { ver:'v165', date:'04/06/2569', items:['feat(ประวัติรักษา): แต่ละแถวโชว์ 5 ช่องคงที่ (อาการ/วินิจฉัย/หัตถการ/ยาที่จ่าย/ผล-คำแนะนำ) ช่องว่าง=ไม่มีข้อมูล + เวลา/ราคา/ประเภทว่าง=ไม่ระบุ'] },
