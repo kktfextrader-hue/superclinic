@@ -6749,18 +6749,26 @@ async function selectTreatPat(id){
 function thItemHtml(t){
   const notes=(window._TH&&window._TH.notes)||[];
   const tNotes=notes.filter(n=>n.treatment_id===t.id);
+  const noteOf=f=>{ const n=tNotes.find(x=>x.field_name===f); return (n&&n.content)?n.content:''; };
   const updatedAt=t.updated_at||t.created_at||'';
-  const updStr=updatedAt?`<em style="font-size:10px;color:#bbb;display:block;margin-top:6px;">แก้ไขล่าสุด ${fmtDateTime(updatedAt)}</em>`:'';
-  const notesHtml=tNotes.map(n=>`
-    <div style="margin-top:6px;font-size:12px;background:rgba(200,169,107,.06);padding:8px 12px;border-radius:8px;border-left:3px solid var(--go);">
-      <span style="font-weight:600;color:#888;font-size:10px;">${fieldLabel(n.field_name)}</span><br>${n.content||'—'}
-      <em style="font-size:10px;color:#ccc;display:block;margin-top:3px;">แก้ไขล่าสุด ${fmtDateTime(n.updated_at||n.created_at)}</em>
-    </div>`).join('');
+  const updStr=updatedAt?`<em style="font-size:10px;color:#bbb;display:block;margin-top:7px;">แก้ไขล่าสุด ${fmtDateTime(updatedAt)}</em>`:'';
+  const NA='<span style="color:#c4b9a6;font-style:italic;">ไม่มีข้อมูล</span>';
+  const fields=[
+    ['อาการ',            noteOf('symptoms') || t.symptoms  || ''],
+    ['การวินิจฉัย',       noteOf('diagnosis')|| t.diagnosis || ''],
+    ['หัตถการ/วิธีรักษา',  noteOf('procedure')|| t.procedure || ''],
+    ['ยาที่จ่าย',         noteOf('herbs_note')|| t.herbs_used|| ''],
+    ['ผลการรักษา/คำแนะนำ', noteOf('advice')   || t.result || t.advice || ''],
+  ];
+  const fieldsHtml=`<div style="margin-top:7px;font-size:12px;line-height:1.75;background:rgba(200,169,107,.06);padding:9px 12px;border-radius:8px;border-left:3px solid var(--go);">
+    ${fields.map(([lbl,val])=>`<div><span style="font-weight:600;color:#7a6f5d;">${lbl}:</span> ${val?String(val):NA}</div>`).join('')}
+  </div>`;
+  const dur=t.duration?`${t.duration} นาที`:'ไม่ระบุเวลา';
+  const price=(t.price!==''&&t.price!==undefined&&t.price!==null&&t.price!=='0')?`฿${t.price}`:'ไม่ระบุราคา';
   return `<div class="tl-item"><div class="tl-dot"></div><div class="tl-content">
-    <div class="tl-title">${t.type||'—'}${t.procedure?' + '+t.procedure:''}</div>
-    <div class="tl-sub">${toThaiDisplay(t.date)} • ${t.doctor||'Dr. Strange'} • ${t.duration||'—'} นาที • ฿${t.price||0}</div>
-    ${t.herbs_used?`<div style="font-size:12px;color:#888;margin-top:4px;">💊 ${t.herbs_used}</div>`:''}
-    ${notesHtml||( t.result?`<div style="margin-top:6px;font-size:12px;background:rgba(200,169,107,.08);padding:8px 12px;border-radius:8px;border-left:3px solid var(--go);">${t.result}</div>`:'')}
+    <div class="tl-title">${t.type?t.type:'<span style="color:#c4b9a6;font-style:italic;">ไม่ระบุประเภทการรักษา</span>'}</div>
+    <div class="tl-sub">${toThaiDisplay(t.date)} • ${t.doctor||'Dr. Strange'} • ${dur} • ${price}</div>
+    ${fieldsHtml}
     ${updStr}
   </div></div>`;
 }
@@ -8275,6 +8283,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v165', date:'04/06/2569', items:['feat(ประวัติรักษา): แต่ละแถวโชว์ 5 ช่องคงที่ (อาการ/วินิจฉัย/หัตถการ/ยาที่จ่าย/ผล-คำแนะนำ) ช่องว่าง=ไม่มีข้อมูล + เวลา/ราคา/ประเภทว่าง=ไม่ระบุ'] },
   { ver:'v164', date:'04/06/2569', items:['feat(ประวัติรักษา): โซนประวัติในหน้าบันทึกรักษา + ช่องค้นหา (เฉพาะโซนนี้) + แบ่งหน้า 5 รายการ/หน้า'] },
   { ver:'v163', date:'04/06/2569', items:['fix(บันทึกรักษา): placeholder ผลการรักษา → "บันทึกการรักษา" · ปุ่มบันทึกจุดปวด = เซฟแผนที่จุดเจ็บลงข้อมูลคนไข้ (DB) ทันที'] },
   { ver:'v162', date:'04/06/2569', items:['fix(บันทึกรักษา): ปุ่มค้างหลังบันทึกสำเร็จ — submitTreatment ไม่เรียก _done() → เพิ่ม finally{_done()} ปลดล็อกปุ่ม'] },
