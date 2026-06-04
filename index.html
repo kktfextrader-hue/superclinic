@@ -3947,6 +3947,7 @@ async function bmPatLoad(id){
     area.innerHTML = bodyMapHTML('patview_'+id, data);
     _bmLevel['patview_'+id] = 1;
     bmWrap.dataset.bmData = JSON.stringify(data);
+    try { bmToggle('patview_'+id); } catch(_){} /* FIX-BM-AUTOEXPAND: กดขยาย section → โชว์ map เลย ไม่ต้องกด ▼ ขยาย ซ้ำ */
     setTimeout(()=>bmLoadData('patview_'+id, data), 80);
     const saveBtn = document.getElementById(`bm-save-btn-${id}`);
     if(saveBtn) saveBtn.style.display = '';
@@ -7927,6 +7928,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v154', date:'04/06/2569', items:['fix(bodymap): หน้าคนไข้ กดขยายแผนที่จุดเจ็บปวด → โชว์ map ทันที (เดิมต้องกดปุ่ม ▼ ขยาย ซ้ำอีกที)'] },
   { ver:'v153', date:'04/06/2569', items:['feat(BACKUP-V1): เตือน backup ใน topbar (banner 6 สถานะตามอายุ backup) + คลิกดาวน์โหลดสำรองข้อมูลทุกตาราง (.json) — standalone client-side'] },
   { ver:'v152', date:'04/06/2569', items:['feat(ui): เปลี่ยนไอคอนใบหน้าจาก face-id (หน้ากาก) เป็น vector ใบหน้าเส้นเรียบ (ยิ้ม) — avatar คนไข้ (รายชื่อ+ค้นหา) + หัวข้อ "ข้อมูลใบหน้า"'] },
   { ver:'v151', date:'04/06/2569', items:['fix(บั๊ก A): กดชื่อคนไข้แล้วชื่อไม่ขึ้น (เห็นแต่ HN+เบอร์) — viewPatient ค้น allPatients 2 แหล่ง (lexical/window) เลือกตัวมีชื่อ','feat(bodymap): แผนที่จุดเจ็บปวดในหน้าคนไข้ = lazy load พับไว้ก่อน กดค่อยโหลด+วาด'] },
