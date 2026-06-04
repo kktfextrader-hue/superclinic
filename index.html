@@ -7087,6 +7087,9 @@ function openPromptPaySetup(){
       <label class="form-label">เบอร์พร้อมเพย์ (10 หลัก) หรือ เลขบัตรประชาชน (13 หลัก)</label>
       <input id="pp-setup-input" class="form-input" placeholder="เช่น 0812345678 หรือ 1234567890123" inputmode="numeric" autocomplete="off" style="margin-bottom:6px;">
       <div id="pp-setup-status" style="font-size:12px;color:#888;min-height:16px;">QR สร้างจากเลขนี้ + ยอดในใบเสร็จ (สร้างในเครื่อง ฟรี) · ปลอดภัย เก็บในระบบของคุณ</div>
+      <label class="form-label" style="margin-top:14px;color:var(--g1);"><i class="ti ti-mail" style="margin-right:5px;"></i>อีเมลรับแจ้งเตือนจากธนาคาร (ตรวจสอบยอดเข้า)</label>
+      <input id="pp-setup-email" class="form-input" type="email" placeholder="เช่น clinic@gmail.com" autocomplete="off" style="margin-bottom:6px;">
+      <div style="font-size:11.5px;color:#999;">อีเมลที่ผูกรับแจ้งเตือนเงินเข้าจากธนาคาร/พร้อมเพย์ — เก็บไว้อ้างอิงตรวจสอบยอด</div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
         <button class="btn btn-outline" onclick="closePromptPaySetup()">ยกเลิก</button>
         <button class="btn btn-green" style="background:var(--g1);" onclick="savePromptPaySetup(this)"><i class="ti ti-device-floppy"></i>บันทึก</button>
@@ -7096,6 +7099,7 @@ function openPromptPaySetup(){
   document.body.appendChild(ov);
   ov.addEventListener('click',function(e){ if(e.target===ov) closePromptPaySetup(); });
   try{ callApi('settings','get',null,'promptpay_id').then(function(r){ var el=document.getElementById('pp-setup-input'); if(el&&r&&r.data&&r.data.value) el.value=r.data.value; }); }catch(_){}
+  try{ callApi('settings','get',null,'promptpay_verify_email').then(function(r){ var el=document.getElementById('pp-setup-email'); if(el&&r&&r.data&&r.data.value) el.value=r.data.value; }); }catch(_){}
   setTimeout(function(){ var el=document.getElementById('pp-setup-input'); if(el) el.focus(); },60);
 }
 function closePromptPaySetup(){ var el=document.getElementById('pp-setup-overlay'); if(el) el.remove(); }
@@ -7107,6 +7111,7 @@ async function savePromptPaySetup(btn){
   var done=(typeof showLoading==='function'&&btn)?showLoading(btn):function(){};
   try{
     await _upsertSetting('promptpay_id', v, 'เบอร์พร้อมเพย์คลินิก (รับเงิน QR)');
+    try{ var _em=document.getElementById('pp-setup-email'); if(_em) await _upsertSetting('promptpay_verify_email', (_em.value||'').trim(), 'อีเมลรับแจ้งเตือนเงินเข้าจากธนาคาร'); }catch(_){}
     if(typeof _ppCache!=='undefined') _ppCache=undefined;
     done(); closePromptPaySetup(); refreshPromptPayBtn(v);
     if(typeof showToast==='function') showToast('✅ บันทึกพร้อมเพย์แล้ว');
@@ -8324,6 +8329,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v170', date:'04/06/2569', items:['feat(การเงิน): ป๊อปอัพตั้งค่า PromptPay เพิ่มช่อง "อีเมลรับแจ้งเตือนจากธนาคาร" (เก็บ setting promptpay_verify_email สำหรับอ้างอิงตรวจสอบยอด)'] },
   { ver:'v169', date:'04/06/2569', items:['fix(ui): หน้าลงทะเบียน เปลี่ยน label "อาการที่มา / ความต้องการ" → "อาการป่วยที่เป็นอยู่"'] },
   { ver:'v168', date:'04/06/2569', items:['feat(สมุนไพร): list ยาสำเร็จรูป&ตำรับ + สมุนไพรสด เรียงตาม stock มาก→น้อย (ของที่มีของขึ้นก่อน) + โชว์ 8 รายการแรก'] },
   { ver:'v167', date:'04/06/2569', items:['feat(บันทึกรักษา): นัดครั้งต่อไป เพิ่มปุ่ม "สร้างนัด" — ช่องวันที่/เวลา/ประเภท disable+จาง จนกว่าจะกด (กดแล้ววันที่เด้งเป็นวันนี้)'] },
