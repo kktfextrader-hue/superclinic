@@ -3408,7 +3408,7 @@ var qrcode = function() {
               <button type="button" class="btn btn-outline btn-sm" onclick="bmTreatSave()" style="font-size:12px;"><i class="ti ti-device-floppy"></i> บันทึกจุดปวด</button>
             </div>
           </div>
-          <div class="form-group" style="grid-column:1/-1;"><label class="form-label">ผลการรักษาและคำแนะนำ</label><textarea class="form-textarea" name="result" rows="3" placeholder="บันทึกการรักษา"></textarea></div>
+          <div class="form-group" style="grid-column:1/-1;"><label class="form-label">บันทึกการรักษาครั้งนี้</label><textarea class="form-textarea" name="result" rows="3" placeholder="บันทึกการรักษา"></textarea></div>
 
           <!-- ยาที่จ่าย — 5 บรรทัด autocomplete -->
           <div class="form-group" style="grid-column:1/-1;">
@@ -7082,7 +7082,7 @@ var _cpayPoll=null, _cpayPollEnd=0;
 function cpayStopEmailPoll(){ if(_cpayPoll){ clearInterval(_cpayPoll); _cpayPoll=null; } }
 function cpayStartEmailPoll(amount){
   cpayStopEmailPoll();
-  _cpayPollEnd=Date.now()+150*1000;
+  _cpayPollEnd=Date.now()+180*1000;
   var setStat=function(html){ var e=document.getElementById('cpay-email-status'); if(e) e.innerHTML=html; };
   setStat('<span style="color:#2f7d4f;">📧 กำลังเฝ้าดูอีเมลยืนยันเงินเข้า...</span>');
   var tick=async function(){
@@ -7153,7 +7153,7 @@ async function cpayPickQR(){
     +(qrUrl?'<img src="'+qrUrl+'" style="width:210px;height:210px;max-width:100%;border:1px solid #eee;border-radius:10px;">':'<div style="color:#C0392B;">สร้าง QR ไม่ได้</div>')
     +'<div style="font-size:11px;color:#888;margin-top:6px;">รับเงินเข้า: '+ppid+'</div>'
     +'<div style="font-size:26px;font-weight:700;color:var(--g1);margin:2px 0 8px;">&#3647;'+amt.toLocaleString()+'</div>'
-    +'<div style="font-size:11.5px;color:#2f7d4f;background:#eefaf1;border:1px solid #bfe6cd;border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.5;">&#128161; หากได้รับอีเมลยืนยันเงินเข้า หน้านี้จะปิดให้อัตโนมัติ &mdash; หรือกด ชำระแล้ว เมื่อยืนยันเอง</div>'
+    +'<div style="font-size:11.5px;color:#2f7d4f;background:#eefaf1;border:1px solid #bfe6cd;border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.5;">&#128161; หากได้รับอีเมลยืนยันเงินเข้า หน้านี้จะปิดให้อัตโนมัติ &mdash; หรือกด ชำระแล้ว เมื่อยืนยันเอง<br>&#9888; หากเกิน 3 นาทีให้เช็คด้วยวิธีอื่น</div>'
     +'<div id="cpay-email-status" style="font-size:11.5px;margin-bottom:8px;min-height:15px;"></div>'
     +'<button class="btn btn-green" style="width:100%;justify-content:center;background:var(--ok);font-weight:700;padding:13px;" onclick="cpayConfirm()">&#10003; ชำระแล้ว (บันทึกรายได้)</button>'
     +'<button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;" onclick="cpayReopen()">&larr; กลับ</button></div>';
@@ -8466,6 +8466,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v177', date:'04/06/2569', items:['ui: label "ผลการรักษาและคำแนะนำ" → "บันทึกการรักษาครั้งนี้" · QR รับเงินเพิ่มหมายเหตุ "เกิน 3 นาทีเช็ควิธีอื่น" + ขยาย poll เป็น 3 นาที'] },
   { ver:'v176', date:'04/06/2569', items:['feat(PAYVERIFY): match ยอดอีเมลแบบ OR (500 หรือ 500.00) · เลขล้วนใช้ boundary กันชนเลขอื่น (Code.gs @14)'] },
   { ver:'v175', date:'04/06/2569', items:['fix(PAYVERIFY): จับยอดอีเมลเฉพาะรูปแบบมีทศนิยม (500.00/1,500.00) กัน false positive (Code.gs @13)'] },
   { ver:'v174', date:'04/06/2569', items:['feat(รับชำระเงิน): Gmail auto-verify ที่ superclinic ด้วย — ผ่าน Apps Script GmailApp (action checkpayment) อ่านอีเมลเจ้าของสคริปต์ จับยอด+ใน 10 นาที · poll 15 วิ/2.5 นาที'] },
