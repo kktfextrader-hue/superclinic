@@ -4486,7 +4486,9 @@ async function loadDailyBrief(){
       callApi('stock_transactions','list').catch(function(){return {data:{rows:[]}};})
     ]);
     var g=function(r){ return (r&&r.data&&r.data.rows)||[]; };
-    renderDailyBrief(el, computeDailyBrief(g(R[0]),g(R[1]),g(R[2]),g(R[3]),g(R[4])));
+    var d=computeDailyBrief(g(R[0]),g(R[1]),g(R[2]),g(R[3]),g(R[4]));
+    renderDailyBrief(el, d);
+    if(d.herbs && d.herbs.length && !window._briefAlerted){ window._briefAlerted=true; setTimeout(function(){ if(typeof showToast==='function') showToast('⚠️ ยาขายดี '+d.herbs.length+' ชนิดเริ่มขาด — ควรเติมสต็อก','warning'); }, 800); }
   }catch(e){ el.innerHTML='<div style="padding:14px;color:rgba(229,211,163,.6);font-size:12px;">โหลดรายงานไม่ได้</div>'; }
 }
 async function loadDashboard(){
@@ -4574,7 +4576,7 @@ async function loadDashboard(){
         </div>`).join('')
       : `<div style="color:rgba(229,211,163,.65);font-size:13px;padding:10px;">สมุนไพรทุกชนิดยังเพียงพอ ✓</div>`;
     }
-    if(lowHerbs.length) setTimeout(()=>showToast(`⚠️ มีสมุนไพร ${lowHerbs.length} ชนิดใกล้หมดสต็อก`,'warning'), 600);
+    /* แจ้งเตือนยาใกล้หมดย้ายไป loadDailyBrief — เฉพาะยาขายบ่อยที่เริ่มขาด (ไม่เด้งทุกตัว) */
   } catch(e){
     console.warn('[Dashboard] API ยังไม่พร้อม — แสดง demo:', e.message);
   }
@@ -8525,6 +8527,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v179', date:'04/06/2569', items:['fix(แจ้งเตือน): toast ยาใกล้หมด แจ้งเฉพาะยาขายบ่อยที่เริ่มขาด (ไม่เด้งทุกตัวที่ stock ต่ำ) + เด้งครั้งเดียวต่อ session'] },
   { ver:'v178', date:'04/06/2569', items:['feat(ภาพรวม): รายงานประจำวันใหม่ — การเงินสุทธิ เมื่อวาน/สัปดาห์/เดือน + ผู้ป่วยเมื่อวาน(มารับบริการ) + ยาขายดีที่เริ่มขาด + ฟีดความเคลื่อนไหววันนี้'] },
   { ver:'v177', date:'04/06/2569', items:['ui: label "ผลการรักษาและคำแนะนำ" → "บันทึกการรักษาครั้งนี้" · QR รับเงินเพิ่มหมายเหตุ "เกิน 3 นาทีเช็ควิธีอื่น" + ขยาย poll เป็น 3 นาที'] },
   { ver:'v176', date:'04/06/2569', items:['feat(PAYVERIFY): match ยอดอีเมลแบบ OR (500 หรือ 500.00) · เลขล้วนใช้ boundary กันชนเลขอื่น (Code.gs @14)'] },
