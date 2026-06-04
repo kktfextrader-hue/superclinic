@@ -4204,7 +4204,25 @@ function showToast(msg, type='success') {
 /* ════════════════════════════════════════════════════════
    CORE API WRAPPER
 ════════════════════════════════════════════════════════ */
+let _saveBusyN = 0;
+function _saveBusyShow(){
+  _saveBusyN++;
+  let el=document.getElementById('save-busy-pill');
+  if(!el){
+    if(!document.getElementById('bspin-style')){ const st=document.createElement('style'); st.id='bspin-style'; st.textContent='@keyframes bspin{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }
+    el=document.createElement('div'); el.id='save-busy-pill';
+    el.style.cssText='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:1000000;background:#2F5D50;color:#fff;padding:9px 18px;border-radius:999px;font-family:Sarabun,sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.22);display:flex;align-items:center;gap:9px;pointer-events:none;';
+    el.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:bspin .7s linear infinite;"></span>กำลังบันทึก...';
+    document.body.appendChild(el);
+  }
+  el.style.display='flex';
+}
+function _saveBusyHide(){
+  _saveBusyN=Math.max(0,_saveBusyN-1);
+  if(_saveBusyN===0){ const el=document.getElementById('save-busy-pill'); if(el) el.style.display='none'; }
+}
 async function callApi(sheet, action, data=null, getId=null) {
+  const _isMut=(action==='create'||action==='update'||action==='delete'); if(_isMut) _saveBusyShow();
   try {
     let res;
     let baseUrl = `${API_URL}?sheet=${encodeURIComponent(sheet)}&action=${encodeURIComponent(action)}&token=${encodeURIComponent(API_TOKEN)}`;
@@ -4222,8 +4240,10 @@ async function callApi(sheet, action, data=null, getId=null) {
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if(json.ok === false) throw new Error(json.error || 'API Error');
+    if(_isMut) _saveBusyHide();
     return json;
   } catch(err) {
+    if(_isMut) _saveBusyHide();
     console.error(`[API] ${sheet}/${action}:`, err);
     throw err;
   }
@@ -8143,6 +8163,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v158', date:'04/06/2569', items:['feat(ux): แสดง pill "กำลังบันทึก..." กลางบนจอ ระหว่างรอ save (เพิ่ม/แก้ไข/ลบ) ก่อนขึ้นผลสำเร็จ/ล้มเหลว'] },
   { ver:'v157', date:'04/06/2569', items:['feat(clinic-tools): การ์ดจัดการข้อมูลในหน้าตั้งค่า — 3 ปุ่ม (demo 20 คน bulk / ล้างข้อมูล+softbackup.zip / กู้คืน) + gate รหัส 2 รอบ (=รหัสการเงิน) + ตั้ง/เปลี่ยนรหัส + recovery escrow (RSA) · backend bulkcreate/cleardata (Code.gs v10)'] },
   { ver:'v156', date:'04/06/2569', items:['fix(ui): toast แจ้งผลเคยโผล่หลัง modal จางอ่านไม่ออก → ดัน z-index เหนือทุก popup'] },
   { ver:'v155', date:'04/06/2569', items:['fix(ui): icon หัวข้อ "ข้อมูลใบหน้า" ใส่ใบหน้าในวงกลมเขียว (มินิ-avatar) ให้ชัด เหมือน avatar คนไข้'] },
