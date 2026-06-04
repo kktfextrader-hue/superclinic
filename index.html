@@ -3626,6 +3626,7 @@ var qrcode = function() {
     <div class="card-body" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <button id="fin-pp-btn" class="btn btn-outline" style="border-color:var(--go);color:var(--g1);font-weight:600;" onclick="openPromptPaySetup()"><span id="fin-pp-check" style="display:none;color:var(--ok);font-weight:700;margin-right:2px;">✓</span><i class="ti ti-qrcode"></i> ตั้งค่าการรับเงิน QR / PromptPay</button>
       <span id="fin-pp-hint" style="font-size:12px;color:#aaa;">ยังไม่ได้ตั้งค่า</span>
+      <button class="btn btn-green" style="background:var(--g1);font-weight:600;" onclick="openPayQR()"><i class="ti ti-qrcode"></i> แสดง QR รับเงิน</button>
     </div>
   </div>
   <div class="grid-4 mb-20">
@@ -7074,6 +7075,40 @@ async function savePaySettings(btn){
   else showToast('⚠️ บันทึกสำเร็จ '+ok+' รายการ, ล้มเหลว '+fail,'warning');
 }
 
+async function openPayQR(){
+  if(document.getElementById('payqr-overlay')) return;
+  if(_ppCache===undefined){ try{ var r=await callApi('settings','get',null,'promptpay_id'); _ppCache=(r&&r.data&&r.data.value)||''; }catch(_){ _ppCache=''; } }
+  var ppid=_ppCache||'';
+  var ov=document.createElement('div'); ov.id='payqr-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:10020;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Sarabun,sans-serif;';
+  if(!ppid){
+    ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:360px;padding:22px;text-align:center;"><div style="font-size:13.5px;color:#8a6d1a;background:#fff5e0;border:1px solid #f0d28a;border-radius:10px;padding:12px;margin-bottom:14px;">⚠️ ยังไม่ได้ตั้งเบอร์พร้อมเพย์ — ตั้งค่าก่อนแสดง QR</div><button class="btn btn-green" style="background:var(--g1);" onclick="closePayQR();openPromptPaySetup();">ตั้งค่าพร้อมเพย์</button> <button class="btn btn-outline" onclick="closePayQR()">ปิด</button></div>';
+    document.body.appendChild(ov); ov.addEventListener('click',function(e){ if(e.target===ov) closePayQR(); }); return;
+  }
+  ov.innerHTML='<div style="background:#fff;border-radius:20px;width:100%;max-width:370px;overflow:hidden;box-shadow:0 12px 50px rgba(0,0,0,.3);">'
+    +'<div style="background:linear-gradient(135deg,#001b94,#0030d0);color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div style="font-size:15px;font-weight:700;"><i class="ti ti-qrcode" style="margin-right:7px;"></i>QR รับเงิน PromptPay</div>'
+    +'<button onclick="closePayQR()" style="background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:16px;">✕</button></div>'
+    +'<div style="padding:18px 20px;text-align:center;">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;justify-content:center;"><label style="font-size:13px;color:#555;font-weight:600;">ยอดเงิน ฿</label>'
+    +'<input id="payqr-amount" class="form-input" type="number" min="0" inputmode="decimal" placeholder="เว้นว่าง=ลูกค้ากรอกเอง" style="max-width:200px;text-align:center;" oninput="_payQRrender()"></div>'
+    +'<div id="payqr-box"></div></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov) closePayQR(); });
+  _payQRrender();
+  setTimeout(function(){ var el=document.getElementById('payqr-amount'); if(el) el.focus(); },60);
+}
+function closePayQR(){ var el=document.getElementById('payqr-overlay'); if(el) el.remove(); }
+function _payQRrender(){
+  var box=document.getElementById('payqr-box'); if(!box) return;
+  var ppid=_ppCache||''; var amtEl=document.getElementById('payqr-amount');
+  var amt=amtEl?parseFloat(amtEl.value):0; if(!(amt>0)) amt=0;
+  var qrUrl=''; try{ var qr=qrcode(0,'M'); qr.addData(promptPayPayload(ppid,amt)); qr.make(); qrUrl=qr.createDataURL(7,10); }catch(e){}
+  box.innerHTML=(qrUrl?'<img src="'+qrUrl+'" style="width:260px;height:260px;max-width:100%;border:1px solid #eee;border-radius:10px;">':'<div style="color:#C0392B;font-size:13px;">สร้าง QR ไม่ได้</div>')
+    +'<div style="font-size:12px;color:#888;margin-top:8px;">รับเงินเข้า: '+ppid+'</div>'
+    +'<div style="font-size:24px;font-weight:700;color:var(--g1);margin-top:2px;">'+(amt>0?('฿'+amt.toLocaleString()):'<span style="font-size:14px;color:#999;">ลูกค้ากรอกยอดเอง</span>')+'</div>'
+    +'<div style="font-size:11px;color:#aaa;margin-top:6px;">ให้ลูกค้าสแกนด้วยแอปธนาคารเพื่อจ่าย</div>';
+}
 function openPromptPaySetup(){
   if(document.getElementById('pp-setup-overlay')) return;
   var ov=document.createElement('div'); ov.id='pp-setup-overlay';
@@ -8329,6 +8364,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v171', date:'04/06/2569', items:['feat(การเงิน): ปุ่ม "แสดง QR รับเงิน" — โชว์ QR PromptPay บนจอให้ลูกค้าสแกน (ไม่ต้องออกบิล) + กรอกยอด/เว้นว่างให้ลูกค้ากรอกเอง'] },
   { ver:'v170', date:'04/06/2569', items:['feat(การเงิน): ป๊อปอัพตั้งค่า PromptPay เพิ่มช่อง "อีเมลรับแจ้งเตือนจากธนาคาร" (เก็บ setting promptpay_verify_email สำหรับอ้างอิงตรวจสอบยอด)'] },
   { ver:'v169', date:'04/06/2569', items:['fix(ui): หน้าลงทะเบียน เปลี่ยน label "อาการที่มา / ความต้องการ" → "อาการป่วยที่เป็นอยู่"'] },
   { ver:'v168', date:'04/06/2569', items:['feat(สมุนไพร): list ยาสำเร็จรูป&ตำรับ + สมุนไพรสด เรียงตาม stock มาก→น้อย (ของที่มีของขึ้นก่อน) + โชว์ 8 รายการแรก'] },
