@@ -4445,7 +4445,7 @@ function computeDailyBrief(finance, treatments, patients, herbs, stockTx){
   var sold={};
   (stockTx||[]).forEach(function(s){ if(String(s.type||'').toUpperCase()!=='OUT') return; var dt=String(s.created_at||s.date||'').slice(0,10); if(dt && dt<D.ago) return; var id=s.herb_id||''; if(!id) return; sold[id]=(sold[id]||0)+(parseFloat(s.quantity)||0); });
   var lowSold=[];
-  (herbs||[]).forEach(function(h){ var qty=parseFloat(h.quantity)||0; var mn=parseFloat(h.min_quantity)||0; var low=(h.status==='ใกล้หมด'||h.status==='หมดแล้ว'||(mn>0&&qty<=mn)||qty<=0); var sales=sold[h.id]||0; if(low&&sales>0) lowSold.push({name:h.name_th||h.name_en||h.id, qty:qty, unit:h.unit||'', sold:sales, out:(qty<=0||h.status==='หมดแล้ว')}); });
+  (herbs||[]).forEach(function(h){ var qty=parseFloat(h.quantity)||0; var st=herbStatus(qty,h.unit); var low=(st!=='เพียงพอ'); var sales=sold[h.id]||0; if(low&&sales>0) lowSold.push({name:h.name_th||h.name_en||h.id, qty:qty, unit:h.unit||'', sold:sales, out:(qty<=0)}); });
   lowSold.sort(function(a,b){ return b.sold-a.sold; }); lowSold=lowSold.slice(0,4);
   var feed=[];
   (finance||[]).forEach(function(f){ if(dateToISO(f.date)!==D.today) return; var a=parseFloat(f.amount)||0; feed.push({ts:f.created_at||'', tm:_briefTime(f.created_at), txt:(f.type==='income'?'รับเงิน ฿'+a.toLocaleString():'จ่าย ฿'+a.toLocaleString())}); });
@@ -6237,7 +6237,7 @@ async function loadHerbs(){
     allHerbs=res.data?.rows||[];
     renderHerbs();
     const sv=document.querySelectorAll('#page-herbs .stat-val');
-    const low=allHerbs.filter(h=>h.status==='ใกล้หมด'||h.status==='หมดแล้ว');
+    const low=allHerbs.filter(h=>herbStatus(h.quantity,h.unit)!=='เพียงพอ');
     if(sv[0]) sv[0].textContent=allHerbs.length;
     if(sv[1]) sv[1].textContent=low.length;
     // คำนวณมูลค่า
@@ -6329,9 +6329,7 @@ async function submitAddHerb(e){
   const nameTh = document.getElementById('herb-name-th').value.trim();
   const qty    = parseFloat(document.getElementById('herb-qty').value)||0;
   const minQty = parseFloat(document.getElementById('herb-min-qty').value)||5;
-  let status   = 'เพียงพอ';
-  if(qty <= 0) status = 'หมดแล้ว';
-  else if(qty <= minQty) status = 'ใกล้หมด';
+  const status = herbStatus(qty, document.getElementById('herb-unit').value);
 
   const data = {
     name_th:       nameTh,
@@ -6464,10 +6462,12 @@ function renderHerbs(filter){
 function showAllFreshHerbs(){ _showAllFresh=true; renderHerbs(); }
 function showAllMediHerbs(){ _showAllMedi=true; renderHerbs(); }
 
+function herbLowThreshold(unit){ var u=String(unit||'').trim(); if(u==='เม็ด'||u==='แคปซูล') return 200; if(u==='ขวด') return 5; if(u==='ซอง') return 10; return 10; }
+function herbStatus(qty, unit){ qty=parseFloat(qty)||0; if(qty<=0) return 'หมดแล้ว'; if(qty<=herbLowThreshold(unit)) return 'ใกล้หมด'; return 'เพียงพอ'; }
 function herbRowHtml(h){
   const emojis={'สมุนไพรสด':'🌿','ยาสำเร็จรูป':'🫙','ยาแผนไทยตำรับ':'🫙','ยาสตรี':'🌸','ยาภายนอก / กายภาพ':'💊','อุปกรณ์':'🪡'};
   const em=emojis[h.category]||'🌿';
-  const isLow=h.status==='ใกล้หมด'||h.status==='หมดแล้ว';
+  const _st=herbStatus(h.quantity,h.unit); const isLow=(_st==='ใกล้หมด'||_st==='หมดแล้ว');
   const hid=(h.id||'').replace(/'/g,"\\'");
   return `<div class="herb-item-row" data-herb-id="${hid}" onclick="viewHerb('${hid}')">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -6480,7 +6480,7 @@ function herbRowHtml(h){
     <div style="display:flex;align-items:center;gap:8px;">
       <div style="text-align:right;">
         <div style="font-size:13px;font-weight:600;color:${isLow?'#C85A30':'var(--g1)'};">${h.quantity||0} ${h.unit||''}</div>
-        ${badgeHerb(h.status)}
+        ${badgeHerb(_st)}
       </div>
       <button class="btn btn-outline btn-sm" title="พิมพ์ฉลากยา"
         onclick="event.stopPropagation();(async()=>openLabelPrinter('${hid}'))()"
@@ -6500,7 +6500,7 @@ function viewHerb(id){
       <div class="form-group"><label class="form-label">ชื่อไทย</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${h.name_th||'—'}</div></div>
       <div class="form-group"><label class="form-label">ชื่ออังกฤษ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${h.name_en||'—'}</div></div>
       <div class="form-group"><label class="form-label">ชื่อวิทยาศาสตร์</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;font-style:italic;">${h.name_sci||'—'}</div></div>
-      <div class="form-group"><label class="form-label">สถานะ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${badgeHerb(h.status)}</div></div>
+      <div class="form-group"><label class="form-label">สถานะ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${badgeHerb(herbStatus(h.quantity,h.unit))}</div></div>
       <div class="form-group"><label class="form-label">คงเหลือ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;font-size:16px;font-weight:600;color:var(--g1);">${h.quantity||0} ${h.unit||''}</div></div>
       <div class="form-group"><label class="form-label">ขั้นต่ำ</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">${h.min_quantity||0} ${h.unit||''}</div></div>
       <div class="form-group"><label class="form-label">ราคาต่อหน่วย</label><div style="padding:10px;background:#f9f6f0;border-radius:10px;">฿${h.cost_per_unit||0}/${h.unit||''}</div></div>
@@ -6542,7 +6542,7 @@ async function submitStock(e, herbId){
     if(h){
       const q=parseFloat(h.quantity||0), adj=parseFloat(data.quantity);
       const nq=data.type==='IN' ? q+adj : Math.max(0,q-adj);
-      const ns=nq<=0?'หมดแล้ว':nq<=(parseFloat(h.min_quantity)||1)?'ใกล้หมด':'เพียงพอ';
+      const ns=herbStatus(nq, h.unit);
       await callApi('herbs','update',{id:herbId, quantity:String(nq), status:ns, updated_at:todayISO()});
     }
     closeModal(); showToast('✅ ปรับสต็อกสำเร็จ');
@@ -6567,12 +6567,12 @@ function renderStockTable(filter){
   let data=allHerbs;
   if(_stockFilter){ const q=_stockFilter.toLowerCase(); data=data.filter(h=>(h.name_th||'').toLowerCase().includes(q)||(h.category||'').toLowerCase().includes(q)); }
   const sv=document.querySelectorAll('#page-stock .stat-val');
-  const low=data.filter(h=>h.status==='ใกล้หมด'||h.status==='หมดแล้ว');
+  const low=data.filter(h=>herbStatus(h.quantity,h.unit)!=='เพียงพอ');
   if(sv[0]) sv[0].textContent=data.length;
   if(sv[1]) sv[1].textContent=low.length;
   if(!data.length){ tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa;">ไม่พบข้อมูล</td></tr>`; return; }
   tb.innerHTML=data.map(h=>{
-    const isLow=h.status==='ใกล้หมด'||h.status==='หมดแล้ว';
+    const _st=herbStatus(h.quantity,h.unit); const isLow=(_st==='ใกล้หมด'||_st==='หมดแล้ว');
     const hid=(h.id||'').replace(/'/g,"\\'");
     return `<tr>
       <td style="color:var(--go);font-weight:600;">${h.id}</td>
@@ -6581,7 +6581,7 @@ function renderStockTable(filter){
       <td><strong ${isLow?'style="color:#C05050;"':''}>${h.quantity||0} ${h.unit||''}</strong></td>
       <td>${h.min_quantity||0} ${h.unit||''}</td>
       <td>฿${h.cost_per_unit||0}/${h.unit||''}</td>
-      <td>${badgeHerb(h.status)}</td>
+      <td>${badgeHerb(_st)}</td>
       <td style="white-space:nowrap;">
         ${isLow
           ?`<button class="btn btn-primary btn-sm" onclick="openAdjStock('${hid}')"><i class="ti ti-shopping-cart"></i>สั่งซื้อ</button>`
@@ -8527,6 +8527,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v180', date:'04/06/2569', items:['feat(สต็อก): สถานะยาตามหน่วย — 0=หมด · ใกล้หมด เม็ด/แคปซูล≤200, ขวด≤5, ซอง≤10 (แทน min_quantity) · ใช้ทั้ง list/สต็อก/stat/แจ้งเตือน/บรีฟ'] },
   { ver:'v179', date:'04/06/2569', items:['fix(แจ้งเตือน): toast ยาใกล้หมด แจ้งเฉพาะยาขายบ่อยที่เริ่มขาด (ไม่เด้งทุกตัวที่ stock ต่ำ) + เด้งครั้งเดียวต่อ session'] },
   { ver:'v178', date:'04/06/2569', items:['feat(ภาพรวม): รายงานประจำวันใหม่ — การเงินสุทธิ เมื่อวาน/สัปดาห์/เดือน + ผู้ป่วยเมื่อวาน(มารับบริการ) + ยาขายดีที่เริ่มขาด + ฟีดความเคลื่อนไหววันนี้'] },
   { ver:'v177', date:'04/06/2569', items:['ui: label "ผลการรักษาและคำแนะนำ" → "บันทึกการรักษาครั้งนี้" · QR รับเงินเพิ่มหมายเหตุ "เกิน 3 นาทีเช็ควิธีอื่น" + ขยาย poll เป็น 3 นาที'] },
