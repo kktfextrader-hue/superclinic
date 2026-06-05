@@ -3005,6 +3005,7 @@ var qrcode = function() {
   <div class="topbar-title" id="topbar-title" style="font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:0.04em;background:linear-gradient(135deg,#F5DFA0,#C8A96B,#E8C97A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">✦ Superclinic</div>
   <div class="topbar-right">
     <button onclick="openCollectPay()" title="รับชำระเงิน" style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#2F5D50,#3f7a68);color:#fff;border:none;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;"><i class="ti ti-cash-register"></i> รับชำระเงิน</button>
+    <button id="btn-sync" onclick="rtSyncNow(this)" title="ซิงค์: ดึงข้อมูลล่าสุดจากเครื่องอื่น (แพ็กเกจ Pro)" style="display:inline-flex;align-items:center;gap:5px;background:#fff;color:var(--g1);border:1px solid var(--go);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;"><i class="ti ti-refresh"></i> ซิงค์</button>
     <!-- BACKUP-V1 — backup status banner (แทน 3 ไอคอนที่ยังไม่มีฟังก์ชัน) -->
     <div id="bkb-banner" class="bkb" onclick="onBackupBannerClick()" title="คลิกเพื่อดาวน์โหลดสำรองข้อมูล" style="display:none">
       <span class="bkb-dot"></span><span class="bkb-text">—</span>
@@ -8621,6 +8622,30 @@ const CL_KEY = 'superclinic_changelog';
     var st=document.getElementById('feat-rtsync-status'); if(st){ st.textContent=window.RT_SYNC?'● เปิดใช้งาน':'● ปิดการใช้งาน'; st.style.color=window.RT_SYNC?'var(--ok)':'var(--er)'; }
   }
   window.rtSyncInitUI = rtSyncInitUI;
+  window._rtBusy=false;
+  window.rtSyncNow = async function(btn){
+    if(window._rtBusy) return;            // กันกดซ้ำ (คิวในเครื่อง)
+    window._rtBusy=true;
+    var icon = btn ? btn.querySelector('i') : null;
+    if(icon) icon.style.animation='spin 1s linear infinite';
+    if(btn) btn.disabled=true;
+    try{
+      var page=rtCurPage(); var m=RT_MAP[page];
+      if(m){
+        if(typeof _apiInvalidate==='function') _apiInvalidate(m.sheet);
+        var fn=window[m.loader]; if(typeof fn==='function'){ await fn(); }
+      } else {
+        try{ if(window._apiCache){ for(var k in window._apiCache) delete window._apiCache[k]; } }catch(_){}
+      }
+      window._rtHash={};
+      try{ showToast('✅ ซิงค์ข้อมูลล่าสุดแล้ว'); }catch(_){}
+    }catch(e){ try{ showToast('ซิงค์ไม่สำเร็จ: '+((e&&e.message)||e),'error'); }catch(_){}}
+    finally{
+      if(icon) icon.style.animation='';
+      if(btn) btn.disabled=false;
+      window._rtBusy=false;
+    }
+  };
   function rtBoot(){ setTimeout(function(){ rtSyncInitUI(); if(window.RT_SYNC) window.rtStart(); window.rtDot(); }, 1500); }
   if(document.readyState!=='loading') rtBoot();
   else document.addEventListener('DOMContentLoaded', rtBoot);
@@ -8628,6 +8653,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v189', date:'05/06/2569', items:['feat(Pro): ปุ่ม "ซิงค์" บน topbar — กดดึงข้อมูลหน้าปัจจุบันสดจากเครื่องอื่น (manual pull) · กำลังซิงค์ไอคอนหมุน+กันกดซ้ำ · ไม่กระทบของเดิม'] },
   { ver:'v188', date:'05/06/2569', items:['ui(ตั้งค่า): ย้าย "เวอร์ชันระบบจดจำใบหน้า" ขึ้นไปอยู่ใต้ "ระบบจดจำใบหน้า" — จัดกลุ่มฟังก์ชันที่เกี่ยวข้องกัน'] },
   { ver:'v187', date:'05/06/2569', items:['exp(ทดลอง): ซิงค์สดหลายอุปกรณ์ (Pro) — poll list หน้าปัจจุบันทุก 12 วิ เห็นข้อมูลจากเครื่องอื่น · toggle ในตั้งค่า default OFF · frontend-only reversible (RT-SYNC-EXPERIMENT)'] },
   { ver:'v186', date:'04/06/2569', items:['perf: callApi cache (อ่าน list/get แคช 60 วิ) + dedupe call พร้อมกัน + ล้าง cache เมื่อเขียน — ลดภาระ backend (Stage 1 scaling)'] },
