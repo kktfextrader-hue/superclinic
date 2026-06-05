@@ -3044,9 +3044,9 @@ var qrcode = function() {
       <div class="stat-label">รายรับเดือนนี้</div>
     </div>
     <div class="stat-card">
-      <div class="stat-top"><div class="stat-icon"><i class="ti ti-star"></i></div></div>
+      <div class="stat-top"><div class="stat-icon"><i class="ti ti-cash"></i></div></div>
       <div class="stat-val">—</div>
-      <div class="stat-label">ความพึงพอใจ</div>
+      <div class="stat-label">รายรับวันนี้</div>
     </div>
   </div>
 
@@ -4440,6 +4440,7 @@ function computeDailyBrief(finance, treatments, patients, herbs, stockTx){
   var D=_briefDates();
   function fsum(pred){ var inc=0,exp=0; (finance||[]).forEach(function(f){ var dt=dateToISO(f.date); if(!dt||!pred(dt)) return; var a=parseFloat(f.amount)||0; if(f.type==='income') inc+=a; else if(f.type==='expense') exp+=a; }); return {inc:inc,exp:exp,net:inc-exp}; }
   var fin={ y:fsum(function(dt){return dt===D.yest;}), w:fsum(function(dt){return dt>=D.week&&dt<=D.today;}), m:fsum(function(dt){return dt.slice(0,7)===D.month;}) };
+  var todayInc=fsum(function(dt){return dt===D.today;}).inc;
   var setY={}, setT={};
   (treatments||[]).forEach(function(t){ var dt=dateToISO(t.date); var pid=t.patient_id||''; if(!pid) return; if(dt===D.yest) setY[pid]=1; if(dt===D.today) setT[pid]=1; });
   var sold={};
@@ -4452,7 +4453,7 @@ function computeDailyBrief(finance, treatments, patients, herbs, stockTx){
   (treatments||[]).forEach(function(t){ if(dateToISO(t.date)!==D.today) return; var nm=_briefPatName(patients,t.patient_id); feed.push({ts:t.created_at||'', tm:_briefTime(t.created_at), txt:'บันทึกการรักษา'+(t.type?(' ('+t.type+')'):'')+(nm?(' — '+nm):'')}); });
   (patients||[]).forEach(function(p){ if(String(p.created_at||'').slice(0,10)!==D.today) return; feed.push({ts:p.created_at||'', tm:_briefTime(p.created_at), txt:'ผู้ป่วยใหม่ — '+((p.first_name||'')+' '+(p.last_name||'')).trim()}); });
   feed.sort(function(a,b){ return String(b.ts).localeCompare(String(a.ts)); }); feed=feed.slice(0,8);
-  return { fin:fin, patY:Object.keys(setY).length, patT:Object.keys(setT).length, herbs:lowSold, feed:feed };
+  return { fin:fin, todayInc:todayInc, patY:Object.keys(setY).length, patT:Object.keys(setT).length, herbs:lowSold, feed:feed };
 }
 function renderDailyBrief(el, d){
   if(!el) return;
@@ -4488,6 +4489,7 @@ async function loadDailyBrief(){
     var g=function(r){ return (r&&r.data&&r.data.rows)||[]; };
     var d=computeDailyBrief(g(R[0]),g(R[1]),g(R[2]),g(R[3]),g(R[4]));
     renderDailyBrief(el, d);
+    try{ var _s4=document.querySelectorAll('#page-dashboard .stat-val')[3]; if(_s4) _s4.textContent='฿'+Math.round(d.todayInc||0).toLocaleString('en-US'); }catch(_){}
     if(d.herbs && d.herbs.length && !window._briefAlerted){ window._briefAlerted=true; setTimeout(function(){ if(typeof showToast==='function') showToast('⚠️ ยาขายดี '+d.herbs.length+' ชนิดเริ่มขาด — ควรเติมสต็อก','warning'); }, 800); }
   }catch(e){ el.innerHTML='<div style="padding:14px;color:rgba(229,211,163,.6);font-size:12px;">โหลดรายงานไม่ได้</div>'; }
 }
@@ -8545,6 +8547,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v183', date:'04/06/2569', items:['feat(ภาพรวม): การ์ดสถิติที่ 4 "ความพึงพอใจ" → "รายรับวันนี้" (income วันนี้)'] },
   { ver:'v182', date:'04/06/2569', items:['feat(สต็อก): ตั้งค่าแจ้งเตือนต่อยา (โมดอลปรับสต็อก) — ใช้ค่าเริ่มต้นตามหน่วย / เตือนเมื่อ<N / ไม่แจ้งเตือน · เก็บใน min_quantity · จำนวน optional + เพิ่มช่องราคาทุนใต้จำนวน'] },
   { ver:'v181', date:'04/06/2569', items:['style(face): ปุ่มค้นหาด้วยใบหน้าทุกที่ ใส่ไอคอนหน้ายิ้ม (faceVec SVG) แบบ avatar หน้าแรก'] },
   { ver:'v180', date:'04/06/2569', items:['feat(สต็อก): สถานะยาตามหน่วย — 0=หมด · ใกล้หมด เม็ด/แคปซูล≤200, ขวด≤5, ซอง≤10 (แทน min_quantity) · ใช้ทั้ง list/สต็อก/stat/แจ้งเตือน/บรีฟ'] },
