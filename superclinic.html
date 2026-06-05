@@ -4240,7 +4240,26 @@ function _saveBusyHide(){
   _saveBusyN=Math.max(0,_saveBusyN-1);
   if(_saveBusyN===0){ const el=document.getElementById('save-busy-pill'); if(el) el.style.display='none'; }
 }
+window._apiCache=window._apiCache||{}; window._apiInflight=window._apiInflight||{};
+function _apiClone(j){ try{ return JSON.parse(JSON.stringify(j)); }catch(_){ return j; } }
+function _apiInvalidate(sheet){ var pre=String(sheet)+'|'; Object.keys(window._apiCache).forEach(function(k){ if(k.indexOf(pre)===0) delete window._apiCache[k]; }); }
 async function callApi(sheet, action, data=null, getId=null) {
+  const isRead = (action==='list'||action==='get') && !data;
+  if(isRead){
+    const key = sheet+'|'+action+'|'+(getId||'');
+    const c = window._apiCache[key];
+    if(c && (Date.now()-c.ts)<60000) return _apiClone(c.data);
+    if(window._apiInflight[key]) return window._apiInflight[key].then(_apiClone);
+    const p = _callApiRaw(sheet,action,data,getId).then(function(j){ window._apiCache[key]={ts:Date.now(),data:j}; return j; });
+    p.then(function(){delete window._apiInflight[key];},function(){delete window._apiInflight[key];});
+    window._apiInflight[key]=p;
+    return p.then(_apiClone);
+  }
+  const r = await _callApiRaw(sheet,action,data,getId);
+  if(action==='create'||action==='update'||action==='delete'||action==='bulkcreate'||action==='cleardata') _apiInvalidate(sheet);
+  return r;
+}
+async function _callApiRaw(sheet, action, data=null, getId=null) {
   const _isMut=(action==='create'||action==='update'||action==='delete'); if(_isMut) _saveBusyShow();
   try {
     let res;
@@ -8546,6 +8565,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v186', date:'04/06/2569', items:['perf: callApi cache (อ่าน list/get แคช 60 วิ) + dedupe call พร้อมกัน + ล้าง cache เมื่อเขียน — ลดภาระ backend (Stage 1 scaling)'] },
   { ver:'v185', date:'04/06/2569', items:['ui(การเงิน): กวาด ฿ ออกทุกที่ → ต่อท้าย "บาท" (ราคา/ใบเสร็จ/QR/คลังยา/รายงาน) แบบ X บาท'] },
   { ver:'v184', date:'04/06/2569', items:['ui(การเงิน): เอา ฿ หน้าเงินออก → ต่อท้าย "บาท" (บรีฟ + การ์ดรายรับ) · เอาปุ่ม "จัดการ" ออกจากการ์ดรายงานประจำวัน'] },
   { ver:'v183', date:'04/06/2569', items:['feat(ภาพรวม): การ์ดสถิติที่ 4 "ความพึงพอใจ" → "รายรับวันนี้" (income วันนี้)'] },

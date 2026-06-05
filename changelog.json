@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v186",
+    "date": "04/06/2569",
+    "items": [
+      "perf: callApi cache (อ่าน list/get แคช 60 วิ) + dedupe call พร้อมกัน + ล้าง cache เมื่อเขียน — ลดภาระ backend (Stage 1 scaling)"
+    ]
+  },
+  {
     "ver": "v185",
     "date": "04/06/2569",
     "items": [
