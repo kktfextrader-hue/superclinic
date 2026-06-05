@@ -6420,7 +6420,7 @@ function herbSearchAC(val, section){
     return `<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f5f0e8;"
       onmousedown="herbACSelect('${h.id}','${(h.name_th||'').replace(/'/g,"\'")}','${section||''}')"
       onmouseover="this.style.background='#f5f0e8'" onmouseout="this.style.background=''">
-      <span style="font-weight:600;">${h.name_th||h.name_en||''}</span>
+      <span style="color:var(--g1);vertical-align:-3px;margin-right:5px;">${herbVec(15)}</span><span style="font-weight:600;">${h.name_th||h.name_en||''}</span>
       <span style="color:#aaa;font-size:11px;margin-left:6px;">${h.id||''}</span>
       <span style="float:right;font-size:11px;color:${sc};">${h.status||''}</span>
     </div>`;
@@ -6493,6 +6493,7 @@ function showAllMediHerbs(){ _showAllMedi=true; renderHerbs(); }
 function herbLowThreshold(unit){ var u=String(unit||'').trim(); if(u==='เม็ด'||u==='แคปซูล') return 200; if(u==='ขวด') return 5; if(u==='ซอง') return 10; return 10; }
 function herbStatus(qty, unit, minQ){ qty=parseFloat(qty)||0; if(qty<=0) return 'หมดแล้ว'; var m=(minQ===undefined||minQ===null||minQ==='')?0:parseFloat(minQ); if(isNaN(m)) m=0; if(m<0) return 'เพียงพอ'; var thr=(m>0)?m:herbLowThreshold(unit); if(qty<=thr) return 'ใกล้หมด'; return 'เพียงพอ'; }
 function herbAlertText(h){ var m=parseFloat(h&&h.min_quantity); if(m<0) return '<span style="color:#aaa;">ไม่เตือน</span>'; if(m>0) return m+' '+((h&&h.unit)||''); return '<span style="color:#aaa;">ค่าเริ่มต้น</span>'; }
+function herbVec(s){ s=s||18; return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3h5v3h-5z"/><path d="M8 6h8v12.5a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V6z"/><path d="M10.5 12h3M12 10.5v3"/></svg>'; }
 function herbRowHtml(h){
   const emojis={'สมุนไพรสด':'🌿','ยาสำเร็จรูป':'🫙','ยาแผนไทยตำรับ':'🫙','ยาสตรี':'🌸','ยาภายนอก / กายภาพ':'💊','อุปกรณ์':'🪡'};
   const em=emojis[h.category]||'🌿';
@@ -6500,7 +6501,7 @@ function herbRowHtml(h){
   const hid=(h.id||'').replace(/'/g,"\\'");
   return `<div class="herb-item-row" data-herb-id="${hid}" onclick="viewHerb('${hid}')">
     <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:18px;">${em}</span>
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:rgba(95,141,78,.1);color:var(--g1);flex-shrink:0;">${herbVec(18)}</span>
       <div>
         <div style="font-size:13px;font-weight:500;">${h.name_th||'—'}${h.name_en?' ('+h.name_en+')':''}</div>
         <div style="font-size:11px;color:#aaa;">${h.id} • ${h.category||''}</div>
@@ -6622,7 +6623,7 @@ function renderStockTable(filter){
     const hid=(h.id||'').replace(/'/g,"\\'");
     return `<tr>
       <td style="color:var(--go);font-weight:600;">${h.id}</td>
-      <td>${h.name_th||'—'}</td>
+      <td><span style="color:var(--g1);vertical-align:-3px;margin-right:4px;">${herbVec(15)}</span>${h.name_th||'—'}</td>
       <td><span class="badge badge-wait">${h.category||'—'}</span></td>
       <td><strong ${isLow?'style="color:#C05050;"':''}>${h.quantity||0} ${h.unit||''}</strong></td>
       <td>${herbAlertText(h)}</td>
@@ -8653,6 +8654,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v190', date:'05/06/2569', items:['ui(คลังยา): ไอคอนขวดยา vector (SVG) นำหน้ารายการยา — รายการยา/autocomplete/ตารางสต็อก แทน emoji/ช่องว่าง (HERB-ICON)'] },
   { ver:'v189', date:'05/06/2569', items:['feat(Pro): ปุ่ม "ซิงค์" บน topbar — กดดึงข้อมูลหน้าปัจจุบันสดจากเครื่องอื่น (manual pull) · กำลังซิงค์ไอคอนหมุน+กันกดซ้ำ · ไม่กระทบของเดิม'] },
   { ver:'v188', date:'05/06/2569', items:['ui(ตั้งค่า): ย้าย "เวอร์ชันระบบจดจำใบหน้า" ขึ้นไปอยู่ใต้ "ระบบจดจำใบหน้า" — จัดกลุ่มฟังก์ชันที่เกี่ยวข้องกัน'] },
   { ver:'v187', date:'05/06/2569', items:['exp(ทดลอง): ซิงค์สดหลายอุปกรณ์ (Pro) — poll list หน้าปัจจุบันทุก 12 วิ เห็นข้อมูลจากเครื่องอื่น · toggle ในตั้งค่า default OFF · frontend-only reversible (RT-SYNC-EXPERIMENT)'] },
