@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v195",
+    "date": "05/06/2569",
+    "items": [
+      "feat(จดจำใบหน้า): เลือกกล้องสแกนใบหน้าในตั้งค่า (dropdown) — รองรับ IP cam ผ่าน OBS Virtual Camera · จำค่าใน localStorage + ปุ่มค้นหากล้อง"
+    ]
+  },
+  {
     "ver": "v194",
     "date": "05/06/2569",
     "items": [

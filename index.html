@@ -3767,6 +3767,15 @@ var qrcode = function() {
           </div>
           <button id="toggle-face" class="toggle" onclick="toggleFeature('face')"></button>
         </div>
+        <div class="setting-row" style="padding:6px 0;">
+          <div style="flex:1;">
+            <div class="setting-label" style="font-size:13px;"><i class="ti ti-camera" style="color:var(--g1);margin-right:6px;"></i>เลือกกล้องสแกนใบหน้า</div>
+            <div class="setting-sub">ใช้ IP cam ได้ผ่าน OBS Virtual Camera &nbsp;<button class="btn btn-outline btn-sm" onclick="faceCamList(true)" style="padding:2px 8px;font-size:11px;">🔄 ค้นหากล้อง</button></div>
+          </div>
+          <select id="face-cam-select" onchange="faceCamSave(this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;background:#fff;color:var(--dk);max-width:190px;">
+            <option value="">กล้องเริ่มต้น (อัตโนมัติ)</option>
+          </select>
+        </div>
         <div class="setting-row" style="padding:4px 0 14px;border-bottom:1px solid rgba(0,0,0,0.07);">
           <div style="flex:1;">
             <div class="setting-label" style="font-size:13px;color:#777;"><i class="ti ti-brain" style="color:var(--g1);margin-right:6px;"></i>เวอร์ชันระบบจดจำใบหน้า</div>
@@ -8714,6 +8723,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v195', date:'05/06/2569', items:['feat(จดจำใบหน้า): เลือกกล้องสแกนใบหน้าในตั้งค่า (dropdown) — รองรับ IP cam ผ่าน OBS Virtual Camera · จำค่าใน localStorage + ปุ่มค้นหากล้อง'] },
   { ver:'v194', date:'05/06/2569', items:['fix(ใบรับรองแพทย์): เพิ่มฟังก์ชัน mcPrint() ที่หายไป — ปุ่มพิมพ์เคย ReferenceError · เปิดหน้าต่างพิมพ์ A4 (Sarabun) + นับ doc cap'] },
   { ver:'v193', date:'05/06/2569', items:['ui(คลังยา): ไอคอนยามีสีตามหน่วย — เม็ด=ฟ้า/แคปซูล=ส้ม/กระปุก=ม่วง/ซอง=เขียวน้ำทะเล/ขวด=เขียว + พื้นจางสีเดียวกัน'] },
   { ver:'v192', date:'05/06/2569', items:['ui(คลังยา): ไอคอนยาเปลี่ยนตามหน่วย — เม็ด/แคปซูล/กระปุก/ซอง/ขวด (อื่นๆ=ใบไม้) แทนขวดยาอย่างเดียว'] },
@@ -9013,12 +9023,33 @@ function closeFaceModal() {
 }
 
 /* ── start webcam ─────────────────────────────────────────────── */
+async function faceCamList(askPerm){
+  var sel = document.getElementById('face-cam-select');
+  if(!sel || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  try{
+    if(askPerm){ var st = await navigator.mediaDevices.getUserMedia({video:true}); st.getTracks().forEach(function(t){t.stop();}); }
+    var devs = await navigator.mediaDevices.enumerateDevices();
+    var cams = devs.filter(function(d){ return d.kind==='videoinput'; });
+    var saved = localStorage.getItem('face_camera_id')||'';
+    var html = '<option value="">กล้องเริ่มต้น (อัตโนมัติ)</option>';
+    cams.forEach(function(c,i){ var label=(c.label||('กล้อง '+(i+1))).replace(/</g,'&lt;'); html += '<option value="'+c.deviceId+'"'+((c.deviceId&&c.deviceId===saved)?' selected':'')+'>'+label+'</option>'; });
+    sel.innerHTML = html;
+    if(askPerm){ try{ showToast('พบกล้อง '+cams.length+' ตัว'+(cams.length?' — เลือกได้เลย':'')); }catch(_){} }
+  }catch(e){ if(askPerm){ try{ showToast('เข้าถึงกล้องไม่ได้: '+((e&&e.message)||e),'error'); }catch(_){} } }
+}
+function faceCamSave(id){ localStorage.setItem('face_camera_id', id||''); try{ showToast(id?'✅ ตั้งกล้องสแกนใบหน้าแล้ว':'ใช้กล้องเริ่มต้น'); }catch(_){} }
+(function(){ function _fc(){ setTimeout(function(){ try{ faceCamList(false); }catch(_){} }, 1800); } if(document.readyState!=='loading') _fc(); else document.addEventListener('DOMContentLoaded', _fc); })();
 async function startFaceWebcam() {
   const video = document.getElementById('fam-video');
   if (!video) return;
-  _faceStream = await navigator.mediaDevices.getUserMedia({
-    video: { width:{ideal:640}, height:{ideal:480}, facingMode:'user' }
-  });
+  var _camId = localStorage.getItem('face_camera_id') || '';
+  var _vc = { width:{ideal:640}, height:{ideal:480} };
+  if(_camId){ _vc.deviceId = { exact: _camId }; } else { _vc.facingMode = 'user'; }
+  try {
+    _faceStream = await navigator.mediaDevices.getUserMedia({ video: _vc });
+  } catch(_camErr) {
+    _faceStream = await navigator.mediaDevices.getUserMedia({ video: { width:{ideal:640}, height:{ideal:480} } });
+  }
   video.srcObject = _faceStream;
   await new Promise(res => { video.onloadedmetadata = res; });
   await video.play();
