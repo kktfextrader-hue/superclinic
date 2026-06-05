@@ -3759,12 +3759,22 @@ var qrcode = function() {
     <div class="card" style="margin-top:16px;">
       <div class="card-head"><div class="card-title"><i class="ti ti-cpu"></i>ฟังก์ชันการทำงาน</div></div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:0;">
-        <div class="setting-row" style="padding:14px 0;border-bottom:1px solid rgba(0,0,0,0.07);">
+        <div class="setting-row" style="padding:14px 0 6px;">
           <div style="flex:1;">
             <div class="setting-label"><i class="ti ti-face-id" style="color:var(--g1);margin-right:6px;"></i>ระบบจดจำใบหน้า</div>
             <div class="setting-sub">ใช้กล้อง Webcam บันทึก & ค้นหาผู้ป่วยจากใบหน้า &nbsp;<span id="feat-face-status" style="font-size:11px;"></span></div>
           </div>
           <button id="toggle-face" class="toggle" onclick="toggleFeature('face')"></button>
+        </div>
+        <div class="setting-row" style="padding:4px 0 14px;border-bottom:1px solid rgba(0,0,0,0.07);">
+          <div style="flex:1;">
+            <div class="setting-label" style="font-size:13px;color:#777;"><i class="ti ti-brain" style="color:var(--g1);margin-right:6px;"></i>เวอร์ชันระบบจดจำใบหน้า</div>
+            <div class="setting-sub">เฉพาะหน้าตรง (เร็ว) หรือ หลายมุมมอง (แม่นกว่า)</div>
+          </div>
+          <select onchange="localStorage.setItem('faceVersion',this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;background:#fff;color:var(--dk);">
+            <option value="standard" id="fv-standard">เฉพาะหน้าตรง (Standard)</option>
+            <option value="advanced" id="fv-advanced" selected>หลายมุมมอง (Advanced)</option>
+          </select>
         </div>
         <div class="setting-row" style="padding:14px 0;">
           <div style="flex:1;">
@@ -3779,16 +3789,6 @@ var qrcode = function() {
             <div class="setting-sub">เปิดหลายเครื่องพร้อมกัน เห็นข้อมูลตรงกันใน ~12 วิ (ฟีเจอร์ Pro · ยังทดลอง) &nbsp;<span id="feat-rtsync-status" style="font-size:11px;"></span></div>
           </div>
           <button id="toggle-rtsync" class="toggle" onclick="rtSyncToggle()"></button>
-        </div>
-        <div class="setting-row" style="padding:12px 0;border-top:1px solid rgba(0,0,0,.07);">
-          <div style="flex:1;">
-            <div class="setting-label" style="font-size:13px;"><i class="ti ti-brain" style="color:var(--g1);margin-right:6px;"></i>Face Recognition Version</div>
-            <div class="setting-sub">เวอร์ชันระบบจดจำใบหน้า</div>
-          </div>
-          <select onchange="localStorage.setItem('faceVersion',this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;background:#fff;color:var(--dk);">
-            <option value="standard" id="fv-standard">เฉพาะหน้าตรง (Standard)</option>
-            <option value="advanced" id="fv-advanced" selected>หลายมุมมอง (Advanced)</option>
-          </select>
         </div>
         <div class="setting-row" style="padding:12px 0;border-top:1px solid rgba(0,0,0,.07);">
           <div style="flex:1;">
@@ -8628,6 +8628,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v188', date:'05/06/2569', items:['ui(ตั้งค่า): ย้าย "เวอร์ชันระบบจดจำใบหน้า" ขึ้นไปอยู่ใต้ "ระบบจดจำใบหน้า" — จัดกลุ่มฟังก์ชันที่เกี่ยวข้องกัน'] },
   { ver:'v187', date:'05/06/2569', items:['exp(ทดลอง): ซิงค์สดหลายอุปกรณ์ (Pro) — poll list หน้าปัจจุบันทุก 12 วิ เห็นข้อมูลจากเครื่องอื่น · toggle ในตั้งค่า default OFF · frontend-only reversible (RT-SYNC-EXPERIMENT)'] },
   { ver:'v186', date:'04/06/2569', items:['perf: callApi cache (อ่าน list/get แคช 60 วิ) + dedupe call พร้อมกัน + ล้าง cache เมื่อเขียน — ลดภาระ backend (Stage 1 scaling)'] },
   { ver:'v185', date:'04/06/2569', items:['ui(การเงิน): กวาด ฿ ออกทุกที่ → ต่อท้าย "บาท" (ราคา/ใบเสร็จ/QR/คลังยา/รายงาน) แบบ X บาท'] },
