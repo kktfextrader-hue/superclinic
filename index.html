@@ -6422,7 +6422,7 @@ function herbSearchAC(val, section){
     return `<div style="padding:8px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #f5f0e8;"
       onmousedown="herbACSelect('${h.id}','${(h.name_th||'').replace(/'/g,"\'")}','${section||''}')"
       onmouseover="this.style.background='#f5f0e8'" onmouseout="this.style.background=''">
-      <span style="color:var(--g1);vertical-align:-3px;margin-right:5px;">${herbVec(15,h.unit)}</span><span style="font-weight:600;">${h.name_th||h.name_en||''}</span>
+      <span style="color:${herbClr(h.unit)};vertical-align:-3px;margin-right:5px;">${herbVec(15,h.unit)}</span><span style="font-weight:600;">${h.name_th||h.name_en||''}</span>
       <span style="color:#aaa;font-size:11px;margin-left:6px;">${h.id||''}</span>
       <span style="float:right;font-size:11px;color:${sc};">${h.status||''}</span>
     </div>`;
@@ -6534,6 +6534,13 @@ function planUpgradeModal(what, used, cap){
 }
 (function(){ function _pl(){ setTimeout(function(){ if(typeof planLoad==='function') planLoad(); }, 2500); } if(document.readyState!=='loading') _pl(); else document.addEventListener('DOMContentLoaded', _pl); })();
 /* ===== PLAN-LIMITS END ===== */
+function herbClr(u){ u=(u||'').toString(); var lu=u.toLowerCase();
+  if(u.indexOf('เม็ด')>=0) return '#3B82C4';
+  if(u.indexOf('แคปซูล')>=0||lu.indexOf('cap')>=0) return '#E0913C';
+  if(u.indexOf('กระปุก')>=0||u.indexOf('ตลับ')>=0) return '#9B59B6';
+  if(u.indexOf('ซอง')>=0) return '#16A085';
+  if(u.indexOf('ขวด')>=0||u.indexOf('หลอด')>=0||u.indexOf('มล')>=0) return '#5F8D4E';
+  return '#2F5D50'; }
 function herbVec(s,u){ s=s||18; u=(u||'').toString(); var P;
   var lu=u.toLowerCase();
   if(u.indexOf('เม็ด')>=0) P='<circle cx="12" cy="12" r="7"/><path d="M5 12h14"/>';
@@ -6550,7 +6557,7 @@ function herbRowHtml(h){
   const hid=(h.id||'').replace(/'/g,"\\'");
   return `<div class="herb-item-row" data-herb-id="${hid}" onclick="viewHerb('${hid}')">
     <div style="display:flex;align-items:center;gap:10px;">
-      <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:rgba(95,141,78,.1);color:var(--g1);flex-shrink:0;">${herbVec(18,h.unit)}</span>
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:${herbClr(h.unit)}1a;color:${herbClr(h.unit)};flex-shrink:0;">${herbVec(18,h.unit)}</span>
       <div>
         <div style="font-size:13px;font-weight:500;">${h.name_th||'—'}${h.name_en?' ('+h.name_en+')':''}</div>
         <div style="font-size:11px;color:#aaa;">${h.id} • ${h.category||''}</div>
@@ -6672,7 +6679,7 @@ function renderStockTable(filter){
     const hid=(h.id||'').replace(/'/g,"\\'");
     return `<tr>
       <td style="color:var(--go);font-weight:600;">${h.id}</td>
-      <td><span style="color:var(--g1);vertical-align:-3px;margin-right:4px;">${herbVec(15,h.unit)}</span>${h.name_th||'—'}</td>
+      <td><span style="color:${herbClr(h.unit)};vertical-align:-3px;margin-right:4px;">${herbVec(15,h.unit)}</span>${h.name_th||'—'}</td>
       <td><span class="badge badge-wait">${h.category||'—'}</span></td>
       <td><strong ${isLow?'style="color:#C05050;"':''}>${h.quantity||0} ${h.unit||''}</strong></td>
       <td>${herbAlertText(h)}</td>
@@ -8707,6 +8714,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v193', date:'05/06/2569', items:['ui(คลังยา): ไอคอนยามีสีตามหน่วย — เม็ด=ฟ้า/แคปซูล=ส้ม/กระปุก=ม่วง/ซอง=เขียวน้ำทะเล/ขวด=เขียว + พื้นจางสีเดียวกัน'] },
   { ver:'v192', date:'05/06/2569', items:['ui(คลังยา): ไอคอนยาเปลี่ยนตามหน่วย — เม็ด/แคปซูล/กระปุก/ซอง/ขวด (อื่นๆ=ใบไม้) แทนขวดยาอย่างเดียว'] },
   { ver:'v191', date:'05/06/2569', items:['feat(plan): cap แพ็กฟรี — ผู้ป่วย 50 / เอกสาร 100 (นับ receipt+label) · ชนเพดาน→modal อัปเกรด (นุ่ม) · config-gated default pro (ตั้ง localStorage plan_tier=free เพื่อทดสอบ) — LF-C/LF-D บางส่วน'] },
   { ver:'v190', date:'05/06/2569', items:['ui(คลังยา): ไอคอนขวดยา vector (SVG) นำหน้ารายการยา — รายการยา/autocomplete/ตารางสต็อก แทน emoji/ช่องว่าง (HERB-ICON)'] },
