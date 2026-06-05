@@ -3776,6 +3776,22 @@ var qrcode = function() {
             <option value="">กล้องเริ่มต้น (อัตโนมัติ)</option>
           </select>
         </div>
+        <div class="setting-row" style="padding:6px 0;">
+          <div style="flex:1;">
+            <div class="setting-label" style="font-size:13px;"><i class="ti ti-camera" style="color:var(--g1);margin-right:6px;"></i>📡 ใช้ IP Camera โดยตรง (ทดลอง)</div>
+            <div class="setting-sub">ลองดึงภาพจาก IP cam ตรง ๆ (MJPEG) ไม่ผ่าน OBS &nbsp;<span id="feat-ipcam-status" style="font-size:11px;"></span></div>
+          </div>
+          <button id="toggle-ipcam" class="toggle" onclick="ipcamToggle()"></button>
+        </div>
+        <div id="ipcam-panel" style="display:none;padding:4px 0 12px;">
+          <input id="ipcam-url" class="form-control" placeholder="เช่น http://192.168.1.50/video.mjpg หรือ /snapshot.jpg" oninput="ipcamSaveUrl(this.value)" style="width:100%;box-sizing:border-box;font-size:12px;padding:7px 10px;margin-bottom:6px;">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="ipcamTest()" style="font-size:11px;"><i class="ti ti-eye"></i> ทดสอบแสดงภาพ</button>
+            <span style="font-size:10.5px;color:#999;">รองรับ MJPEG/snapshot · RTSP ใช้ตรงไม่ได้ (ใช้ OBS)</span>
+          </div>
+          <div id="ipcam-preview" style="display:none;margin-top:8px;text-align:center;background:#000;border-radius:8px;overflow:hidden;"></div>
+          <div id="ipcam-note" style="display:none;margin-top:6px;font-size:11px;padding:8px;border-radius:6px;line-height:1.5;"></div>
+        </div>
         <div class="setting-row" style="padding:4px 0 14px;border-bottom:1px solid rgba(0,0,0,0.07);">
           <div style="flex:1;">
             <div class="setting-label" style="font-size:13px;color:#777;"><i class="ti ti-brain" style="color:var(--g1);margin-right:6px;"></i>เวอร์ชันระบบจดจำใบหน้า</div>
@@ -8723,6 +8739,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v196', date:'05/06/2569', items:['feat(ทดลอง): โหมด IP Camera ตรงในตั้งค่า — toggle + ช่อง URL + ปุ่มทดสอบแสดงภาพ (MJPEG/snapshot) บอกผลได้/ไม่ได้ทันที · RTSP ยังต้องใช้ OBS'] },
   { ver:'v195', date:'05/06/2569', items:['feat(จดจำใบหน้า): เลือกกล้องสแกนใบหน้าในตั้งค่า (dropdown) — รองรับ IP cam ผ่าน OBS Virtual Camera · จำค่าใน localStorage + ปุ่มค้นหากล้อง'] },
   { ver:'v194', date:'05/06/2569', items:['fix(ใบรับรองแพทย์): เพิ่มฟังก์ชัน mcPrint() ที่หายไป — ปุ่มพิมพ์เคย ReferenceError · เปิดหน้าต่างพิมพ์ A4 (Sarabun) + นับ doc cap'] },
   { ver:'v193', date:'05/06/2569', items:['ui(คลังยา): ไอคอนยามีสีตามหน่วย — เม็ด=ฟ้า/แคปซูล=ส้ม/กระปุก=ม่วง/ซอง=เขียวน้ำทะเล/ขวด=เขียว + พื้นจางสีเดียวกัน'] },
@@ -9039,6 +9056,36 @@ async function faceCamList(askPerm){
 }
 function faceCamSave(id){ localStorage.setItem('face_camera_id', id||''); try{ showToast(id?'✅ ตั้งกล้องสแกนใบหน้าแล้ว':'ใช้กล้องเริ่มต้น'); }catch(_){} }
 (function(){ function _fc(){ setTimeout(function(){ try{ faceCamList(false); }catch(_){} }, 1800); } if(document.readyState!=='loading') _fc(); else document.addEventListener('DOMContentLoaded', _fc); })();
+function ipcamToggle(){
+  var on = !(localStorage.getItem('ipcam_enabled')==='1');
+  localStorage.setItem('ipcam_enabled', on?'1':'0');
+  ipcamInitUI();
+  try{ showToast(on?'📡 เปิดโหมด IP cam (ทดลอง)':'ปิดโหมด IP cam'); }catch(_){}
+}
+function ipcamSaveUrl(v){ localStorage.setItem('ipcam_url', v||''); }
+function ipcamInitUI(){
+  var on = localStorage.getItem('ipcam_enabled')==='1';
+  var b=document.getElementById('toggle-ipcam'); if(b) b.classList.toggle('on',on);
+  var p=document.getElementById('ipcam-panel'); if(p) p.style.display=on?'block':'none';
+  var st=document.getElementById('feat-ipcam-status'); if(st){ st.textContent=on?'● เปิด':''; st.style.color='var(--ok)'; }
+  var u=document.getElementById('ipcam-url'); if(u && !u.value) u.value=localStorage.getItem('ipcam_url')||'';
+}
+function ipcamTest(){
+  var url=(localStorage.getItem('ipcam_url')||'').trim();
+  var box=document.getElementById('ipcam-preview'); var note=document.getElementById('ipcam-note');
+  if(!url){ try{ showToast('ใส่ URL กล้องก่อน','error'); }catch(_){} return; }
+  if(note) note.style.display='none';
+  if(!box) return;
+  box.style.display='block';
+  box.innerHTML='<div style="color:#fff;padding:14px;font-size:12px;">กำลังโหลด...</div>';
+  var img=new Image();
+  img.onload=function(){ box.innerHTML=''; img.style.maxWidth='100%'; img.style.display='block'; box.appendChild(img);
+    if(note){ note.style.display='block'; note.style.background='#eafaf0'; note.style.color='#1d7a44'; note.innerHTML='✅ โหลดภาพได้ — กล้องนี้ใช้ในเบราว์เซอร์ได้ (ขั้นต่อไปผมจะผูกให้สแกนหน้าจากกล้องนี้)'; } };
+  img.onerror=function(){ box.style.display='none';
+    if(note){ note.style.display='block'; note.style.background='#fdeeec'; note.style.color='#C0392B'; note.innerHTML='❌ โหลดภาพไม่ได้ — สาเหตุที่พบบ่อย: (1) เป็น RTSP ใช้ตรงไม่ได้ ต้องผ่าน OBS (2) แอปเป็น HTTPS แต่กล้องเป็น HTTP ถูกบล็อก (mixed content) (3) URL/เครือข่ายไม่ถูกต้อง'; } };
+  img.src=url;
+}
+(function(){ function _ic(){ setTimeout(function(){ try{ ipcamInitUI(); }catch(_){} }, 1900); } if(document.readyState!=='loading') _ic(); else document.addEventListener('DOMContentLoaded', _ic); })();
 async function startFaceWebcam() {
   const video = document.getElementById('fam-video');
   if (!video) return;
