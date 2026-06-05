@@ -3076,7 +3076,6 @@ var qrcode = function() {
     <div class="card" style="background:var(--grad-green);">
       <div class="card-head" style="border-bottom-color:rgba(229,211,163,0.15);">
         <div class="card-title" style="color:#E5D3A3;"><i class="ti ti-leaf" style="color:var(--go);"></i>รายงานประจำวัน</div>
-        <button class="btn btn-outline btn-sm" style="color:#E5D3A3;border-color:rgba(229,211,163,0.3);" onclick="showPage('herbs',null)">จัดการ →</button>
       </div>
       <div id="dash-brief" class="card-body" style="padding:6px 16px 16px;max-height:360px;overflow-y:auto;"><div style="padding:14px;color:rgba(229,211,163,.6);font-size:12px;">กำลังโหลด...</div></div>
     </div>
@@ -4458,13 +4457,13 @@ function computeDailyBrief(finance, treatments, patients, herbs, stockTx){
 function renderDailyBrief(el, d){
   if(!el) return;
   var nc=function(n){ return n>=0?'#9FE1CB':'#FFB7A2'; };
-  var ns=function(n){ return (n>=0?'+':'-')+'฿'+Math.abs(Math.round(n)).toLocaleString(); };
+  var ns=function(n){ return (n>=0?'+':'-')+Math.abs(Math.round(n)).toLocaleString()+' บาท'; };
   var f=d.fin; var h='';
   h+='<div style="margin-top:6px;"><div style="font-size:11px;font-weight:700;color:var(--go);margin-bottom:6px;">💰 การเงิน (สุทธิ)</div><div style="display:flex;flex-wrap:wrap;gap:14px;">';
   h+='<span style="font-size:12px;color:rgba(229,211,163,.7);">เมื่อวาน <b style="font-size:16px;color:'+nc(f.y.net)+';">'+ns(f.y.net)+'</b></span>';
   h+='<span style="font-size:12px;color:rgba(229,211,163,.7);">สัปดาห์ <b style="font-size:16px;color:'+nc(f.w.net)+';">'+ns(f.w.net)+'</b></span>';
   h+='<span style="font-size:12px;color:rgba(229,211,163,.7);">เดือน <b style="font-size:16px;color:'+nc(f.m.net)+';">'+ns(f.m.net)+'</b></span>';
-  h+='</div><div style="font-size:10.5px;color:rgba(229,211,163,.45);margin-top:3px;">เมื่อวาน: รับ ฿'+Math.round(f.y.inc).toLocaleString()+' · จ่าย ฿'+Math.round(f.y.exp).toLocaleString()+'</div></div>';
+  h+='</div><div style="font-size:10.5px;color:rgba(229,211,163,.45);margin-top:3px;">เมื่อวาน: รับ '+Math.round(f.y.inc).toLocaleString()+' บาท · จ่าย '+Math.round(f.y.exp).toLocaleString()+' บาท'+'</div></div>';
   h+='<div style="margin-top:11px;font-size:12.5px;color:rgba(229,211,163,.9);">👥 ผู้ป่วยเมื่อวาน <b style="color:#fff;font-size:16px;">'+d.patY+'</b> คน · วันนี้ '+d.patT+'</div>';
   h+='<div style="margin-top:11px;"><div style="font-size:11px;font-weight:700;color:var(--go);margin-bottom:5px;">💊 ยาขายดีที่เริ่มขาด</div>';
   if(d.herbs.length){ d.herbs.forEach(function(x){ var dot=x.out?'#FF6B6B':'#E6B655'; h+='<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(229,211,163,.92);padding:3px 0;"><span style="width:8px;height:8px;border-radius:50%;background:'+dot+';flex-shrink:0;"></span><span style="font-weight:600;color:#fff;">'+x.name+'</span> เหลือ '+x.qty+' '+x.unit+'<span style="font-size:11px;color:rgba(229,211,163,.55);margin-left:auto;">ขาย '+x.sold+'/ด.</span></div>'; }); }
@@ -4489,7 +4488,7 @@ async function loadDailyBrief(){
     var g=function(r){ return (r&&r.data&&r.data.rows)||[]; };
     var d=computeDailyBrief(g(R[0]),g(R[1]),g(R[2]),g(R[3]),g(R[4]));
     renderDailyBrief(el, d);
-    try{ var _s4=document.querySelectorAll('#page-dashboard .stat-val')[3]; if(_s4) _s4.textContent='฿'+Math.round(d.todayInc||0).toLocaleString('en-US'); }catch(_){}
+    try{ var _sv=document.querySelectorAll('#page-dashboard .stat-val'); if(_sv[2]) _sv[2].textContent=Math.round((d.fin&&d.fin.m&&d.fin.m.inc)||0).toLocaleString('en-US')+' บาท'; if(_sv[3]) _sv[3].textContent=Math.round(d.todayInc||0).toLocaleString('en-US')+' บาท'; }catch(_){}
     if(d.herbs && d.herbs.length && !window._briefAlerted){ window._briefAlerted=true; setTimeout(function(){ if(typeof showToast==='function') showToast('⚠️ ยาขายดี '+d.herbs.length+' ชนิดเริ่มขาด — ควรเติมสต็อก','warning'); }, 800); }
   }catch(e){ el.innerHTML='<div style="padding:14px;color:rgba(229,211,163,.6);font-size:12px;">โหลดรายงานไม่ได้</div>'; }
 }
@@ -8547,6 +8546,7 @@ const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
 const CHANGELOG = [
+  { ver:'v184', date:'04/06/2569', items:['ui(การเงิน): เอา ฿ หน้าเงินออก → ต่อท้าย "บาท" (บรีฟ + การ์ดรายรับ) · เอาปุ่ม "จัดการ" ออกจากการ์ดรายงานประจำวัน'] },
   { ver:'v183', date:'04/06/2569', items:['feat(ภาพรวม): การ์ดสถิติที่ 4 "ความพึงพอใจ" → "รายรับวันนี้" (income วันนี้)'] },
   { ver:'v182', date:'04/06/2569', items:['feat(สต็อก): ตั้งค่าแจ้งเตือนต่อยา (โมดอลปรับสต็อก) — ใช้ค่าเริ่มต้นตามหน่วย / เตือนเมื่อ<N / ไม่แจ้งเตือน · เก็บใน min_quantity · จำนวน optional + เพิ่มช่องราคาทุนใต้จำนวน'] },
   { ver:'v181', date:'04/06/2569', items:['style(face): ปุ่มค้นหาด้วยใบหน้าทุกที่ ใส่ไอคอนหน้ายิ้ม (faceVec SVG) แบบ avatar หน้าแรก'] },
