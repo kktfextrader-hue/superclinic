@@ -8739,6 +8739,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v197', date:'05/06/2569', items:['fix(จดจำใบหน้า): เข้มเกณฑ์ match — รับเฉพาะความเหมือน >= 55% (dist<=0.45) · ต่ำกว่านั้นขึ้น "ไม่พบ" · กัน false match ตอนไม่มีคน/หน้าไม่ชัด'] },
   { ver:'v196', date:'05/06/2569', items:['feat(ทดลอง): โหมด IP Camera ตรงในตั้งค่า — toggle + ช่อง URL + ปุ่มทดสอบแสดงภาพ (MJPEG/snapshot) บอกผลได้/ไม่ได้ทันที · RTSP ยังต้องใช้ OBS'] },
   { ver:'v195', date:'05/06/2569', items:['feat(จดจำใบหน้า): เลือกกล้องสแกนใบหน้าในตั้งค่า (dropdown) — รองรับ IP cam ผ่าน OBS Virtual Camera · จำค่าใน localStorage + ปุ่มค้นหากล้อง'] },
   { ver:'v194', date:'05/06/2569', items:['fix(ใบรับรองแพทย์): เพิ่มฟังก์ชัน mcPrint() ที่หายไป — ปุ่มพิมพ์เคย ReferenceError · เปิดหน้าต่างพิมพ์ A4 (Sarabun) + นับ doc cap'] },
@@ -9616,7 +9617,7 @@ async function openFaceAdvanced(initialMode, context) {
         } catch(_) {}
       }
       results.sort((a,b) => a.dist-b.dist);
-      const top = results.slice(0,3).filter(r => r.dist < THRESHOLD + 0.25);
+      const top = results.slice(0,3).filter(r => r.dist <= THRESHOLD);  // เข้มขึ้น: conf >= 55% เท่านั้น (กัน false match ตอนไม่มีหน้า/ความเหมือนต่ำ)
 
       if (!top.length) { setStatus('error','❌ ไม่พบผู้ป่วยที่ตรงกัน'); resultShown=true; searching=false; return; }
 
