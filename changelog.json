@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v191",
+    "date": "05/06/2569",
+    "items": [
+      "feat(plan): cap แพ็กฟรี — ผู้ป่วย 50 / เอกสาร 100 (นับ receipt+label) · ชนเพดาน→modal อัปเกรด (นุ่ม) · config-gated default pro (ตั้ง localStorage plan_tier=free เพื่อทดสอบ) — LF-C/LF-D บางส่วน"
+    ]
+  },
+  {
     "ver": "v190",
     "date": "05/06/2569",
     "items": [

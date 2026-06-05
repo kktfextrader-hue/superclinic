@@ -5222,6 +5222,7 @@ function calcAge(dob, displayId){
 
 async function submitAddPatient(e){
   e.preventDefault();
+  if(typeof planCheckPatient==='function' && !planCheckPatient()) return;
   const _done = showLoading(e.submitter);
   const fd=new FormData(e.target), data={};
   fd.forEach((v,k)=>{ if(v) data[k]=v; });
@@ -5995,6 +5996,7 @@ async function submitAddAppt(e){
   // ถ้าเป็นผู้ป่วยใหม่ — สร้าง patient record ก่อน
   let finalPatId = patId;
   if(isNew && patName){
+      if(typeof planCheckPatient==='function' && !planCheckPatient()) return;
     try {
       const nameParts = patName.trim().split(' ');
       const fn = nameParts[0]||patName, ln = nameParts.slice(1).join(' ')||'';
@@ -6493,6 +6495,45 @@ function showAllMediHerbs(){ _showAllMedi=true; renderHerbs(); }
 function herbLowThreshold(unit){ var u=String(unit||'').trim(); if(u==='เม็ด'||u==='แคปซูล') return 200; if(u==='ขวด') return 5; if(u==='ซอง') return 10; return 10; }
 function herbStatus(qty, unit, minQ){ qty=parseFloat(qty)||0; if(qty<=0) return 'หมดแล้ว'; var m=(minQ===undefined||minQ===null||minQ==='')?0:parseFloat(minQ); if(isNaN(m)) m=0; if(m<0) return 'เพียงพอ'; var thr=(m>0)?m:herbLowThreshold(unit); if(qty<=thr) return 'ใกล้หมด'; return 'เพียงพอ'; }
 function herbAlertText(h){ var m=parseFloat(h&&h.min_quantity); if(m<0) return '<span style="color:#aaa;">ไม่เตือน</span>'; if(m>0) return m+' '+((h&&h.unit)||''); return '<span style="color:#aaa;">ค่าเริ่มต้น</span>'; }
+/* ===== PLAN-LIMITS START (cap แพ็กฟรี · config-gated · default pro) ===== */
+window.PLAN_TIER = localStorage.getItem('plan_tier') || 'pro';   // 'free' | 'pro' (ตั้ง free เพื่อทดสอบ cap)
+window.PLAN_LIMITS = { patients:50, docs:100 };
+window._planDocUsed = 0;
+function planIsFree(){ return window.PLAN_TIER === 'free'; }
+function planActivePatientCount(){ return (window.allPatients||[]).filter(function(p){ return p.is_active!=='FALSE' && p.is_active!==false; }).length; }
+function planCheckPatient(){
+  if(!planIsFree()) return true;
+  var n = planActivePatientCount();
+  if(n >= window.PLAN_LIMITS.patients){ planUpgradeModal('ผู้ป่วย', n, window.PLAN_LIMITS.patients); return false; }
+  return true;
+}
+function planCheckDoc(){
+  if(!planIsFree()) return true;
+  if((window._planDocUsed||0) >= window.PLAN_LIMITS.docs){ planUpgradeModal('เอกสาร', window._planDocUsed, window.PLAN_LIMITS.docs); return false; }
+  return true;
+}
+function planBumpDoc(){
+  if(!planIsFree()) return;
+  window._planDocUsed = (window._planDocUsed||0) + 1;
+  try{ callApi('settings','update',{ key:'plan_doc_used', value:String(window._planDocUsed), description:'จำนวนเอกสารที่พิมพ์ (plan free cap)' }); }catch(_){}
+}
+async function planLoad(){
+  try{ var r = await callApi('settings','get', null, 'plan_doc_used'); var row = r && r.data && (r.data.row || (r.data.rows && r.data.rows[0])); window._planDocUsed = parseInt((row && row.value)||'0',10) || 0; }catch(_){ window._planDocUsed = 0; }
+}
+window.planReset = async function(){ window._planDocUsed = 0; try{ await callApi('settings','update',{ key:'plan_doc_used', value:'0', description:'reset doc count' }); }catch(_){} try{ showToast('รีเซ็ตตัวนับเอกสารแล้ว'); }catch(_){} };
+function planUpgradeModal(what, used, cap){
+  try{
+    openModal('🔓 อัปเกรดเป็นแพ็กเกจ Pro',
+      '<div style="text-align:center;padding:6px 4px;">'
+      + '<div style="font-size:40px;margin-bottom:6px;">🔓</div>'
+      + '<div style="font-size:15px;font-weight:700;color:var(--g1);margin-bottom:6px;">ถึงขีดจำกัดแพ็กเกจฟรีแล้ว</div>'
+      + '<div style="font-size:13px;color:#666;line-height:1.6;">แพ็กเกจฟรีรองรับ <b>' + what + ' สูงสุด ' + cap + '</b> (ใช้ไป ' + used + ')<br>อัปเกรดเป็น <b>Pro</b> เพื่อใช้แบบไม่จำกัด + ปลดล็อกทุกฟีเจอร์</div>'
+      + '<div style="margin-top:14px;padding:12px;background:#f8f5ef;border-radius:10px;font-size:12px;color:#8a6d1a;">ติดต่ออัปเกรดแพ็กเกจ Pro กับผู้ดูแลระบบ</div>'
+      + '</div>');
+  }catch(_){ try{ showToast('แพ็กเกจฟรีรองรับ ' + what + ' สูงสุด ' + cap + ' — อัปเกรด Pro เพื่อใช้ต่อ','error'); }catch(__){}}
+}
+(function(){ function _pl(){ setTimeout(function(){ if(typeof planLoad==='function') planLoad(); }, 2500); } if(document.readyState!=='loading') _pl(); else document.addEventListener('DOMContentLoaded', _pl); })();
+/* ===== PLAN-LIMITS END ===== */
 function herbVec(s){ s=s||18; return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3h5v3h-5z"/><path d="M8 6h8v12.5a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V6z"/><path d="M10.5 12h3M12 10.5v3"/></svg>'; }
 function herbRowHtml(h){
   const emojis={'สมุนไพรสด':'🌿','ยาสำเร็จรูป':'🫙','ยาแผนไทยตำรับ':'🫙','ยาสตรี':'🌸','ยาภายนอก / กายภาพ':'💊','อุปกรณ์':'🪡'};
@@ -7937,6 +7978,8 @@ function _rcptBuildPrintHtml(){
 
 // ── พิมพ์ผ่าน OS Driver (window.print) ──
 function rcptPrintOS(){
+  if(typeof planCheckDoc==='function' && !planCheckDoc()) return;
+  if(typeof planBumpDoc==='function') planBumpDoc();
   const w=window.open('','_blank','width=400,height=600');
   if(!w){ showToast('กรุณาอนุญาต popup','error'); return; }
   w.document.write(_rcptBuildPrintHtml());
@@ -7948,6 +7991,8 @@ function rcptPrintOS(){
 
 // ── พิมพ์โดยตรง ESC/POS ผ่าน Web Serial API ──
 async function rcptPrintDirect(){
+  if(typeof planCheckDoc==='function' && !planCheckDoc()) return;
+  if(typeof planBumpDoc==='function') planBumpDoc();
   if(!navigator.serial){ showToast('Browser นี้ไม่รองรับ Web Serial API — ใช้ Chrome/Edge','error'); return; }
   const d=_rcptData;
   const now=new Date();
@@ -8654,6 +8699,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v191', date:'05/06/2569', items:['feat(plan): cap แพ็กฟรี — ผู้ป่วย 50 / เอกสาร 100 (นับ receipt+label) · ชนเพดาน→modal อัปเกรด (นุ่ม) · config-gated default pro (ตั้ง localStorage plan_tier=free เพื่อทดสอบ) — LF-C/LF-D บางส่วน'] },
   { ver:'v190', date:'05/06/2569', items:['ui(คลังยา): ไอคอนขวดยา vector (SVG) นำหน้ารายการยา — รายการยา/autocomplete/ตารางสต็อก แทน emoji/ช่องว่าง (HERB-ICON)'] },
   { ver:'v189', date:'05/06/2569', items:['feat(Pro): ปุ่ม "ซิงค์" บน topbar — กดดึงข้อมูลหน้าปัจจุบันสดจากเครื่องอื่น (manual pull) · กำลังซิงค์ไอคอนหมุน+กันกดซ้ำ · ไม่กระทบของเดิม'] },
   { ver:'v188', date:'05/06/2569', items:['ui(ตั้งค่า): ย้าย "เวอร์ชันระบบจดจำใบหน้า" ขึ้นไปอยู่ใต้ "ระบบจดจำใบหน้า" — จัดกลุ่มฟังก์ชันที่เกี่ยวข้องกัน'] },
@@ -10158,6 +10204,8 @@ function _lpBuildCard(W,H,fonts,scale){
 
 // ── Print ──
 function lpPrint(){
+  if(typeof planCheckDoc==='function' && !planCheckDoc()) return;
+  if(typeof planBumpDoc==='function') planBumpDoc();
   const qty=lpGetQty();
   const PX_PER_CM=37.8;
   const W=Math.round(_lpW*PX_PER_CM);
