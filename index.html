@@ -3773,6 +3773,13 @@ var qrcode = function() {
           </div>
           <button id="toggle-idcard" class="toggle" onclick="toggleFeature('idcard')"></button>
         </div>
+        <div class="setting-row" style="padding:14px 0;border-top:1px solid rgba(0,0,0,.07);">
+          <div style="flex:1;">
+            <div class="setting-label"><i class="ti ti-refresh-dot" style="color:var(--g1);margin-right:6px;"></i>🧪 ซิงค์สดหลายอุปกรณ์ (ทดลอง)</div>
+            <div class="setting-sub">เปิดหลายเครื่องพร้อมกัน เห็นข้อมูลตรงกันใน ~12 วิ (ฟีเจอร์ Pro · ยังทดลอง) &nbsp;<span id="feat-rtsync-status" style="font-size:11px;"></span></div>
+          </div>
+          <button id="toggle-rtsync" class="toggle" onclick="rtSyncToggle()"></button>
+        </div>
         <div class="setting-row" style="padding:12px 0;border-top:1px solid rgba(0,0,0,.07);">
           <div style="flex:1;">
             <div class="setting-label" style="font-size:13px;"><i class="ti ti-brain" style="color:var(--g1);margin-right:6px;"></i>Face Recognition Version</div>
@@ -8564,7 +8571,64 @@ async function czRunRestore(pw){
 const CL_KEY = 'superclinic_changelog';
 
 // โครงสร้าง changelog (version, date, items) — เพิ่มที่นี่ทุกครั้งที่ update
+/* ===== RT-SYNC-EXPERIMENT START (Pro multi-device · default OFF · reversible) ===== */
+(function(){
+  window.RT_SYNC = (localStorage.getItem('sc_rt_sync')==='1');
+  window._rtTimer=null; window._rtHash={}; window._rtPollMs=12000;
+  var RT_MAP = {
+    patients:{sheet:'patients',loader:'loadPatients'},
+    herbs:{sheet:'herbs',loader:'loadHerbs'},
+    stock:{sheet:'herbs',loader:'loadStock'},
+    appointments:{sheet:'appointments',loader:'loadAppointments'},
+    dashboard:{sheet:'appointments',loader:'loadDashboard'}
+  };
+  function rtCurPage(){ var el=document.querySelector('.page.active'); return el? el.id.replace('page-',''):''; }
+  function rtHash(rows){ try{ var str=JSON.stringify(rows); var h=0; for(var i=0;i<str.length;i++){ h=((h<<5)-h+str.charCodeAt(i))|0; } return h+'_'+str.length; }catch(_){ return ''; } }
+  window.rtTick = async function(){
+    if(!window.RT_SYNC || document.hidden) return;
+    var page=rtCurPage(); var m=RT_MAP[page]; if(!m) return;
+    try{
+      var j = await _callApiRaw(m.sheet,'list');
+      var rows=(j&&j.data&&j.data.rows)||[];
+      var h=rtHash(rows);
+      if(window._rtHash[m.sheet]!==undefined && window._rtHash[m.sheet]!==h){
+        if(typeof _apiInvalidate==='function') _apiInvalidate(m.sheet);
+        var fn=window[m.loader]; if(typeof fn==='function'){ try{ fn(); }catch(_){} }
+        try{ showToast('🔄 อัปเดตจากอุปกรณ์อื่น','info'); }catch(_){}
+      }
+      window._rtHash[m.sheet]=h;
+    }catch(_){}
+  };
+  window.rtStart=function(){ if(window._rtTimer) return; window._rtTimer=setInterval(window.rtTick,window._rtPollMs); window.rtDot(); };
+  window.rtStop=function(){ if(window._rtTimer){ clearInterval(window._rtTimer); window._rtTimer=null; } window.rtDot(); };
+  window.rtDot=function(){
+    var d=document.getElementById('rt-dot');
+    if(!d){ d=document.createElement('div'); d.id='rt-dot'; d.style.cssText='position:fixed;bottom:12px;left:12px;z-index:99998;font-size:11px;padding:3px 9px;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);'; document.body.appendChild(d); }
+    d.innerHTML = window.RT_SYNC ? '🟢 ซิงค์สด' : '⚪ ซิงค์ปิด';
+    d.style.color = window.RT_SYNC ? '#1d7a44' : '#999';
+    d.style.display = window.RT_SYNC ? '' : 'none';
+  };
+  window.rtSyncToggle=function(){
+    window.RT_SYNC=!window.RT_SYNC;
+    localStorage.setItem('sc_rt_sync', window.RT_SYNC?'1':'0');
+    rtSyncInitUI();
+    if(window.RT_SYNC){ window._rtHash={}; window.rtStart(); try{ showToast('🟢 เปิดซิงค์สดหลายอุปกรณ์ (ทดลอง)','info'); }catch(_){} }
+    else { window.rtStop(); try{ showToast('⚪ ปิดซิงค์สดแล้ว'); }catch(_){} }
+    window.rtDot();
+  };
+  function rtSyncInitUI(){
+    var b=document.getElementById('toggle-rtsync'); if(b) b.classList.toggle('on',window.RT_SYNC);
+    var st=document.getElementById('feat-rtsync-status'); if(st){ st.textContent=window.RT_SYNC?'● เปิดใช้งาน':'● ปิดการใช้งาน'; st.style.color=window.RT_SYNC?'var(--ok)':'var(--er)'; }
+  }
+  window.rtSyncInitUI = rtSyncInitUI;
+  function rtBoot(){ setTimeout(function(){ rtSyncInitUI(); if(window.RT_SYNC) window.rtStart(); window.rtDot(); }, 1500); }
+  if(document.readyState!=='loading') rtBoot();
+  else document.addEventListener('DOMContentLoaded', rtBoot);
+})();
+/* ===== RT-SYNC-EXPERIMENT END ===== */
+
 const CHANGELOG = [
+  { ver:'v187', date:'05/06/2569', items:['exp(ทดลอง): ซิงค์สดหลายอุปกรณ์ (Pro) — poll list หน้าปัจจุบันทุก 12 วิ เห็นข้อมูลจากเครื่องอื่น · toggle ในตั้งค่า default OFF · frontend-only reversible (RT-SYNC-EXPERIMENT)'] },
   { ver:'v186', date:'04/06/2569', items:['perf: callApi cache (อ่าน list/get แคช 60 วิ) + dedupe call พร้อมกัน + ล้าง cache เมื่อเขียน — ลดภาระ backend (Stage 1 scaling)'] },
   { ver:'v185', date:'04/06/2569', items:['ui(การเงิน): กวาด ฿ ออกทุกที่ → ต่อท้าย "บาท" (ราคา/ใบเสร็จ/QR/คลังยา/รายงาน) แบบ X บาท'] },
   { ver:'v184', date:'04/06/2569', items:['ui(การเงิน): เอา ฿ หน้าเงินออก → ต่อท้าย "บาท" (บรีฟ + การ์ดรายรับ) · เอาปุ่ม "จัดการ" ออกจากการ์ดรายงานประจำวัน'] },

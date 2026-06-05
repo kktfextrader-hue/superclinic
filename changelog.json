@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v187",
+    "date": "05/06/2569",
+    "items": [
+      "exp(ทดลอง): ซิงค์สดหลายอุปกรณ์ (Pro) — poll list หน้าปัจจุบันทุก 12 วิ เห็นข้อมูลจากเครื่องอื่น · toggle ในตั้งค่า default OFF · frontend-only reversible (RT-SYNC-EXPERIMENT)"
+    ]
+  },
+  {
     "ver": "v186",
     "date": "04/06/2569",
     "items": [
