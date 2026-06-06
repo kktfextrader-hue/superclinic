@@ -4575,7 +4575,7 @@ async function loadDashboard(){
       callApi('herbs','list')
     ]);
     const patients = (pRes.data?.rows||[]).filter(p=>p.is_active!=='FALSE'&&p.is_active!==false);
-    allAppts = aRes.data?.rows||[];
+    allAppts = window.allAppts = aRes.data?.rows||[];
     const appts    = allAppts;
     const herbs    = hRes.data?.rows||[];
     const todayAp    = appts.filter(a=>dateToISO(a.date)===today && normalizeStatus(a.status)!=='cancelled').sort((a,b)=>parseTimeStr(a.time_start).localeCompare(parseTimeStr(b.time_start)));
@@ -5756,7 +5756,7 @@ async function loadRegTodayList(){
 /* ════════════════════════════════════════════════════════
    APPOINTMENTS
 ════════════════════════════════════════════════════════ */
-let allAppts=[], selApptDate=todayISO(), calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+let allAppts=window.allAppts=[], selApptDate=todayISO(), calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 
 function openAddAppt(){
   openModal('📅 นัดหมายใหม่',`
@@ -6217,7 +6217,7 @@ async function loadAppointments(){
   if(el) el.innerHTML=`<div style="padding:40px;text-align:center;color:#aaa;"><i class="ti ti-loader" style="font-size:22px;"></i><br>กำลังโหลด...</div>`;
   try {
     const res=await callApi('appointments','list');
-    allAppts=res.data?.rows||[];
+    allAppts=window.allAppts=res.data?.rows||[];
     renderCalendar();
     renderApptDay(selApptDate);
     renderTreatTodayAppts(); // อัปเดต sidebar นัดวันนี้ในหน้ารักษา
@@ -8895,6 +8895,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v206', date:'06/06/2569', items:['fix(สถานะ): ซิงค์ allAppts ↔ window.allAppts — ปฏิทิน/แดชบอร์ด/นัดวันนี้ เห็นนัดล่าสุดทันที ไม่ค้าง'] },
   { ver:'v205', date:'06/06/2569', items:['feat(เสียง+รักษา): ไมค์พูดที่ช่องอาการป่วย (สถานะ "กดอีกครั้งเพื่อจบ") · ผู้ป่วยที่ลงทะเบียนแล้วโผล่ใน "นัดวันนี้" หน้าบันทึกหลังรักษา · แสดงความดัน/น้ำหนัก/ส่วนสูงล่าสุดบนการ์ดผู้ป่วย'] },
   { ver:'v204', date:'06/06/2569', items:['ui(เสียง): เอากล่องสัญญาณชีพ (พูดได้) ออกจากหน้าแก้ไขข้อมูลผู้ป่วย — vitals เป็นค่ารายครั้ง ใช้ที่หน้าลงทะเบียน/บันทึกรักษาแทน'] },
   { ver:'v203', date:'06/06/2569', items:['db(เสียง): ส่วนสูงที่พูด/กรอกถูกบันทึกจริง (เข้า note) + learning dict ค้นหาด้วยเสียงย้ายขึ้น Google Sheet ต่อคลินิก (แชร์หลายเครื่อง)'] },
