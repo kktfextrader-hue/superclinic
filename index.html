@@ -3343,7 +3343,7 @@ var qrcode = function() {
 <section class="page" id="page-treatments">
   <div class="page-header">
     <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div><div class="page-h1">💆 ประวัติการรักษา</div><div class="page-sub">บันทึกและติดตามผลการรักษาของผู้ป่วย</div></div>
+      <div><div class="page-h1">💆 บันทึกหลังการรักษา</div><div class="page-sub">บันทึกและติดตามผลการรักษาของผู้ป่วย</div></div>
       <button class="btn btn-primary"><i class="ti ti-plus"></i>บันทึกการรักษา</button>
     </div>
   </div>
@@ -3877,7 +3877,7 @@ const titles = {
   dashboard:'✦ Superclinic',
   appointments:'📅 ตารางนัดหมาย',
   patients:'👤 ทะเบียนผู้ป่วย',
-  treatments:'💆 ประวัติการรักษา',
+  treatments:'💆 บันทึกหลังการรักษา',
   herbs:'🌿 สมุนไพร & ยา',
   stock:'📦 จัดการสต็อก',
   reports:'📊 รายงาน & สถิติ',
@@ -8911,6 +8911,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v208', date:'06/06/2569', items:['ui: เปลี่ยนหัวข้อหน้าเป็น "บันทึกหลังการรักษา" ให้ตรงกับเมนูซ้าย (เดิม "ประวัติการรักษา")'] },
   { ver:'v207', date:'06/06/2569', items:['feat(รักษา): การ์ดผู้ป่วยแสดงสัญญาณชีพล่าสุด 4 ค่า (ความดัน/น้ำหนัก/ส่วนสูง/ชีพจร) · ประวัติการรักษาเป็น collapse + lazy load (กดหัวข้อเพื่อขยาย+โหลด)'] },
   { ver:'v206', date:'06/06/2569', items:['fix(สถานะ): ซิงค์ allAppts ↔ window.allAppts — ปฏิทิน/แดชบอร์ด/นัดวันนี้ เห็นนัดล่าสุดทันที ไม่ค้าง'] },
   { ver:'v205', date:'06/06/2569', items:['feat(เสียง+รักษา): ไมค์พูดที่ช่องอาการป่วย (สถานะ "กดอีกครั้งเพื่อจบ") · ผู้ป่วยที่ลงทะเบียนแล้วโผล่ใน "นัดวันนี้" หน้าบันทึกหลังรักษา · แสดงความดัน/น้ำหนัก/ส่วนสูงล่าสุดบนการ์ดผู้ป่วย'] },
