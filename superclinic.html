@@ -3247,6 +3247,11 @@ var qrcode = function() {
               <option value="Nick Fury">Nick Fury</option>
             </select>
           </div>
+          <div class="vv-only" id="vv-bar-reg" style="display:flex;align-items:center;gap:10px;background:#f3f8f4;border:1px dashed var(--go);border-radius:10px;padding:8px 12px;">
+            <span style="font-size:13px;color:var(--g1);font-weight:600;flex-shrink:0;">🩺 สัญญาณชีพ</span>
+            <button type="button" id="vv-mic-reg" onclick="vvMic('reg')" title="พูด เช่น ความดัน 120/80 น้ำหนัก 65 ส่วนสูง 170" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--g1);color:#fff;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;"><i class="ti ti-microphone"></i></button>
+            <span id="vv-trans-reg" style="font-size:11.5px;color:#888;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">พูด: "ความดัน 120/80 น้ำหนัก 65 ส่วนสูง 170"</span>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <div class="form-group">
               <label class="form-label">ความดันโลหิต</label>
@@ -3266,6 +3271,13 @@ var qrcode = function() {
               <label class="form-label">น้ำหนัก (กก.)</label>
               <input type="number" id="reg-weight" class="form-control" placeholder="60" step="0.1">
             </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="form-group">
+              <label class="form-label">ส่วนสูง (ซม.)</label>
+              <input type="number" id="reg-height" class="form-control" placeholder="170" step="0.1">
+            </div>
+            <div class="form-group"></div>
           </div>
           <div class="form-group">
             <label class="form-label">อาการป่วยที่เป็นอยู่ <span style="color:var(--er)">*</span></label>
@@ -3808,6 +3820,13 @@ var qrcode = function() {
             <div class="setting-sub">อ่านข้อมูลจากบัตรประชาชนผ่านเครื่องอ่าน USB HID &nbsp;<span id="feat-idcard-status" style="font-size:11px;"></span></div>
           </div>
           <button id="toggle-idcard" class="toggle" onclick="toggleFeature('idcard')"></button>
+        </div>
+        <div class="setting-row" style="padding:14px 0;border-top:1px solid rgba(0,0,0,.07);">
+          <div style="flex:1;">
+            <div class="setting-label"><i class="ti ti-microphone" style="color:var(--g1);margin-right:6px;"></i>🎤 กรอกด้วยเสียง (ทดลอง)</div>
+            <div class="setting-sub">พูดกรอกสัญญาณชีพ (น้ำหนัก/ส่วนสูง/ความดัน) ในหน้าลงทะเบียน &amp; แก้ไขผู้ป่วย &nbsp;<span id="feat-voice-status" style="font-size:11px;"></span></div>
+          </div>
+          <button id="toggle-voice" class="toggle" onclick="vvToggleVoice()"></button>
         </div>
         <div class="setting-row" style="padding:14px 0;border-top:1px solid rgba(0,0,0,.07);">
           <div style="flex:1;">
@@ -5280,6 +5299,44 @@ async function submitAddPatient(e){
   } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
 
+/* ===== VOICE-VITALS START (พูดกรอกสัญญาณชีพ scoped) ===== */
+window.VV_LOC={reg:{bp:'reg-bp',weight:'reg-weight',height:'reg-height',trans:'vv-trans-reg'},edit:{bp:'vve-bp',weight:'vve-weight',height:'vve-height',trans:'vv-trans-edit'}};
+function vvVoiceOn(){ return localStorage.getItem('voice_enabled')!=='0'; }
+var VV_DIGIT={'ศูนย์':0,'สูญ':0,'หนึ่ง':1,'เอ็ด':1,'สอง':2,'ยี่':2,'สาม':3,'สี่':4,'ห้า':5,'หก':6,'เจ็ด':7,'แปด':8,'เก้า':9};
+var VV_SCALE={'สิบ':10,'ร้อย':100,'พัน':1000};
+var VV_NW=['พัน','ร้อย','สิบ','ศูนย์','สูญ','หนึ่ง','เอ็ด','สอง','ยี่','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+var VV_RE=new RegExp('(?:'+VV_NW.join('|')+')+','g');
+function vvScaled(r){r=r.replace(/\s/g,'');var i=0,t=0,c=0;while(i<r.length){var m=false;for(var w in VV_SCALE){if(r.indexOf(w,i)===i){var s=VV_SCALE[w];if(c===0)c=1;c=c*s;t+=c;c=0;i+=w.length;m=true;break;}}if(m)continue;for(var d in VV_DIGIT){if(r.indexOf(d,i)===i){c=VV_DIGIT[d];i+=d.length;m=true;break;}}if(m)continue;i++;}return t+c;}
+function vvDigits(r){r=r.replace(/\s/g,'');var i=0,o='';while(i<r.length){var m=false;for(var d in VV_DIGIT){if(r.indexOf(d,i)===i){o+=VV_DIGIT[d];i+=d.length;m=true;break;}}if(!m)i++;}return o;}
+function vvConv(r){return /สิบ|ร้อย|พัน/.test(r)?String(vvScaled(r)):(vvDigits(r)||r);}
+function vvToArabic(t){return t.replace(VV_RE,function(m){return vvConv(m);});}
+function vvParse(raw){var t=(raw||'').toLowerCase().replace(/ทับ|หาร/g,'/').replace(/จุด/g,'.');t=vvToArabic(t);var o={},m;
+  m=t.match(/(?:ความดัน|ดัน|บีพี|bp)[^0-9]*(\d{2,3})\s*\/\s*(\d{2,3})/);if(!m)m=t.match(/(?:ความดัน|ดัน|บีพี|bp)[^0-9]*(\d{2,3})[^0-9]+(\d{2,3})/);if(m){o.sys=+m[1];o.dia=+m[2];}
+  m=t.match(/(?:น้ำหนัก|หนัก|นน|weight)[^0-9]*(\d{1,3}(?:\.\d)?)/);if(m)o.weight=parseFloat(m[1]);
+  m=t.match(/(?:ส่วนสูง|สูง|height)[^0-9]*(\d{2,3}(?:\.\d)?)/);if(m)o.height=parseFloat(m[1]);
+  return o;}
+function vvSet(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==''&&!(typeof val==='number'&&isNaN(val))){el.value=val;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},700);return true;}return false;}
+function vvFill(loc,v){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;if(v.sys&&v.dia){if(vvSet(c.bp,v.sys+'/'+v.dia))n++;}if(v.weight!==undefined){if(vvSet(c.weight,v.weight))n++;}if(v.height!==undefined){if(vvSet(c.height,v.height))n++;}return n;}
+var _vvRecog=null,_vvActive=null;
+function vvMic(loc){
+  if(!vvVoiceOn()){ try{showToast('เปิด "กรอกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ try{showToast('เบราว์เซอร์ไม่รองรับเสียง (ใช้ Chrome)','error');}catch(_){} return; }
+  if(_vvActive===loc){ try{_vvRecog.stop();}catch(_){} return; }
+  if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
+  _vvActive=loc;
+  var btn=document.getElementById('vv-mic-'+loc); if(btn) btn.style.background='var(--er)';
+  var tr=document.getElementById((window.VV_LOC[loc]||{}).trans);
+  _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=true; _vvRecog.continuous=true; var fin='';
+  _vvRecog.onresult=function(e){var itm='';for(var i=e.resultIndex;i<e.results.length;i++){var r=e.results[i];if(r.isFinal)fin+=r[0].transcript+' ';else itm+=r[0].transcript;}var sh=(fin+itm).trim();if(tr)tr.textContent='🎧 '+sh;vvFill(loc,vvParse(sh));};
+  _vvRecog.onerror=function(e){if(tr)tr.textContent='⚠️ '+e.error;};
+  _vvRecog.onend=function(){if(btn)btn.style.background='';_vvActive=null;};
+  try{_vvRecog.start();}catch(_){}
+}
+function vvToggleVoice(){ localStorage.setItem('voice_enabled', vvVoiceOn()?'0':'1'); vvApplyVoiceUI(); try{showToast(vvVoiceOn()?'🎤 เปิดกรอกด้วยเสียง':'ปิดกรอกด้วยเสียง');}catch(_){} }
+function vvApplyVoiceUI(){var on=vvVoiceOn();var b=document.getElementById('toggle-voice');if(b)b.classList.toggle('on',on);var st=document.getElementById('feat-voice-status');if(st){st.textContent=on?'● เปิด':'● ปิด';st.style.color=on?'var(--ok)':'var(--er)';}var els=document.querySelectorAll('.vv-only');for(var i=0;i<els.length;i++){els[i].style.display=on?'':'none';}}
+(function(){function _v(){vvApplyVoiceUI();}if(document.readyState!=='loading')_v();else document.addEventListener('DOMContentLoaded',_v);})();
+/* ===== VOICE-VITALS END ===== */
 function openEditPatient(id){
   const p=allPatients.find(x=>(x.hn===id||x.id===id)); if(!p) return;
   const sel=(name,val,opts)=>`<select class="form-select" name="${name}">${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select>`;
@@ -5300,6 +5357,11 @@ function openEditPatient(id){
       <div class="form-group"><label class="form-label">อายุ</label><input class="form-input" name="age" type="number" value="${p.age||''}"></div>
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">โรคประจำตัว</label><textarea class="form-textarea" name="chronic_disease">${p.chronic_disease||''}</textarea></div>
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">การแพ้ยา</label><textarea class="form-textarea" name="allergy" style="min-height:50px;">${p.allergy||''}</textarea></div>
+      <div class="vv-only form-group" style="grid-column:1/-1;border:1px dashed var(--go);border-radius:10px;padding:10px;${vvVoiceOn()?'':'display:none;'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><label class="form-label" style="margin:0;">🩺 สัญญาณชีพ (พูดได้)</label><button type="button" id="vv-mic-edit" onclick="vvMic('edit')" title="กดพูด" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--g1);color:#fff;cursor:pointer;"><i class="ti ti-microphone"></i></button></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;"><input class="form-input" id="vve-bp" placeholder="ความดัน 120/80"><input class="form-input" id="vve-weight" type="number" step="0.1" placeholder="น้ำหนัก กก."><input class="form-input" id="vve-height" type="number" step="0.1" placeholder="ส่วนสูง ซม."></div>
+        <div id="vv-trans-edit" style="font-size:11px;color:#888;margin-top:4px;"></div>
+      </div>
     </form>`,
     `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
      <button class="btn btn-primary" onclick="document.getElementById('fp-edit').requestSubmit()"><i class="ti ti-device-floppy"></i>บันทึก</button>`
@@ -8739,6 +8801,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v198', date:'05/06/2569', items:['feat(เสียง): พูดกรอกสัญญาณชีพ (น้ำหนัก/ส่วนสูง/ความดัน) — กรอบ scoped ไมค์ฟังเฉพาะกรอบ · หน้าลงทะเบียน + แก้ไขผู้ป่วย + switch ในตั้งค่า · UI only'] },
   { ver:'v197', date:'05/06/2569', items:['fix(จดจำใบหน้า): เข้มเกณฑ์ match — รับเฉพาะความเหมือน >= 55% (dist<=0.45) · ต่ำกว่านั้นขึ้น "ไม่พบ" · กัน false match ตอนไม่มีคน/หน้าไม่ชัด'] },
   { ver:'v196', date:'05/06/2569', items:['feat(ทดลอง): โหมด IP Camera ตรงในตั้งค่า — toggle + ช่อง URL + ปุ่มทดสอบแสดงภาพ (MJPEG/snapshot) บอกผลได้/ไม่ได้ทันที · RTSP ยังต้องใช้ OBS'] },
   { ver:'v195', date:'05/06/2569', items:['feat(จดจำใบหน้า): เลือกกล้องสแกนใบหน้าในตั้งค่า (dropdown) — รองรับ IP cam ผ่าน OBS Virtual Camera · จำค่าใน localStorage + ปุ่มค้นหากล้อง'] },
