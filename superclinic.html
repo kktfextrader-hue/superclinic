@@ -3317,7 +3317,7 @@ var qrcode = function() {
             </div>
             <div class="form-group">
               <label class="form-label">หมายเหตุเพิ่มเติม</label>
-              <input type="text" id="reg-note" class="form-control" placeholder="หมายเหตุ...">
+              <div style="display:flex;gap:8px;align-items:center;"><input type="text" id="reg-note" class="form-control" placeholder="หมายเหตุ... (พิมพ์ หรือ กดไมค์พูด)" style="flex:1;"><button type="button" id="vv-mic-note" class="vv-only" onclick="vvDictate('reg-note','vv-mic-note')" title="พูดเพื่อบันทึกหมายเหตุ" style="width:38px;height:38px;flex-shrink:0;border-radius:8px;border:1px solid var(--go);background:#f3f8f4;color:var(--g1);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><i class="ti ti-microphone"></i></button></div>
             </div>
           </div>
           <!-- Body Map — ลงทะเบียนก่อนรักษา -->
@@ -3823,7 +3823,7 @@ var qrcode = function() {
         </div>
         <div class="setting-row" style="padding:14px 0;border-top:1px solid rgba(0,0,0,.07);">
           <div style="flex:1;">
-            <div class="setting-label"><i class="ti ti-microphone" style="color:var(--g1);margin-right:6px;"></i>🎤 กรอกด้วยเสียง (ทดลอง)</div>
+            <div class="setting-label"><i class="ti ti-microphone" style="color:var(--g1);margin-right:6px;"></i>บันทึกด้วยเสียง</div>
             <div class="setting-sub">พูดกรอกสัญญาณชีพ (น้ำหนัก/ส่วนสูง/ความดัน) ในหน้าลงทะเบียน &amp; แก้ไขผู้ป่วย &nbsp;<span id="feat-voice-status" style="font-size:11px;"></span></div>
           </div>
           <button id="toggle-voice" class="toggle" onclick="vvToggleVoice()"></button>
@@ -5335,9 +5335,25 @@ function vvMic(loc){
   _vvRecog.onend=function(){if(btn)btn.style.background='';var dn=document.getElementById('vv-done-'+loc);if(dn)dn.style.display='none';_vvActive=null;};
   try{_vvRecog.start();}catch(_){}
 }
+function vvDictate(fieldId,btnId){
+  if(!vvVoiceOn()){ try{showToast('เปิด "บันทึกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ try{showToast('เบราว์เซอร์ไม่รองรับเสียง (ใช้ Chrome)','error');}catch(_){} return; }
+  var el=document.getElementById(fieldId),btn=document.getElementById(btnId);
+  if(_vvActive==='d:'+fieldId){ try{_vvRecog.stop();}catch(_){} return; }
+  if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
+  _vvActive='d:'+fieldId;
+  if(btn){btn.style.background='var(--er)';btn.style.color='#fff';}
+  _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=false; _vvRecog.continuous=true;
+  var base=el?el.value:'';
+  _vvRecog.onresult=function(e){var add='';for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)add+=e.results[i][0].transcript;}add=add.trim();if(add&&el){el.value=(base?base+' ':'')+add;base=el.value;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},600);}};
+  _vvRecog.onerror=function(){};
+  _vvRecog.onend=function(){if(btn){btn.style.background='#f3f8f4';btn.style.color='var(--g1)';}_vvActive=null;};
+  try{_vvRecog.start();}catch(_){}
+}
 function vvToggleVoice(){ localStorage.setItem('voice_enabled', vvVoiceOn()?'0':'1'); vvApplyVoiceUI(); try{showToast(vvVoiceOn()?'🎤 เปิดกรอกด้วยเสียง':'ปิดกรอกด้วยเสียง');}catch(_){} }
-function vvApplyVoiceUI(){var on=vvVoiceOn();var b=document.getElementById('toggle-voice');if(b)b.classList.toggle('on',on);var st=document.getElementById('feat-voice-status');if(st){st.textContent=on?'● เปิด':'● ปิด';st.style.color=on?'var(--ok)':'var(--er)';}var els=document.querySelectorAll('.vv-only');for(var i=0;i<els.length;i++){els[i].style.display=on?'':'none';}}
-(function(){function _v(){vvApplyVoiceUI();}if(document.readyState!=='loading')_v();else document.addEventListener('DOMContentLoaded',_v);})();
+function vvApplyVoiceUI(){var on=vvVoiceOn();var b=document.getElementById('toggle-voice');if(b)b.classList.toggle('on',on);var st=document.getElementById('feat-voice-status');if(st){st.textContent=on?'● เปิด':'● ปิด';st.style.color=on?'var(--ok)':'var(--er)';}if(document.body)document.body.classList.toggle('vv-off',!on);}
+(function(){function _v(){if(!document.getElementById('vv-style')){var s=document.createElement('style');s.id='vv-style';s.textContent='.vv-off .vv-only{display:none!important}';(document.head||document.documentElement).appendChild(s);}vvApplyVoiceUI();}if(document.readyState!=='loading')_v();else document.addEventListener('DOMContentLoaded',_v);})();
 /* ===== VOICE-VITALS END ===== */
 function openEditPatient(id){
   const p=allPatients.find(x=>(x.hn===id||x.id===id)); if(!p) return;
@@ -8803,6 +8819,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v200', date:'06/06/2569', items:['feat(เสียง): เปลี่ยน label เป็น "บันทึกด้วยเสียง" + เพิ่มไมค์พูดท้ายช่อง "หมายเหตุเพิ่มเติม" (dictate ลงข้อความตรงๆ) · fix การซ่อนกล่องเสียงไม่ให้กระทบ layout'] },
   { ver:'v199', date:'06/06/2569', items:['feat(เสียง): เพิ่มปุ่ม "✓ เสร็จ" หยุดฟังในกรอบสัญญาณชีพ (ชัดกว่ากดไมค์ซ้ำ) — โผล่ตอนกำลังฟัง'] },
   { ver:'v198', date:'05/06/2569', items:['feat(เสียง): พูดกรอกสัญญาณชีพ (น้ำหนัก/ส่วนสูง/ความดัน) — กรอบ scoped ไมค์ฟังเฉพาะกรอบ · หน้าลงทะเบียน + แก้ไขผู้ป่วย + switch ในตั้งค่า · UI only'] },
   { ver:'v197', date:'05/06/2569', items:['fix(จดจำใบหน้า): เข้มเกณฑ์ match — รับเฉพาะความเหมือน >= 55% (dist<=0.45) · ต่ำกว่านั้นขึ้น "ไม่พบ" · กัน false match ตอนไม่มีคน/หน้าไม่ชัด'] },
