@@ -5433,11 +5433,6 @@ function openEditPatient(id){
       <div class="form-group"><label class="form-label">อายุ</label><input class="form-input" name="age" type="number" value="${p.age||''}"></div>
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">โรคประจำตัว</label><textarea class="form-textarea" name="chronic_disease">${p.chronic_disease||''}</textarea></div>
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">การแพ้ยา</label><textarea class="form-textarea" name="allergy" style="min-height:50px;">${p.allergy||''}</textarea></div>
-      <div class="vv-only form-group" style="grid-column:1/-1;border:1px dashed var(--go);border-radius:10px;padding:10px;${vvVoiceOn()?'':'display:none;'}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><label class="form-label" style="margin:0;">🩺 สัญญาณชีพ (พูดได้)</label><button type="button" id="vv-mic-edit" onclick="vvMic('edit')" title="กดพูด" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--g1);color:#fff;cursor:pointer;"><i class="ti ti-microphone"></i></button><button type="button" id="vv-done-edit" onclick="vvStop()" style="display:none;align-items:center;gap:4px;border:none;background:var(--ok);color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;margin-left:6px;"><i class="ti ti-check"></i>เสร็จ</button></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;"><input class="form-input" id="vve-bp" placeholder="ความดัน 120/80"><input class="form-input" id="vve-weight" type="number" step="0.1" placeholder="น้ำหนัก กก."><input class="form-input" id="vve-height" type="number" step="0.1" placeholder="ส่วนสูง ซม."></div>
-        <div id="vv-trans-edit" style="font-size:11px;color:#888;margin-top:4px;"></div>
-      </div>
     </form>`,
     `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
      <button class="btn btn-primary" onclick="document.getElementById('fp-edit').requestSubmit()"><i class="ti ti-device-floppy"></i>บันทึก</button>`
@@ -8877,6 +8872,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v204', date:'06/06/2569', items:['ui(เสียง): เอากล่องสัญญาณชีพ (พูดได้) ออกจากหน้าแก้ไขข้อมูลผู้ป่วย — vitals เป็นค่ารายครั้ง ใช้ที่หน้าลงทะเบียน/บันทึกรักษาแทน'] },
   { ver:'v203', date:'06/06/2569', items:['db(เสียง): ส่วนสูงที่พูด/กรอกถูกบันทึกจริง (เข้า note) + learning dict ค้นหาด้วยเสียงย้ายขึ้น Google Sheet ต่อคลินิก (แชร์หลายเครื่อง)'] },
   { ver:'v202', date:'06/06/2569', items:['feat(เสียง): ค้นหาผู้ป่วยด้วยเสียงหน้าลงทะเบียน — พูดชื่อ-สกุล/เบอร์โทร ตรงเลือกให้เลย ไม่ตรงโชว์ใกล้เคียง + จำการออกเสียง (learning)'] },
   { ver:'v201', date:'06/06/2569', items:['feat(เสียง): ตอนกดไมค์มีวงกลมแดงกระพริบ (pulse ring) + ข้อความ 🔴 กำลังฟัง บอกว่ากำลังบันทึกเสียง'] },
