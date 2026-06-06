@@ -3280,7 +3280,7 @@ var qrcode = function() {
             <div class="form-group"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">อาการป่วยที่เป็นอยู่ <span style="color:var(--er)">*</span></label>
+            <label class="form-label" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">อาการป่วยที่เป็นอยู่ <span style="color:var(--er)">*</span><button type="button" id="vv-mic-symptoms" class="vv-only" onclick="vvDictate('reg-symptoms','vv-mic-symptoms')" title="พูดเพื่อบันทึกอาการ" style="width:30px;height:30px;flex-shrink:0;border-radius:8px;border:1px solid var(--go);background:#f3f8f4;color:var(--g1);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><i class="ti ti-microphone"></i></button><span id="vv-stat-symptoms" style="font-size:11px;color:var(--er);font-weight:500;"></span></label>
             <textarea id="reg-symptoms" class="form-control" rows="3" placeholder="ระบุอาการหรือความต้องการของผู้ป่วย..." style="resize:vertical;min-height:80px;"></textarea>
           </div>
           <div class="form-group">
@@ -5328,6 +5328,26 @@ function vvSearchDict(){ if(_vsDict) return _vsDict; try{ _vsDict=JSON.parse(loc
 async function vvSearchDictLoad(){ try{ var r=await callApi('settings','get',null,'voice_search_dict'); var v=r&&r.data&&r.data.value; if(v){ var d=JSON.parse(v); _vsDict=Object.assign(vvSearchDict(),d); localStorage.setItem('vsearch_dict',JSON.stringify(_vsDict)); } }catch(_){} }
 function vvSearchDictSave(){ var json=JSON.stringify(vvSearchDict()); try{localStorage.setItem('vsearch_dict',json);}catch(_){} try{ callApi('settings','update',{value:json,updated_at:todayISO()},'voice_search_dict').catch(function(){ callApi('settings','create',{key:'voice_search_dict',value:json,description:'เสียง→HN ค้นหาผู้ป่วย (voice search learning)',updated_at:todayISO()}).catch(function(){}); }); }catch(_){} }
 function vvPName(p){return ((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')).trim();}
+function vvLatestVitals(id,p){
+  try{
+    var aps=(window.allAppts||[]).filter(function(a){return a&&(a.patient_id===id||(p&&(a.patient_id===p.id||a.patient_id===p.hn)));});
+    if(!aps.length) return '';
+    aps.sort(function(a,b){var bi=String((typeof dateToISO==='function'?dateToISO(b.date):b.date)||''),ai=String((typeof dateToISO==='function'?dateToISO(a.date):a.date)||'');return bi.localeCompare(ai);});
+    var note='',dt='';
+    for(var i=0;i<aps.length;i++){ var n=aps[i].note||''; if(/BP:[0-9]|W:[0-9]|H:[0-9]/.test(n)){ note=n; dt=aps[i].date; break; } }
+    if(!note) return '';
+    var bp=(note.match(/BP:([0-9]+\/[0-9]+)/)||[])[1];
+    var w=(note.match(/W:([0-9.]+)kg/)||[])[1];
+    var h=(note.match(/H:([0-9.]+)cm/)||[])[1];
+    var parts=[];
+    if(bp) parts.push('ความดัน '+bp);
+    if(w) parts.push('น้ำหนัก '+w+' กก.');
+    if(h) parts.push('ส่วนสูง '+h+' ซม.');
+    if(!parts.length) return '';
+    var ds=(dt&&typeof toThaiDisplay==='function')?toThaiDisplay(dt):dt;
+    return '<div style="font-size:12px;color:#fff;margin-top:7px;background:rgba(255,255,255,.13);border-radius:8px;padding:5px 11px;display:inline-block;">🩺 สัญญาณชีพล่าสุด: '+parts.join('  •  ')+(ds?' <span style="opacity:.6;">('+ds+')</span>':'')+'</div>';
+  }catch(_){ return ''; }
+}
 function vvSearchVoice(){
   if(!vvVoiceOn()){ try{showToast('เปิด "บันทึกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -5402,11 +5422,12 @@ function vvDictate(fieldId,btnId){
   if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
   _vvActive='d:'+fieldId;
   if(btn) btn.classList.add('vv-rec');
+  var stt=document.getElementById('vv-stat-'+fieldId); if(stt) stt.textContent='🔴 กำลังฟัง... กดอีกครั้งเพื่อจบการทำงาน';
   _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=false; _vvRecog.continuous=true;
   var base=el?el.value:'';
   _vvRecog.onresult=function(e){var add='';for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)add+=e.results[i][0].transcript;}add=add.trim();if(add&&el){el.value=(base?base+' ':'')+add;base=el.value;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},600);}};
   _vvRecog.onerror=function(){};
-  _vvRecog.onend=function(){if(btn)btn.classList.remove('vv-rec');_vvActive=null;};
+  _vvRecog.onend=function(){if(btn)btn.classList.remove('vv-rec');if(stt)stt.textContent='';_vvActive=null;};
   try{_vvRecog.start();}catch(_){}
 }
 function vvToggleVoice(){ localStorage.setItem('voice_enabled', vvVoiceOn()?'0':'1'); vvApplyVoiceUI(); try{showToast(vvVoiceOn()?'🎤 เปิดกรอกด้วยเสียง':'ปิดกรอกด้วยเสียง');}catch(_){} }
@@ -6862,6 +6883,7 @@ async function loadTreatmentPatients(){
   try {
     if(!allPatients.length){ const r=await callApi('patients','list'); allPatients=(r.data?.rows||[]).filter(p=>p.is_active!=='FALSE'); }
     if(!allHerbs.length){ const r=await callApi('herbs','list'); allHerbs=r.data?.rows||[]; }
+    try{ const ar=await callApi('appointments','list'); window.allAppts=ar.data?.rows||[]; if(typeof renderTreatTodayAppts==='function') renderTreatTodayAppts(); }catch(_){}
     renderTreatmentPatientList();
     initHerbRows();
     // ตั้งค่า default date
@@ -7095,6 +7117,7 @@ async function selectTreatPat(id){
     <div style="flex:1;">
       <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#E5D3A3;">${name}</div>
       <div style="font-size:12px;color:rgba(229,211,163,.65);margin-top:3px;">${p.hn} • อายุ ${p.age||'—'} ปี • ธาตุ${p.element||'—'} • แพ้: ${p.allergy||'ไม่มี'}</div>
+      ${vvLatestVitals(id,p)}
     </div>
   </div>`;
   const hist=document.getElementById('treat-history');
@@ -8872,6 +8895,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v205', date:'06/06/2569', items:['feat(เสียง+รักษา): ไมค์พูดที่ช่องอาการป่วย (สถานะ "กดอีกครั้งเพื่อจบ") · ผู้ป่วยที่ลงทะเบียนแล้วโผล่ใน "นัดวันนี้" หน้าบันทึกหลังรักษา · แสดงความดัน/น้ำหนัก/ส่วนสูงล่าสุดบนการ์ดผู้ป่วย'] },
   { ver:'v204', date:'06/06/2569', items:['ui(เสียง): เอากล่องสัญญาณชีพ (พูดได้) ออกจากหน้าแก้ไขข้อมูลผู้ป่วย — vitals เป็นค่ารายครั้ง ใช้ที่หน้าลงทะเบียน/บันทึกรักษาแทน'] },
   { ver:'v203', date:'06/06/2569', items:['db(เสียง): ส่วนสูงที่พูด/กรอกถูกบันทึกจริง (เข้า note) + learning dict ค้นหาด้วยเสียงย้ายขึ้น Google Sheet ต่อคลินิก (แชร์หลายเครื่อง)'] },
   { ver:'v202', date:'06/06/2569', items:['feat(เสียง): ค้นหาผู้ป่วยด้วยเสียงหน้าลงทะเบียน — พูดชื่อ-สกุล/เบอร์โทร ตรงเลือกให้เลย ไม่ตรงโชว์ใกล้เคียง + จำการออกเสียง (learning)'] },
