@@ -3388,8 +3388,8 @@ var qrcode = function() {
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><div class="card-title"><i class="ti ti-history"></i>ประวัติการรักษาล่าสุด</div></div>
-        <div id="treat-history" class="card-body">
+        <div class="card-head" onclick="treatHistToggle()" style="cursor:pointer;user-select:none;"><div class="card-title"><i class="ti ti-history"></i>ประวัติการรักษาล่าสุด</div><span id="treat-hist-chev" style="font-size:12.5px;color:var(--g1);font-weight:600;white-space:nowrap;">▼ ดูประวัติการรักษา</span></div>
+        <div id="treat-history" class="card-body" style="display:none;">
           <div style="padding:20px;text-align:center;color:#aaa;">เลือกผู้ป่วยเพื่อดูประวัติการรักษา</div>
         </div>
       </div>
@@ -5331,21 +5331,21 @@ function vvPName(p){return ((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||
 function vvLatestVitals(id,p){
   try{
     var aps=(window.allAppts||[]).filter(function(a){return a&&(a.patient_id===id||(p&&(a.patient_id===p.id||a.patient_id===p.hn)));});
-    if(!aps.length) return '';
     aps.sort(function(a,b){var bi=String((typeof dateToISO==='function'?dateToISO(b.date):b.date)||''),ai=String((typeof dateToISO==='function'?dateToISO(a.date):a.date)||'');return bi.localeCompare(ai);});
     var note='',dt='';
-    for(var i=0;i<aps.length;i++){ var n=aps[i].note||''; if(/BP:[0-9]|W:[0-9]|H:[0-9]/.test(n)){ note=n; dt=aps[i].date; break; } }
-    if(!note) return '';
+    for(var i=0;i<aps.length;i++){ var n=aps[i].note||''; if(/BP:[0-9]|\bP:[0-9]|W:[0-9]|H:[0-9]/.test(n)){ note=n; dt=aps[i].date; break; } }
     var bp=(note.match(/BP:([0-9]+\/[0-9]+)/)||[])[1];
+    var pu=(note.match(/\bP:([0-9]+)/)||[])[1];
     var w=(note.match(/W:([0-9.]+)kg/)||[])[1];
     var h=(note.match(/H:([0-9.]+)cm/)||[])[1];
-    var parts=[];
-    if(bp) parts.push('ความดัน '+bp);
-    if(w) parts.push('น้ำหนัก '+w+' กก.');
-    if(h) parts.push('ส่วนสูง '+h+' ซม.');
-    if(!parts.length) return '';
     var ds=(dt&&typeof toThaiDisplay==='function')?toThaiDisplay(dt):dt;
-    return '<div style="font-size:12px;color:#fff;margin-top:7px;background:rgba(255,255,255,.13);border-radius:8px;padding:5px 11px;display:inline-block;">🩺 สัญญาณชีพล่าสุด: '+parts.join('  •  ')+(ds?' <span style="opacity:.6;">('+ds+')</span>':'')+'</div>';
+    var has=(bp||pu||w||h);
+    var chip=function(lbl,val,unit){return '<span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;white-space:nowrap;">'+lbl+' <b style="font-weight:700;">'+(val?(val+(unit||'')):'—')+'</b></span>';};
+    return '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:#fff;">'
+      +'<span style="color:rgba(229,211,163,.95);font-weight:600;">🩺 สัญญาณชีพล่าสุด'+(has&&ds?' ('+ds+')':'')+':</span>'
+      +chip('ความดัน',bp,'')+chip('น้ำหนัก',w,' กก.')+chip('ส่วนสูง',h,' ซม.')+chip('ชีพจร',pu,'/นาที')
+      +(has?'':'<span style="color:rgba(229,211,163,.6);">ยังไม่มีบันทึก</span>')
+      +'</div>';
   }catch(_){ return ''; }
 }
 function vvSearchVoice(){
@@ -7120,18 +7120,10 @@ async function selectTreatPat(id){
       ${vvLatestVitals(id,p)}
     </div>
   </div>`;
+  _thLoadedFor=null;
   const hist=document.getElementById('treat-history');
-  if(hist) hist.innerHTML=`<div style="padding:20px;text-align:center;color:#aaa;"><i class="ti ti-loader" style="font-size:18px;"></i> กำลังโหลด...</div>`;
-  try {
-    const [tRes,nRes]=await Promise.all([
-      callApi('treatments','list'),
-      callApi('treatment_notes','list').catch(()=>({ok:true,data:{rows:[]}}))
-    ]);
-    const items=(tRes.data?.rows||[]).filter(t=>t.patient_id===id).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
-    const notes=nRes.data?.rows||[];
-    window._TH={ items, notes, page:1, q:'', perPage:5 };
-    thMount();
-  } catch(e){ if(hist) hist.innerHTML='<div style="padding:20px;color:#aaa;">ไม่สามารถโหลดประวัติได้</div>'; }
+  if(hist){ hist.style.display='none'; hist.innerHTML=''; }
+  const chev=document.getElementById('treat-hist-chev'); if(chev) chev.textContent='▼ ดูประวัติการรักษา';
 }
 
 // ===== ประวัติการรักษา: ค้นหา + แบ่งหน้า (เฉพาะโซนนี้) =====
@@ -7165,6 +7157,30 @@ function thMatch(t,q){
   const notes=((window._TH&&window._TH.notes)||[]).filter(n=>n.treatment_id===t.id).map(n=>(n.content||'')+' '+fieldLabel(n.field_name)).join(' ');
   const hay=[t.type,t.procedure,t.symptoms,t.diagnosis,t.herbs_used,t.result,t.doctor,toThaiDisplay(t.date),notes].join(' ').toLowerCase();
   return hay.includes(q);
+}
+let _thLoadedFor=null;
+async function treatHistToggle(){
+  const hist=document.getElementById('treat-history'); if(!hist) return;
+  const chev=document.getElementById('treat-hist-chev');
+  if(!selTreatPat){ if(chev) chev.textContent='▼ ดูประวัติการรักษา'; return; }
+  if(hist.style.display==='none'){
+    hist.style.display='';
+    if(chev) chev.textContent='▲ ซ่อนประวัติ';
+    if(_thLoadedFor!==selTreatPat){
+      hist.innerHTML='<div style="padding:20px;text-align:center;color:#aaa;"><i class="ti ti-loader" style="font-size:18px;"></i> กำลังโหลด...</div>';
+      try{
+        const [tRes,nRes]=await Promise.all([callApi('treatments','list'),callApi('treatment_notes','list').catch(()=>({ok:true,data:{rows:[]}}))]);
+        const items=(tRes.data?.rows||[]).filter(t=>t.patient_id===selTreatPat).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
+        const notes=nRes.data?.rows||[];
+        window._TH={ items, notes, page:1, q:'', perPage:5 };
+        thMount();
+        _thLoadedFor=selTreatPat;
+      }catch(e){ hist.innerHTML='<div style="padding:20px;color:#aaa;">ไม่สามารถโหลดประวัติได้</div>'; }
+    }
+  } else {
+    hist.style.display='none';
+    if(chev) chev.textContent='▼ ดูประวัติการรักษา';
+  }
 }
 function thMount(){
   const hist=document.getElementById('treat-history'); if(!hist) return;
@@ -8895,6 +8911,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v207', date:'06/06/2569', items:['feat(รักษา): การ์ดผู้ป่วยแสดงสัญญาณชีพล่าสุด 4 ค่า (ความดัน/น้ำหนัก/ส่วนสูง/ชีพจร) · ประวัติการรักษาเป็น collapse + lazy load (กดหัวข้อเพื่อขยาย+โหลด)'] },
   { ver:'v206', date:'06/06/2569', items:['fix(สถานะ): ซิงค์ allAppts ↔ window.allAppts — ปฏิทิน/แดชบอร์ด/นัดวันนี้ เห็นนัดล่าสุดทันที ไม่ค้าง'] },
   { ver:'v205', date:'06/06/2569', items:['feat(เสียง+รักษา): ไมค์พูดที่ช่องอาการป่วย (สถานะ "กดอีกครั้งเพื่อจบ") · ผู้ป่วยที่ลงทะเบียนแล้วโผล่ใน "นัดวันนี้" หน้าบันทึกหลังรักษา · แสดงความดัน/น้ำหนัก/ส่วนสูงล่าสุดบนการ์ดผู้ป่วย'] },
   { ver:'v204', date:'06/06/2569', items:['ui(เสียง): เอากล่องสัญญาณชีพ (พูดได้) ออกจากหน้าแก้ไขข้อมูลผู้ป่วย — vitals เป็นค่ารายครั้ง ใช้ที่หน้าลงทะเบียน/บันทึกรักษาแทน'] },
