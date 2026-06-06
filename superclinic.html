@@ -3249,7 +3249,7 @@ var qrcode = function() {
           </div>
           <div class="vv-only" id="vv-bar-reg" style="display:flex;align-items:center;gap:10px;background:#f3f8f4;border:1px dashed var(--go);border-radius:10px;padding:8px 12px;">
             <span style="font-size:13px;color:var(--g1);font-weight:600;flex-shrink:0;">🩺 สัญญาณชีพ</span>
-            <button type="button" id="vv-mic-reg" onclick="vvMic('reg')" title="พูด เช่น ความดัน 120/80 น้ำหนัก 65 ส่วนสูง 170" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--g1);color:#fff;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;"><i class="ti ti-microphone"></i></button>
+            <button type="button" id="vv-mic-reg" onclick="vvMic('reg')" title="พูด เช่น ความดัน 120/80 น้ำหนัก 65 ส่วนสูง 170" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--g1);color:#fff;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;"><i class="ti ti-microphone"></i></button><button type="button" id="vv-done-reg" onclick="vvStop()" style="display:none;align-items:center;gap:4px;border:none;background:var(--ok);color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;font-weight:600;flex-shrink:0;"><i class="ti ti-check"></i>เสร็จ</button>
             <span id="vv-trans-reg" style="font-size:11.5px;color:#888;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">พูด: "ความดัน 120/80 น้ำหนัก 65 ส่วนสูง 170"</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -5318,6 +5318,7 @@ function vvParse(raw){var t=(raw||'').toLowerCase().replace(/ทับ|หาร
 function vvSet(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==''&&!(typeof val==='number'&&isNaN(val))){el.value=val;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},700);return true;}return false;}
 function vvFill(loc,v){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;if(v.sys&&v.dia){if(vvSet(c.bp,v.sys+'/'+v.dia))n++;}if(v.weight!==undefined){if(vvSet(c.weight,v.weight))n++;}if(v.height!==undefined){if(vvSet(c.height,v.height))n++;}return n;}
 var _vvRecog=null,_vvActive=null;
+function vvStop(){ if(_vvRecog){ try{_vvRecog.stop();}catch(_){} } }
 function vvMic(loc){
   if(!vvVoiceOn()){ try{showToast('เปิด "กรอกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -5326,11 +5327,12 @@ function vvMic(loc){
   if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
   _vvActive=loc;
   var btn=document.getElementById('vv-mic-'+loc); if(btn) btn.style.background='var(--er)';
+  var dn=document.getElementById('vv-done-'+loc); if(dn) dn.style.display='inline-flex';
   var tr=document.getElementById((window.VV_LOC[loc]||{}).trans);
   _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=true; _vvRecog.continuous=true; var fin='';
   _vvRecog.onresult=function(e){var itm='';for(var i=e.resultIndex;i<e.results.length;i++){var r=e.results[i];if(r.isFinal)fin+=r[0].transcript+' ';else itm+=r[0].transcript;}var sh=(fin+itm).trim();if(tr)tr.textContent='🎧 '+sh;vvFill(loc,vvParse(sh));};
   _vvRecog.onerror=function(e){if(tr)tr.textContent='⚠️ '+e.error;};
-  _vvRecog.onend=function(){if(btn)btn.style.background='';_vvActive=null;};
+  _vvRecog.onend=function(){if(btn)btn.style.background='';var dn=document.getElementById('vv-done-'+loc);if(dn)dn.style.display='none';_vvActive=null;};
   try{_vvRecog.start();}catch(_){}
 }
 function vvToggleVoice(){ localStorage.setItem('voice_enabled', vvVoiceOn()?'0':'1'); vvApplyVoiceUI(); try{showToast(vvVoiceOn()?'🎤 เปิดกรอกด้วยเสียง':'ปิดกรอกด้วยเสียง');}catch(_){} }
@@ -5358,7 +5360,7 @@ function openEditPatient(id){
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">โรคประจำตัว</label><textarea class="form-textarea" name="chronic_disease">${p.chronic_disease||''}</textarea></div>
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">การแพ้ยา</label><textarea class="form-textarea" name="allergy" style="min-height:50px;">${p.allergy||''}</textarea></div>
       <div class="vv-only form-group" style="grid-column:1/-1;border:1px dashed var(--go);border-radius:10px;padding:10px;${vvVoiceOn()?'':'display:none;'}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><label class="form-label" style="margin:0;">🩺 สัญญาณชีพ (พูดได้)</label><button type="button" id="vv-mic-edit" onclick="vvMic('edit')" title="กดพูด" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--g1);color:#fff;cursor:pointer;"><i class="ti ti-microphone"></i></button></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><label class="form-label" style="margin:0;">🩺 สัญญาณชีพ (พูดได้)</label><button type="button" id="vv-mic-edit" onclick="vvMic('edit')" title="กดพูด" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--g1);color:#fff;cursor:pointer;"><i class="ti ti-microphone"></i></button><button type="button" id="vv-done-edit" onclick="vvStop()" style="display:none;align-items:center;gap:4px;border:none;background:var(--ok);color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;margin-left:6px;"><i class="ti ti-check"></i>เสร็จ</button></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;"><input class="form-input" id="vve-bp" placeholder="ความดัน 120/80"><input class="form-input" id="vve-weight" type="number" step="0.1" placeholder="น้ำหนัก กก."><input class="form-input" id="vve-height" type="number" step="0.1" placeholder="ส่วนสูง ซม."></div>
         <div id="vv-trans-edit" style="font-size:11px;color:#888;margin-top:4px;"></div>
       </div>
@@ -8801,6 +8803,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v199', date:'06/06/2569', items:['feat(เสียง): เพิ่มปุ่ม "✓ เสร็จ" หยุดฟังในกรอบสัญญาณชีพ (ชัดกว่ากดไมค์ซ้ำ) — โผล่ตอนกำลังฟัง'] },
   { ver:'v198', date:'05/06/2569', items:['feat(เสียง): พูดกรอกสัญญาณชีพ (น้ำหนัก/ส่วนสูง/ความดัน) — กรอบ scoped ไมค์ฟังเฉพาะกรอบ · หน้าลงทะเบียน + แก้ไขผู้ป่วย + switch ในตั้งค่า · UI only'] },
   { ver:'v197', date:'05/06/2569', items:['fix(จดจำใบหน้า): เข้มเกณฑ์ match — รับเฉพาะความเหมือน >= 55% (dist<=0.45) · ต่ำกว่านั้นขึ้น "ไม่พบ" · กัน false match ตอนไม่มีคน/หน้าไม่ชัด'] },
   { ver:'v196', date:'05/06/2569', items:['feat(ทดลอง): โหมด IP Camera ตรงในตั้งค่า — toggle + ช่อง URL + ปุ่มทดสอบแสดงภาพ (MJPEG/snapshot) บอกผลได้/ไม่ได้ทันที · RTSP ยังต้องใช้ OBS'] },
