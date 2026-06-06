@@ -5323,7 +5323,10 @@ function vvStop(){ if(_vvRecog){ try{_vvRecog.stop();}catch(_){} } }
 function vvNorm(s){return (s||'').toString().toLowerCase().replace(/\s+/g,'').replace(/[^ก-๙a-z0-9]/g,'');}
 function vvLev(a,b){var m=a.length,n=b.length;if(!m)return n;if(!n)return m;var d=[],i,j;for(i=0;i<=m;i++)d[i]=[i];for(j=0;j<=n;j++)d[0][j]=j;for(i=1;i<=m;i++)for(j=1;j<=n;j++){var c=a.charAt(i-1)===b.charAt(j-1)?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);}return d[m][n];}
 function vvSim(a,b){a=vvNorm(a);b=vvNorm(b);if(!a&&!b)return 1;var L=Math.max(a.length,b.length)||1;return 1-vvLev(a,b)/L;}
-function vvSearchDict(){try{return JSON.parse(localStorage.getItem('vsearch_dict')||'{}');}catch(_){return {};}}
+window._vsDict=null;
+function vvSearchDict(){ if(_vsDict) return _vsDict; try{ _vsDict=JSON.parse(localStorage.getItem('vsearch_dict')||'{}'); }catch(_){ _vsDict={}; } return _vsDict; }
+async function vvSearchDictLoad(){ try{ var r=await callApi('settings','get',null,'voice_search_dict'); var v=r&&r.data&&r.data.value; if(v){ var d=JSON.parse(v); _vsDict=Object.assign(vvSearchDict(),d); localStorage.setItem('vsearch_dict',JSON.stringify(_vsDict)); } }catch(_){} }
+function vvSearchDictSave(){ var json=JSON.stringify(vvSearchDict()); try{localStorage.setItem('vsearch_dict',json);}catch(_){} try{ callApi('settings','update',{value:json,updated_at:todayISO()},'voice_search_dict').catch(function(){ callApi('settings','create',{key:'voice_search_dict',value:json,description:'เสียง→HN ค้นหาผู้ป่วย (voice search learning)',updated_at:todayISO()}).catch(function(){}); }); }catch(_){} }
 function vvPName(p){return ((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')).trim();}
 function vvSearchVoice(){
   if(!vvVoiceOn()){ try{showToast('เปิด "บันทึกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
@@ -5332,7 +5335,7 @@ function vvSearchVoice(){
   var btn=document.getElementById('vv-mic-regsearch');
   if(_vvActive==='search'){ try{_vvRecog.stop();}catch(_){} return; }
   if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
-  _vvActive='search';
+  _vvActive='search'; try{vvSearchDictLoad();}catch(_){}
   if(btn) btn.classList.add('vv-rec');
   var inp=document.getElementById('reg-search'), res=document.getElementById('reg-search-result');
   if(res) res.innerHTML='<div style="padding:14px;text-align:center;color:var(--er);font-size:13px;font-weight:600;">🔴 กำลังฟัง... พูด "ชื่อ นามสกุล" หรือ เบอร์โทร</div>';
@@ -5368,7 +5371,7 @@ function vvSearchShow(list,raw,header){
   el.querySelectorAll('.vvs-row').forEach(function(div){div.addEventListener('click',function(){var p=list[parseInt(div.dataset.idx)];if(p)vvSearchPick(p,raw);});});
 }
 function vvSearchPick(p,raw){
-  if(raw){ var d=vvSearchDict(); d[vvNorm(raw)]=p.hn; try{localStorage.setItem('vsearch_dict',JSON.stringify(d));}catch(_){} }
+  if(raw){ var d=vvSearchDict(); d[vvNorm(raw)]=p.hn; vvSearchDictSave(); }
   var name=vvPName(p);
   selectRegPatient(p.id||p.hn,name,p.hn||'');
   if(raw){ try{showToast('🧠 จำไว้แล้ว: "'+raw+'" = '+name);}catch(_){} }
@@ -5672,7 +5675,7 @@ async function submitRegister(e){
     time_start:   g('reg-time'),
     treatment_type: planType || 'ลงทะเบียน',
     note: [
-      `BP:${g('reg-bp')||'-'} T:${g('reg-temp')||'-'}°C P:${g('reg-pulse')||'-'} W:${g('reg-weight')||'-'}kg`,
+      `BP:${g('reg-bp')||'-'} T:${g('reg-temp')||'-'}°C P:${g('reg-pulse')||'-'} W:${g('reg-weight')||'-'}kg H:${g('reg-height')||'-'}cm`,
       `อาการ: ${symptoms}`,
       plan ? `แผนการรักษา: ${plan}` : '',
       g('reg-current-meds') ? `ยาประจำ: ${g('reg-current-meds')}` : '',
@@ -5691,7 +5694,7 @@ async function submitRegister(e){
   try {
     await callApi('appointments','create',data);
     showToast('✅ ลงทะเบียนสำเร็จ — สถานะ "กำลังรักษา"');
-    ['reg-patient-id','reg-patient-name','reg-bp','reg-temp','reg-pulse','reg-weight','reg-symptoms','reg-current-meds','reg-allergy','reg-note','reg-plan'].forEach(id=>{
+    ['reg-patient-id','reg-patient-name','reg-bp','reg-temp','reg-pulse','reg-weight','reg-height','reg-symptoms','reg-current-meds','reg-allergy','reg-note','reg-plan'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.value='';
     });
     const ai = document.getElementById('reg-allergy-info');
@@ -8874,6 +8877,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v203', date:'06/06/2569', items:['db(เสียง): ส่วนสูงที่พูด/กรอกถูกบันทึกจริง (เข้า note) + learning dict ค้นหาด้วยเสียงย้ายขึ้น Google Sheet ต่อคลินิก (แชร์หลายเครื่อง)'] },
   { ver:'v202', date:'06/06/2569', items:['feat(เสียง): ค้นหาผู้ป่วยด้วยเสียงหน้าลงทะเบียน — พูดชื่อ-สกุล/เบอร์โทร ตรงเลือกให้เลย ไม่ตรงโชว์ใกล้เคียง + จำการออกเสียง (learning)'] },
   { ver:'v201', date:'06/06/2569', items:['feat(เสียง): ตอนกดไมค์มีวงกลมแดงกระพริบ (pulse ring) + ข้อความ 🔴 กำลังฟัง บอกว่ากำลังบันทึกเสียง'] },
   { ver:'v200', date:'06/06/2569', items:['feat(เสียง): เปลี่ยน label เป็น "บันทึกด้วยเสียง" + เพิ่มไมค์พูดท้ายช่อง "หมายเหตุเพิ่มเติม" (dictate ลงข้อความตรงๆ) · fix การซ่อนกล่องเสียงไม่ให้กระทบ layout'] },
