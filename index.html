@@ -3209,7 +3209,7 @@ var qrcode = function() {
         <button type="button" class="btn btn-outline btn-sm" onclick="openFaceAdvanced('read')" style="gap:6px;font-size:12px;border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));"><i class="ti ti-face-id" style="font-size:14px;color:#b8923f;"></i>🔍 ค้นหาจากใบหน้า</button>
       </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-        <div class="search-wrap" style="width:100%;"><i class="ti ti-search"></i><input id="reg-search" class="search-input" style="width:100%;" placeholder="ค้นหาชื่อ / HN / เบอร์โทร..." oninput="searchRegPatient(this.value)" onkeydown="regSearchKeyNav(event)"></div>
+        <div style="display:flex;gap:8px;align-items:center;width:100%;"><div class="search-wrap" style="flex:1;"><i class="ti ti-search"></i><input id="reg-search" class="search-input" style="width:100%;" placeholder="ค้นหาชื่อ / HN / เบอร์โทร..." oninput="searchRegPatient(this.value)" onkeydown="regSearchKeyNav(event)"></div><button type="button" id="vv-mic-regsearch" class="vv-only" onclick="vvSearchVoice()" title="พูดชื่อ-สกุล หรือ เบอร์โทร เพื่อค้นหา" style="width:42px;height:42px;flex-shrink:0;border-radius:10px;border:none;background:var(--g1);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:18px;"><i class="ti ti-microphone"></i></button></div>
         <div id="reg-search-result" style="max-height:320px;overflow-y:auto;"></div>
       </div>
     </div>
@@ -5319,6 +5319,61 @@ function vvSet(id,val){var el=document.getElementById(id);if(el&&val!==undefined
 function vvFill(loc,v){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;if(v.sys&&v.dia){if(vvSet(c.bp,v.sys+'/'+v.dia))n++;}if(v.weight!==undefined){if(vvSet(c.weight,v.weight))n++;}if(v.height!==undefined){if(vvSet(c.height,v.height))n++;}return n;}
 var _vvRecog=null,_vvActive=null;
 function vvStop(){ if(_vvRecog){ try{_vvRecog.stop();}catch(_){} } }
+/* ---- VOICE-SEARCH (ค้นหาผู้ป่วยด้วยเสียง) ---- */
+function vvNorm(s){return (s||'').toString().toLowerCase().replace(/\s+/g,'').replace(/[^ก-๙a-z0-9]/g,'');}
+function vvLev(a,b){var m=a.length,n=b.length;if(!m)return n;if(!n)return m;var d=[],i,j;for(i=0;i<=m;i++)d[i]=[i];for(j=0;j<=n;j++)d[0][j]=j;for(i=1;i<=m;i++)for(j=1;j<=n;j++){var c=a.charAt(i-1)===b.charAt(j-1)?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);}return d[m][n];}
+function vvSim(a,b){a=vvNorm(a);b=vvNorm(b);if(!a&&!b)return 1;var L=Math.max(a.length,b.length)||1;return 1-vvLev(a,b)/L;}
+function vvSearchDict(){try{return JSON.parse(localStorage.getItem('vsearch_dict')||'{}');}catch(_){return {};}}
+function vvPName(p){return ((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')).trim();}
+function vvSearchVoice(){
+  if(!vvVoiceOn()){ try{showToast('เปิด "บันทึกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ try{showToast('เบราว์เซอร์ไม่รองรับเสียง (ใช้ Chrome)','error');}catch(_){} return; }
+  var btn=document.getElementById('vv-mic-regsearch');
+  if(_vvActive==='search'){ try{_vvRecog.stop();}catch(_){} return; }
+  if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
+  _vvActive='search';
+  if(btn) btn.classList.add('vv-rec');
+  var inp=document.getElementById('reg-search'), res=document.getElementById('reg-search-result');
+  if(res) res.innerHTML='<div style="padding:14px;text-align:center;color:var(--er);font-size:13px;font-weight:600;">🔴 กำลังฟัง... พูด "ชื่อ นามสกุล" หรือ เบอร์โทร</div>';
+  _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=true; _vvRecog.continuous=false;
+  var fin='';
+  _vvRecog.onresult=function(e){var itm='';fin='';for(var i=0;i<e.results.length;i++){var r=e.results[i];if(r.isFinal)fin+=r[0].transcript;else itm+=r[0].transcript;}if(inp)inp.value=(fin+itm).trim();};
+  _vvRecog.onerror=function(){};
+  _vvRecog.onend=function(){if(btn)btn.classList.remove('vv-rec');_vvActive=null;var said=(fin||(inp?inp.value:'')||'').trim();if(said)vvSearchMatch(said);};
+}
+function vvSearchMatch(raw){
+  if(!allPatients.length){ try{showToast('กำลังโหลดรายชื่อ...');}catch(_){} callApi('patients','list').then(function(r){allPatients=((r.data&&r.data.rows)||[]).filter(function(p){return p.is_active!=='FALSE'&&p.is_active!==false;});vvSearchMatch(raw);}).catch(function(){}); return; }
+  var digits=vvToArabic(raw).replace(/[^0-9]/g,'');
+  if(digits.length>=9){
+    var key=digits.slice(-9);
+    var byPhone=allPatients.filter(function(p){var ph=String(p.phone||'').replace(/[^0-9]/g,'');return ph.length>=9 && ph.slice(-9)===key;});
+    if(byPhone.length===1){ vvSearchPick(byPhone[0],null); return; }
+    if(byPhone.length>1){ vvSearchShow(byPhone,null,'📞 เบอร์ตรงกันหลายคน — เลือก'); return; }
+  }
+  var nrm=vvNorm(raw), dict=vvSearchDict();
+  if(dict[nrm]){ var dp=allPatients.find(function(x){return x.hn===dict[nrm];}); if(dp){ vvSearchPick(dp,null); try{showToast('🧠 จำได้: '+vvPName(dp));}catch(_){} return; } }
+  var exact=allPatients.filter(function(p){return vvNorm((p.first_name||'')+(p.last_name||''))===nrm;});
+  if(exact.length===1){ vvSearchPick(exact[0],null); return; }
+  if(exact.length>1){ vvSearchShow(exact,raw,'ชื่อตรงกันหลายคน — เลือก'); return; }
+  var scored=allPatients.map(function(p){return {p:p,s:vvSim(raw,(p.first_name||'')+(p.last_name||''))};}).filter(function(x){return x.s>=0.34;}).sort(function(a,b){return b.s-a.s;}).slice(0,6).map(function(x){return x.p;});
+  if(scored.length){ vvSearchShow(scored,raw,'🔎 ใกล้เคียง — แตะเพื่อเลือก (ระบบจะจำชื่อนี้ไว้)'); }
+  else { var inp=document.getElementById('reg-search'); if(inp)inp.value=raw; if(typeof searchRegPatient==='function') searchRegPatient(raw); }
+}
+function vvSearchShow(list,raw,header){
+  _regSearchResults=list; _regCursor=-1;
+  var el=document.getElementById('reg-search-result'); if(!el)return;
+  var rows=list.map(function(p,i){var name=vvPName(p);return '<div class="vvs-row" data-idx="'+i+'" style="padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:4px;border:1px solid rgba(200,169,107,0.25);transition:background .1s;" onmouseover="this.style.background=\'#f8f4ed\'" onmouseout="this.style.background=\'\'">'+patAv(p)+'<div><div style="font-size:13px;font-weight:500;">'+name+'</div><div style="font-size:11px;color:#999;">'+(p.hn||'')+' • '+(p.phone||'—')+' • '+(p.element||'')+(p.allergy?' ⚠️':'')+'</div></div></div>';}).join('');
+  el.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--g1);padding:6px 4px;">'+header+'</div>'+rows;
+  el.querySelectorAll('.vvs-row').forEach(function(div){div.addEventListener('click',function(){var p=list[parseInt(div.dataset.idx)];if(p)vvSearchPick(p,raw);});});
+}
+function vvSearchPick(p,raw){
+  if(raw){ var d=vvSearchDict(); d[vvNorm(raw)]=p.hn; try{localStorage.setItem('vsearch_dict',JSON.stringify(d));}catch(_){} }
+  var name=vvPName(p);
+  selectRegPatient(p.id||p.hn,name,p.hn||'');
+  if(raw){ try{showToast('🧠 จำไว้แล้ว: "'+raw+'" = '+name);}catch(_){} }
+}
+
 function vvMic(loc){
   if(!vvVoiceOn()){ try{showToast('เปิด "กรอกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -8819,6 +8874,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v202', date:'06/06/2569', items:['feat(เสียง): ค้นหาผู้ป่วยด้วยเสียงหน้าลงทะเบียน — พูดชื่อ-สกุล/เบอร์โทร ตรงเลือกให้เลย ไม่ตรงโชว์ใกล้เคียง + จำการออกเสียง (learning)'] },
   { ver:'v201', date:'06/06/2569', items:['feat(เสียง): ตอนกดไมค์มีวงกลมแดงกระพริบ (pulse ring) + ข้อความ 🔴 กำลังฟัง บอกว่ากำลังบันทึกเสียง'] },
   { ver:'v200', date:'06/06/2569', items:['feat(เสียง): เปลี่ยน label เป็น "บันทึกด้วยเสียง" + เพิ่มไมค์พูดท้ายช่อง "หมายเหตุเพิ่มเติม" (dictate ลงข้อความตรงๆ) · fix การซ่อนกล่องเสียงไม่ให้กระทบ layout'] },
   { ver:'v199', date:'06/06/2569', items:['feat(เสียง): เพิ่มปุ่ม "✓ เสร็จ" หยุดฟังในกรอบสัญญาณชีพ (ชัดกว่ากดไมค์ซ้ำ) — โผล่ตอนกำลังฟัง'] },
