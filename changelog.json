@@ -1,5 +1,26 @@
 [
   {
+    "ver": "v170",
+    "date": "09/06/2569",
+    "items": [
+      "fix(v212): update PAT + credential.helper bypass"
+    ]
+  },
+  {
+    "ver": "v169",
+    "date": "09/06/2569",
+    "items": [
+      "fix(v212): rename ประเภทการรักษา + fix credential.helper"
+    ]
+  },
+  {
+    "ver": "v168",
+    "date": "09/06/2569",
+    "items": [
+      "fix(v212): rename หัตถการ/วิธีรักษา to ประเภทการรักษา ให้สอดคล้องกัน"
+    ]
+  },
+  {
     "ver": "v167",
     "date": "09/06/2569",
     "items": [

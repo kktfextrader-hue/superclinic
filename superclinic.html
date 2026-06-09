@@ -7145,7 +7145,7 @@ function thItemHtml(t){
   const NA='<span style="color:#c4b9a6;font-style:italic;">ไม่มีข้อมูล</span>';
   const fields=[
     ['อาการ',            noteOf('symptoms') || t.symptoms  || ''],
-    ['หัตถการ/วิธีรักษา',  noteOf('procedure')|| t.procedure || t.type || ''],
+    ['ประเภทการรักษา',    noteOf('procedure')|| t.procedure || t.type || ''],
     ['ยาที่จ่าย',         noteOf('herbs_note')|| t.herbs_used|| ''],
     ['ผลการรักษา/คำแนะนำ', noteOf('advice')   || t.result || t.advice || ''],
     ['ค่าบริการ',         (t.price&&t.price!=='0'&&t.price!==''&&t.price!==null)?String(t.price)+' บาท':''],
@@ -8990,6 +8990,10 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v170', date:'09/06/2569', items:['fix(v212): update PAT + credential.helper bypass'] },
+  { ver:'v169', date:'09/06/2569', items:['fix(v212): rename ประเภทการรักษา + fix credential.helper'] },
+  { ver:'v168', date:'09/06/2569', items:['fix(v212): rename หัตถการ/วิธีรักษา to ประเภทการรักษา ให้สอดคล้องกัน'] },
+  { ver:'v212', date:'09/06/2569', items:['fix(ประวัติรักษา): เปลี่ยน label หัตถการ/วิธีรักษา → ประเภทการรักษา ให้สอดคล้องกัน'] },
   { ver:'v167', date:'09/06/2569', items:['update'] },
   { ver:'v166', date:'09/06/2569', items:['update'] },
   { ver:'v165', date:'09/06/2569', items:['feat(v211): ปุ่ม edit+delete ในประวัติการรักษา'] },
