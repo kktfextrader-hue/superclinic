@@ -4915,107 +4915,105 @@ function renderPatPag(total){
   el.innerHTML=h;
 }
 
+function pdToggle(secId){
+  const b=document.getElementById('pds-'+secId);
+  const c=document.getElementById('pdc-'+secId);
+  if(!b||!c) return;
+  const open=b.style.display!=='none';
+  b.style.display=open?'none':'';
+  c.style.transform=open?'rotate(-90deg)':'';
+}
 function viewPatient(id){
-  /* FIX-PAT-NAME-V1 (บั๊ก A): lexical allPatients กับ window.allPatients diverge ได้ (face flow เซ็ตแค่ window) → ค้น 2 แหล่ง เลือก record ที่มีชื่อจริงก่อน → detail ไม่โชว์ "—" ทั้งที่ list มีชื่อ */
+  /* FIX-PAT-NAME-V1 */
   const _pool=[].concat(window.allPatients||[], allPatients||[]);
   const p=_pool.find(x=>(x.hn===id||x.id===id)&&(x.first_name||x.last_name||x.prefix))||_pool.find(x=>(x.hn===id||x.id===id));
   if(!p) return;
   const name=`${p.prefix||''} ${p.first_name||''} ${p.last_name||''}`.trim();
   const fullName=`${p.first_name||''} ${p.last_name||''}`.trim();
 
-  // ดึงประวัติการรักษาจาก allTreatments (ถ้ามี) แสดง 5 ล่าสุดก่อน
-  const patTreatments = (window.allTreatments||[]).filter(t=>t.patient_id===id).sort((a,b)=>dateToISO(b.date).localeCompare(dateToISO(a.date)));
-  const show5 = patTreatments.slice(0,5);
-  const hasMore = patTreatments.length > 5;
+  const fv=(label,val,full=false,style='')=>`<div class="form-group"${full?' style="grid-column:1/-1;"':''}><label class="form-label" style="font-size:10.5px;color:#aaa;text-transform:uppercase;letter-spacing:.04em;">${label}</label><div style="padding:8px 11px;background:#fff;border:1px solid #ede8e0;border-radius:9px;font-size:13px;min-height:32px;${style}">${val||'—'}</div></div>`;
+  const secHead=(secId,icon,title,color,badge='',open=true)=>`<div onclick="pdToggle('${secId}')" style="display:flex;align-items:center;gap:8px;padding:9px 13px;cursor:pointer;background:${color};border-radius:10px 10px ${open?'0 0':'10px 10px'};transition:border-radius .2s;" onmouseenter="this.style.filter='brightness(.97)'" onmouseleave="this.style.filter=''">
+    <span style="font-size:14px;">${icon}</span>
+    <span style="flex:1;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;">${title}</span>
+    ${badge}
+    <i class="ti ti-chevron-up" id="pdc-${secId}" style="font-size:13px;color:rgba(0,0,0,.3);transition:transform .2s;${open?'':'transform:rotate(-90deg)'}"></i>
+  </div>`;
+  const secWrap=(secId,hdr,body,open=true)=>`<div style="border-radius:11px;overflow:hidden;margin-bottom:8px;border:1.5px solid rgba(0,0,0,.07);">
+    ${hdr}
+    <div id="pds-${secId}" style="padding:10px 13px;${open?'':'display:none'}">
+      ${body}
+    </div>
+  </div>`;
 
-  const field=(label,val,full=false)=>`<div class="form-group"${full?' style="grid-column:1/-1;"':''}><label class="form-label">${label}</label><div style="padding:9px 13px;background:#f9f6f0;border-radius:10px;font-size:13.5px;">${val||'—'}</div></div>`;
+  const s1=secWrap('s1',secHead('s1','👤','ข้อมูลพื้นฐาน','rgba(47,93,80,.07)'),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    ${fv('รหัสผู้ป่วย (HN)',`<span style="font-weight:700;color:var(--go);">${p.hn||'—'}</span>`)}
+    ${fv('ประเภทผู้ป่วย',badgePatientType(p.patient_type,p.hn||p.id))}
+    ${fv('ชื่อ-นามสกุล',name,true)}
+    ${fv('เลขบัตรประชาชน',p.id_card||'—')}
+    ${fv('เพศ',p.gender||'—')}
+    ${fv('วันเกิด',toThaiDisplay(p.dob))}
+    ${fv('อายุ',p.age?`<span style="font-weight:700;color:var(--g1);">${p.age} ปี</span>`:'—')}
+    ${fv('กรุ๊ปเลือด',p.blood_type||'—')}
+    ${fv('ธาตุประจำตัว',p.element||'—')}
+    ${fv('เบอร์โทรศัพท์',p.phone||'—')}
+    ${fv('อีเมล',p.email||'—')}
+    ${fv('เบอร์ฉุกเฉิน',p.emergency_contact||'—')}
+    ${fv('ที่อยู่',p.address||'—',true)}
+  </div>`,true);
 
-  function treatmentRows(rows){
-    if(!rows.length) return `<div style="text-align:center;padding:16px;color:#aaa;font-size:13px;">ยังไม่มีประวัติการรักษา</div>`;
-    return rows.map(t=>`
-      <div class="pat-history-row">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <span style="font-weight:600;color:var(--g1);">${t.type||'—'}</span>
-          <span style="font-size:11.5px;color:#aaa;">${toThaiDisplay(t.date)}</span>
-        </div>
-        <div style="font-size:12.5px;color:#555;">อาการ: ${t.symptoms||'—'}</div>
-        ${t.herbs_used?`<div style="font-size:12px;color:var(--g2);">💊 ยา: ${t.herbs_used}</div>`:''}
-        ${t.price?`<div style="font-size:12px;color:var(--go);font-weight:600;">${parseFloat(t.price).toLocaleString()} บาท</div>`:''}
-        ${t.result?`<div style="font-size:12px;color:#888;">ผลการรักษา: ${t.result}</div>`:''}
-      </div>`).join('');
-  }
+  const allergyBadge=p.allergy&&p.allergy!=='ไม่มี'?`<span style="font-size:10px;background:rgba(192,57,43,.12);color:#C0392B;padding:2px 8px;border-radius:7px;font-weight:700;">⚠️ แพ้ยา</span>`:'';
+  const s2=secWrap('s2',secHead('s2','🩺','สุขภาพและอาการ','rgba(192,57,43,.06)',allergyBadge),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    ${fv('โรคประจำตัว / อาการหลัก',p.chronic_disease||'—',true)}
+    ${fv('การแพ้ยา / สมุนไพร',p.allergy||'ไม่มี',true,p.allergy&&p.allergy!=='ไม่มี'?'background:#fff5f5;border-color:rgba(192,57,43,.2);color:#a93226;':'')}
+    ${fv('ความดันโลหิตล่าสุด',p.blood_pressure||'—')}
+    ${fv('ยาที่ทานประจำ',p.current_medications||'—')}
+  </div>`,true);
 
-  const histHTML=`
-    <div id="pat-hist-wrap">
-      ${treatmentRows(show5)}
-      ${hasMore?`<div style="text-align:center;margin-top:6px;">
-        <button class="btn btn-outline btn-sm" onclick="expandPatHistory('${id}')">ดูทั้งหมด ${patTreatments.length} ครั้ง ↓</button>
-      </div>`:''}
-    </div>`;
+  const s3=`<div style="border-radius:11px;overflow:hidden;margin-bottom:8px;border:1.5px solid rgba(200,169,107,.25);">
+    <div onclick="pdToggle('s3bm-${id}');bmPatToggle('${id}')" style="display:flex;align-items:center;gap:8px;padding:9px 13px;cursor:pointer;background:rgba(200,169,107,.08);" onmouseenter="this.style.filter='brightness(.97)'" onmouseleave="this.style.filter=''">
+      <span style="font-size:14px;"><i class="ti ti-body-scan"></i></span>
+      <span style="flex:1;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#9a6f1c;">แผนที่จุดเจ็บปวด</span>
+      <span id="bm-toggle-hint-${id}" style="font-size:10.5px;color:#aaa;">(คลิกเพื่อดู/แก้ไข)</span>
+      <i class="ti ti-chevron-down" id="pdc-s3bm-${id}" style="font-size:13px;color:rgba(0,0,0,.3);transition:transform .2s;transform:rotate(-90deg)"></i>
+    </div>
+    <div id="pds-s3bm-${id}" style="padding:10px 13px;display:none;">
+      <div id="patview-bodymap-wrap-${id}"></div>
+    </div>
+  </div>`;
 
-  openModal(`👤 ${fullName}`,`
-    <div style="max-width:600px;">
-      <!-- ส่วนที่ 1: ข้อมูลพื้นฐาน -->
-      <div class="pat-detail-section">
-        <div class="pat-detail-section-title">📋 ข้อมูลพื้นฐาน</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          ${field('รหัสผู้ป่วย (HN)',`<span style="font-weight:700;color:var(--go);">${p.hn||'—'}</span>`)}
-          ${field('ประเภท',badgePatientType(p.patient_type,p.hn||p.id))}
-          ${field('ชื่อ-นามสกุล',name)}
-          ${field('อายุ / เพศ',`${p.age||'—'} ปี / ${p.gender||'—'}`)}
-          ${field('วันเกิด',toThaiDisplay(p.dob))}
-          ${field('กรุ๊ปเลือด / ธาตุ',`${p.blood_type||'—'} / ${p.element||'—'}`)}
-          ${field('เบอร์โทรศัพท์',p.phone)}
-          ${field('อีเมล',p.email)}
-          ${p.emergency_contact?field('ผู้ติดต่อฉุกเฉิน',p.emergency_contact):''}
-          ${p.address?field('ที่อยู่',p.address,true):''}
-        </div>
-      </div>
-      <!-- Body Map ผู้ป่วย (FIX-BM-LAZY-V1: พับไว้ก่อน กดค่อยโหลด+วาด) -->
-      <div class="pat-detail-section">
-        <div class="pat-detail-section-title" onclick="bmPatToggle('${id}')" style="cursor:pointer;"><i class="ti ti-body-scan"></i> แผนที่จุดเจ็บปวด <span id="bm-toggle-hint-${id}" style="font-size:11px;color:#aaa;font-weight:400;">(คลิกเพื่อดู/แก้ไข)</span></div>
-        <div id="patview-bodymap-wrap-${id}"></div>
-      </div>
-      <!-- ส่วนที่ 2: ข้อมูลอาการ -->
-      <div class="pat-detail-section">
-        <div class="pat-detail-section-title">🩺 ข้อมูลอาการและสุขภาพ</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          ${field('โรคประจำตัว / อาการหลัก',p.chronic_disease,true)}
-          <div class="form-group" style="grid-column:1/-1;"><label class="form-label">การแพ้ยา / สมุนไพร</label><div style="padding:9px 13px;background:#fff0f0;border-radius:10px;font-size:13.5px;border:1px solid rgba(192,57,43,.15);">${p.allergy||'ไม่มี'}</div></div>
-          ${p.blood_pressure?field('ความดันโลหิตล่าสุด',p.blood_pressure):''}
-          ${p.current_medications?field('ยาที่ทานประจำ',p.current_medications):''}
-        </div>
-      </div>
-      <!-- ส่วนที่ 3: ข้อมูลการรักษา -->
-      <div class="pat-detail-section">
-        <div class="pat-detail-section-title" onclick="loadPatHistorySection('${id}')">💊 ข้อมูลการรักษา / ยา <span style="font-size:11px;color:#aaa;">(คลิกเพื่อโหลด)</span></div>
-        <div id="pat-treat-section-${id}" style="font-size:13px;color:#aaa;padding:8px 0;">คลิกหัวข้อเพื่อโหลดข้อมูล</div>
-      </div>
-      <!-- ส่วนที่ 4 & 5: ประวัติ -->
-      <div class="pat-detail-section">
-        <div class="pat-detail-section-title" onclick="loadPatHistorySection('${id}')">🗒️ ประวัติเข้ารับการรักษา <span id="pat-hist-count-${id}" style="font-size:11px;color:#aaa;"></span></div>
-        <div id="pat-hist-section-${id}" style="font-size:13px;color:#aaa;padding:8px 0;">คลิกหัวข้อเพื่อโหลดข้อมูล</div>
-      </div>
-      <div class="pat-detail-section">
-        <div class="pat-detail-section-title" style="cursor:default;"><span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${faceVec(15)}</span>ข้อมูลใบหน้า</span>${hasFaceData(p)?'<span style="font-size:11px;background:rgba(47,93,80,.1);color:#2F5D50;padding:2px 10px;border-radius:10px;margin-left:8px;">✅ บันทึกแล้ว</span>':'<span style="font-size:11px;background:rgba(192,57,43,.08);color:#C0392B;padding:2px 10px;border-radius:10px;margin-left:8px;">ยังไม่มี</span>'}</div>
-        <div style="font-size:12px;color:#888;padding:4px 0;">${hasFaceData(p)?'บันทึกข้อมูลใบหน้าแล้ว — กด "แก้ไขใบหน้า" ในปุ่มด้านล่าง':'กด "+ เพิ่มใบหน้า" ด้านล่างเพื่อบันทึกใบหน้า'}</div>
-      </div>
-      ${(p.surgery_history||p.accident_history)?`
-      <div class="pat-detail-section">
-        <div class="pat-detail-section-title">📝 ประวัติอื่นๆ</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          ${p.surgery_history?field('ประวัติการผ่าตัด',p.surgery_history):''}
-          ${p.accident_history?field('ประวัติอุบัติเหตุ',p.accident_history):''}
-        </div>
-      </div>`:''}
-    </div>`,
+  const s4=`<div style="border-radius:11px;overflow:hidden;margin-bottom:8px;border:1.5px solid rgba(47,93,80,.15);">
+    <div onclick="pdToggle('s4hist-${id}');if(document.getElementById('pds-s4hist-${id}').style.display!=='none')loadPatHistorySection('${id}')" style="display:flex;align-items:center;gap:8px;padding:9px 13px;cursor:pointer;background:rgba(47,93,80,.07);" onmouseenter="this.style.filter='brightness(.97)'" onmouseleave="this.style.filter=''">
+      <span style="font-size:14px;">📋</span>
+      <span style="flex:1;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#2F5D50;">ประวัติการรักษา</span>
+      <span id="pat-hist-count-${id}" style="font-size:11px;background:rgba(47,93,80,.12);color:#2F5D50;padding:2px 9px;border-radius:8px;font-weight:600;"></span>
+      <i class="ti ti-chevron-down" id="pdc-s4hist-${id}" style="font-size:13px;color:rgba(0,0,0,.3);transition:transform .2s;transform:rotate(-90deg)"></i>
+    </div>
+    <div id="pds-s4hist-${id}" style="padding:10px 13px;display:none;">
+      <div id="pat-treat-section-${id}" style="margin-bottom:10px;"></div>
+      <div id="pat-hist-section-${id}" style="font-size:13px;color:#aaa;">คลิกหัวข้อเพื่อโหลดข้อมูล</div>
+    </div>
+  </div>`;
+
+  const s5=secWrap('s5other',secHead('s5other','📝','ประวัติอื่นๆ','rgba(41,128,185,.06)'),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    ${fv('ประวัติการผ่าตัด',p.surgery_history||'—')}
+    ${fv('ประวัติอุบัติเหตุ',p.accident_history||'—')}
+    ${fv('บันทึกอื่นๆ',p.notes||'—',true)}
+  </div>`,false);
+
+  const s6=`<div style="border-radius:11px;margin-bottom:8px;border:1.5px solid #e8e3db;background:#fafaf8;padding:9px 13px;display:flex;align-items:center;gap:8px;">
+    <span style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#2F5D50,#5F8D4E);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${faceVec(14)}</span>
+    <span style="flex:1;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#666;">ข้อมูลใบหน้า</span>
+    ${hasFaceData(p)?'<span style="font-size:11px;background:rgba(47,93,80,.1);color:#2F5D50;padding:2px 10px;border-radius:8px;font-weight:600;">✅ บันทึกแล้ว</span>':'<span style="font-size:11px;background:rgba(192,57,43,.08);color:#C0392B;padding:2px 10px;border-radius:8px;">ยังไม่มี</span>'}
+  </div>`;
+
+  openModal(`👤 ${fullName}`,`<div style="max-width:620px;">${s1}${s2}${s3}${s4}${s5}${s6}</div>`,
     `<button class="btn btn-outline" onclick="closeModal()" style="margin-right:auto;">ปิด</button>
      <button class="btn btn-outline" onclick="closeModal();(function(){var _hn='${id}';var _pts=window.allPatients||[];var _pt=_pts.find(function(x){return x.hn===_hn;});var _m=_pt&&hasFaceData(_pt)?'edit':'save';openFaceAdvanced(_m,_hn);})()" style="border-color:rgba(200,169,107,.7);color:#7a5e23;background:linear-gradient(135deg,rgba(200,169,107,.16),rgba(200,169,107,.09));gap:6px;"><i class="ti ti-face-id" style="color:#b8923f;"></i>${hasFaceData(p) ? 'แก้ไขใบหน้า' : '+ เพิ่มใบหน้า'}</button>
      <button class="btn btn-outline" onclick="closeMedCert();(async()=>openMedCert(\'${id}\'))();" style="border-color:var(--g1);color:var(--g1);gap:6px;"><i class="ti ti-certificate"></i>ออกใบรับรองแพทย์</button>
      <button class="btn btn-green" onclick="closeModal();goRegisterWithPatient('${id}')"><i class="ti ti-clipboard-list"></i>ลงทะเบียน</button>
      <button class="btn-edit" onclick="closeModal();openEditPatient('${id}')"><i class="ti ti-pencil"></i>แก้ไข</button>`
   );
-  // FIX-BM-LAZY-V1: ไม่ auto-load แล้ว — body map โหลด+วาดตอนกดหัวข้อ (bmPatToggle) เท่านั้น
+  // FIX-BM-LAZY-V1: ไม่ auto-load แล้ว
 }
 
 async function loadPatHistorySection(patId){
@@ -5436,40 +5434,56 @@ function vvApplyVoiceUI(){var on=vvVoiceOn();var b=document.getElementById('togg
 /* ===== VOICE-VITALS END ===== */
 function openEditPatient(id){
   const p=allPatients.find(x=>(x.hn===id||x.id===id)); if(!p) return;
-  const sel=(name,val,opts)=>`<select class="form-select" name="${name}">${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select>`;
+  const sel=(nm,val,opts)=>`<select class="form-select" name="${nm}">${opts.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select>`;
+  const sec=(title,color)=>`<div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${color};border-bottom:1.5px solid rgba(0,0,0,.07);padding-bottom:5px;margin-top:6px;grid-column:1/-1;">${title}</div>`;
   openModal('✏️ แก้ไขข้อมูลผู้ป่วย',`
-    <form id="fp-edit" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" onsubmit="submitEditPatient(event,'${id}')">
-      <div class="form-group"><label class="form-label">คำนำหน้า</label>${sel('prefix',p.prefix||'',['','นาย','นาง','นางสาว','เด็กชาย','เด็กหญิง'])}</div>
-      <div class="form-group"><label class="form-label">ชื่อ *</label><input class="form-input" name="first_name" value="${p.first_name||''}" required></div>
-      <div class="form-group"><label class="form-label">นามสกุล</label><input class="form-input" name="last_name" value="${p.last_name||''}"></div>
+    <form id="fp-edit" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" onsubmit="submitEditPatient(event,'${id}')">
+      ${sec('👤 ข้อมูลพื้นฐาน','#2F5D50')}
+      <div class="form-group" style="grid-template-columns:100px 1fr 1fr;display:grid;gap:8px;grid-column:1/-1;">
+        <div><label class="form-label">คำนำหน้า</label>${sel('prefix',p.prefix||'',[['','เลือก'],['นาย','นาย'],['นาง','นาง'],['นางสาว','นางสาว'],['เด็กชาย','เด็กชาย'],['เด็กหญิง','เด็กหญิง']])}</div>
+        <div><label class="form-label">ชื่อ *</label><input class="form-input" name="first_name" value="${p.first_name||''}" required></div>
+        <div><label class="form-label">นามสกุล</label><input class="form-input" name="last_name" value="${p.last_name||''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">เลขบัตรประชาชน</label><input class="form-input" name="id_card" value="${p.id_card||''}" placeholder="1-XXXX-XXXXX-XX-X" maxlength="17"></div>
+      <div class="form-group"><label class="form-label">เพศ</label>${sel('gender',p.gender||'',[['','เลือก'],['ชาย','ชาย'],['หญิง','หญิง'],['อื่นๆ','อื่นๆ']])}</div>
+      <div class="form-group"><label class="form-label">วันเกิด</label>
+        <div class="dp-wrap"><input type="text" id="ep-dob-disp" class="form-input dp-input" placeholder="วว/ดด/ปปปป" readonly><input type="hidden" id="ep-dob" name="dob" value="${p.dob||''}"></div></div>
+      <div class="form-group"><label class="form-label">กรุ๊ปเลือด</label>${sel('blood_type',p.blood_type||'',[['','ไม่ทราบ'],['A','A'],['B','B'],['AB','AB'],['O','O']])}</div>
+      <div class="form-group"><label class="form-label">อายุ</label><input class="form-input" name="age" type="number" value="${p.age||''}" placeholder="ปี"></div>
+      <div class="form-group"><label class="form-label">ประเภทผู้ป่วย</label>${sel('patient_type',p.patient_type||'new',[['new','ผู้ป่วยใหม่'],['regular','ผู้ป่วยประจำ'],['vip','VIP']])}</div>
       <div class="form-group"><label class="form-label">เบอร์โทรศัพท์</label><input class="form-input" name="phone" value="${p.phone||''}"></div>
-      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" name="email" value="${p.email||''}"></div>
-      <div class="form-group"><label class="form-label">ธาตุประจำตัว</label>${sel('element',p.element||'',['','ดิน','น้ำ','ลม','ไฟ'])}</div>
-      <div class="form-group"><label class="form-label">ประเภทผู้ป่วย</label>
-        <select class="form-select" name="patient_type">
-          <option value="new" ${p.patient_type==='new'?'selected':''}>ผู้ป่วยใหม่</option>
-          <option value="regular" ${p.patient_type==='regular'?'selected':''}>ผู้ป่วยประจำ</option>
-          <option value="vip" ${p.patient_type==='vip'?'selected':''}>VIP</option>
-        </select></div>
-      <div class="form-group"><label class="form-label">อายุ</label><input class="form-input" name="age" type="number" value="${p.age||''}"></div>
-      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">โรคประจำตัว</label><textarea class="form-textarea" name="chronic_disease">${p.chronic_disease||''}</textarea></div>
-      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">การแพ้ยา</label><textarea class="form-textarea" name="allergy" style="min-height:50px;">${p.allergy||''}</textarea></div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" name="email" value="${p.email||''}"></div>
+      <div class="form-group"><label class="form-label">เบอร์ฉุกเฉิน</label><input class="form-input" name="emergency_contact" value="${p.emergency_contact||''}" placeholder="ชื่อ — เบอร์โทร"></div>
+      <div class="form-group"><label class="form-label">ธาตุประจำตัว</label>${sel('element',p.element||'',[['','ไม่ระบุ'],['ดิน','ดิน'],['น้ำ','น้ำ'],['ลม','ลม'],['ไฟ','ไฟ']])}</div>
+      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">ที่อยู่</label><input class="form-input" name="address" value="${p.address||''}" placeholder="ที่อยู่"></div>
+      ${sec('🩺 สุขภาพและอาการ','#C0392B')}
+      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">โรคประจำตัว / อาการหลัก</label><textarea class="form-textarea" name="chronic_disease" style="min-height:60px;">${p.chronic_disease||''}</textarea></div>
+      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">การแพ้ยา / สมุนไพร</label><textarea class="form-textarea" name="allergy" style="min-height:50px;background:#fff8f8;">${p.allergy||''}</textarea></div>
+      <div class="form-group"><label class="form-label">ความดันโลหิต</label><input class="form-input" name="blood_pressure" value="${p.blood_pressure||''}" placeholder="120/80 mmHg"></div>
+      <div class="form-group"><label class="form-label">ยาที่ทานประจำ</label><input class="form-input" name="current_medications" value="${p.current_medications||''}" placeholder="ชื่อยา..."></div>
+      ${sec('📝 ประวัติอื่นๆ','#2980b9')}
+      <div class="form-group"><label class="form-label">ประวัติการผ่าตัด</label><textarea class="form-textarea" name="surgery_history" style="min-height:55px;">${p.surgery_history||''}</textarea></div>
+      <div class="form-group"><label class="form-label">ประวัติอุบัติเหตุ</label><textarea class="form-textarea" name="accident_history" style="min-height:55px;">${p.accident_history||''}</textarea></div>
+      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">บันทึกอื่นๆ</label><textarea class="form-textarea" name="notes" style="min-height:55px;">${p.notes||''}</textarea></div>
     </form>`,
     `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn btn-primary" onclick="document.getElementById('fp-edit').requestSubmit()"><i class="ti ti-device-floppy"></i>บันทึก</button>`
+     <button class="btn btn-primary" id="ep-save-btn" onclick="document.getElementById('fp-edit').requestSubmit()"><i class="ti ti-device-floppy"></i>บันทึก</button>`
   );
+  setTimeout(()=>{ dpInit('ep-dob-disp','ep-dob', p.dob||todayISO()); },60);
 }
 
 async function submitEditPatient(e, id){
   e.preventDefault();
+  const btn=document.getElementById('ep-save-btn');
+  const _done=showLoading(btn);
   const fd=new FormData(e.target), data={id};
   fd.forEach((v,k)=>{ data[k]=v; });
   data.updated_at=todayISO();
   try {
     await callApi('patients','update',data);
-    closeModal(); showToast('✅ อัปเดตข้อมูลผู้ป่วยสำเร็จ');
+    _done(); closeModal(); showToast('✅ อัปเดตข้อมูลผู้ป่วยสำเร็จ');
     loadPatients();
-  } catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
+  } catch(err){ _done(); showToast('เกิดข้อผิดพลาด: '+err.message,'error'); }
 }
 
 function deletePatient(id, name){
@@ -8990,6 +9004,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v171', date:'10/06/2569', items:['feat(v212): patient detail redesign - color sections+chevron+all fields, edit form ครบ 20 fields'] },
+  { ver:'v212', date:'10/06/2569', items:['feat(ข้อมูลคนไข้): redesign sections highlight+collapse+all fields, edit form ครบ fields'] },
   { ver:'v170', date:'09/06/2569', items:['fix(v212): update PAT + credential.helper bypass'] },
   { ver:'v169', date:'09/06/2569', items:['fix(v212): rename ประเภทการรักษา + fix credential.helper'] },
   { ver:'v168', date:'09/06/2569', items:['fix(v212): rename หัตถการ/วิธีรักษา to ประเภทการรักษา ให้สอดคล้องกัน'] },
