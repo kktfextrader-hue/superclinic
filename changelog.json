@@ -1,465 +1,23 @@
 [
   {
-    "ver": "v208",
-    "date": "06/06/2569",
-    "items": [
-      "ui: เปลี่ยนหัวข้อหน้าเป็น \"บันทึกหลังการรักษา\" ให้ตรงกับเมนูซ้าย (เดิม \"ประวัติการรักษา\")"
-    ]
-  },
-  {
-    "ver": "v207",
-    "date": "06/06/2569",
-    "items": [
-      "feat(รักษา): การ์ดผู้ป่วยแสดงสัญญาณชีพล่าสุด 4 ค่า (ความดัน/น้ำหนัก/ส่วนสูง/ชีพจร) · ประวัติการรักษาเป็น collapse + lazy load (กดหัวข้อเพื่อขยาย+โหลด)"
-    ]
-  },
-  {
-    "ver": "v206",
-    "date": "06/06/2569",
-    "items": [
-      "fix(สถานะ): ซิงค์ allAppts ↔ window.allAppts — ปฏิทิน/แดชบอร์ด/นัดวันนี้ เห็นนัดล่าสุดทันที ไม่ค้าง"
-    ]
-  },
-  {
-    "ver": "v205",
-    "date": "06/06/2569",
-    "items": [
-      "feat(เสียง+รักษา): ไมค์พูดที่ช่องอาการป่วย (สถานะ \"กดอีกครั้งเพื่อจบ\") · ผู้ป่วยที่ลงทะเบียนแล้วโผล่ใน \"นัดวันนี้\" หน้าบันทึกหลังรักษา · แสดงความดัน/น้ำหนัก/ส่วนสูงล่าสุดบนการ์ดผู้ป่วย"
-    ]
-  },
-  {
-    "ver": "v204",
-    "date": "06/06/2569",
-    "items": [
-      "ui(เสียง): เอากล่องสัญญาณชีพ (พูดได้) ออกจากหน้าแก้ไขข้อมูลผู้ป่วย — vitals เป็นค่ารายครั้ง ใช้ที่หน้าลงทะเบียน/บันทึกรักษาแทน"
-    ]
-  },
-  {
-    "ver": "v203",
-    "date": "06/06/2569",
-    "items": [
-      "db(เสียง): ส่วนสูงที่พูด/กรอกถูกบันทึกจริง (เข้า note) + learning dict ค้นหาด้วยเสียงย้ายขึ้น Google Sheet ต่อคลินิก (แชร์หลายเครื่อง)"
-    ]
-  },
-  {
-    "ver": "v202",
-    "date": "06/06/2569",
-    "items": [
-      "feat(เสียง): ค้นหาผู้ป่วยด้วยเสียงหน้าลงทะเบียน — พูดชื่อ-สกุล/เบอร์โทร ตรงเลือกให้เลย ไม่ตรงโชว์ใกล้เคียง + จำการออกเสียง (learning)"
-    ]
-  },
-  {
-    "ver": "v201",
-    "date": "06/06/2569",
-    "items": [
-      "feat(เสียง): ตอนกดไมค์มีวงกลมแดงกระพริบ (pulse ring) + ข้อความ 🔴 กำลังฟัง บอกว่ากำลังบันทึกเสียง"
-    ]
-  },
-  {
-    "ver": "v200",
-    "date": "06/06/2569",
-    "items": [
-      "feat(เสียง): เปลี่ยน label เป็น \"บันทึกด้วยเสียง\" + เพิ่มไมค์พูดท้ายช่อง \"หมายเหตุเพิ่มเติม\" (dictate ลงข้อความตรงๆ) · fix การซ่อนกล่องเสียงไม่ให้กระทบ layout"
-    ]
-  },
-  {
-    "ver": "v199",
-    "date": "06/06/2569",
-    "items": [
-      "feat(เสียง): เพิ่มปุ่ม \"✓ เสร็จ\" หยุดฟังในกรอบสัญญาณชีพ (ชัดกว่ากดไมค์ซ้ำ) — โผล่ตอนกำลังฟัง"
-    ]
-  },
-  {
-    "ver": "v198",
-    "date": "05/06/2569",
-    "items": [
-      "feat(เสียง): พูดกรอกสัญญาณชีพ (น้ำหนัก/ส่วนสูง/ความดัน) — กรอบ scoped ไมค์ฟังเฉพาะกรอบ · หน้าลงทะเบียน + แก้ไขผู้ป่วย + switch ในตั้งค่า · UI only"
-    ]
-  },
-  {
-    "ver": "v197",
-    "date": "05/06/2569",
-    "items": [
-      "fix(จดจำใบหน้า): เข้มเกณฑ์ match — รับเฉพาะความเหมือน >= 55% (dist<=0.45) · ต่ำกว่านั้นขึ้น \"ไม่พบ\" · กัน false match ตอนไม่มีคน/หน้าไม่ชัด"
-    ]
-  },
-  {
-    "ver": "v196",
-    "date": "05/06/2569",
-    "items": [
-      "feat(ทดลอง): โหมด IP Camera ตรงในตั้งค่า — toggle + ช่อง URL + ปุ่มทดสอบแสดงภาพ (MJPEG/snapshot) บอกผลได้/ไม่ได้ทันที · RTSP ยังต้องใช้ OBS"
-    ]
-  },
-  {
-    "ver": "v195",
-    "date": "05/06/2569",
-    "items": [
-      "feat(จดจำใบหน้า): เลือกกล้องสแกนใบหน้าในตั้งค่า (dropdown) — รองรับ IP cam ผ่าน OBS Virtual Camera · จำค่าใน localStorage + ปุ่มค้นหากล้อง"
-    ]
-  },
-  {
-    "ver": "v194",
-    "date": "05/06/2569",
-    "items": [
-      "fix(ใบรับรองแพทย์): เพิ่มฟังก์ชัน mcPrint() ที่หายไป — ปุ่มพิมพ์เคย ReferenceError · เปิดหน้าต่างพิมพ์ A4 (Sarabun) + นับ doc cap"
-    ]
-  },
-  {
-    "ver": "v193",
-    "date": "05/06/2569",
-    "items": [
-      "ui(คลังยา): ไอคอนยามีสีตามหน่วย — เม็ด=ฟ้า/แคปซูล=ส้ม/กระปุก=ม่วง/ซอง=เขียวน้ำทะเล/ขวด=เขียว + พื้นจางสีเดียวกัน"
-    ]
-  },
-  {
-    "ver": "v192",
-    "date": "05/06/2569",
-    "items": [
-      "ui(คลังยา): ไอคอนยาเปลี่ยนตามหน่วย — เม็ด/แคปซูล/กระปุก/ซอง/ขวด (อื่นๆ=ใบไม้) แทนขวดยาอย่างเดียว"
-    ]
-  },
-  {
-    "ver": "v191",
-    "date": "05/06/2569",
-    "items": [
-      "feat(plan): cap แพ็กฟรี — ผู้ป่วย 50 / เอกสาร 100 (นับ receipt+label) · ชนเพดาน→modal อัปเกรด (นุ่ม) · config-gated default pro (ตั้ง localStorage plan_tier=free เพื่อทดสอบ) — LF-C/LF-D บางส่วน"
-    ]
-  },
-  {
-    "ver": "v190",
-    "date": "05/06/2569",
-    "items": [
-      "ui(คลังยา): ไอคอนขวดยา vector (SVG) นำหน้ารายการยา — รายการยา/autocomplete/ตารางสต็อก แทน emoji/ช่องว่าง (HERB-ICON)"
-    ]
-  },
-  {
-    "ver": "v189",
-    "date": "05/06/2569",
-    "items": [
-      "feat(Pro): ปุ่ม \"ซิงค์\" บน topbar — กดดึงข้อมูลหน้าปัจจุบันสดจากเครื่องอื่น (manual pull) · กำลังซิงค์ไอคอนหมุน+กันกดซ้ำ · ไม่กระทบของเดิม"
-    ]
-  },
-  {
-    "ver": "v188",
-    "date": "05/06/2569",
-    "items": [
-      "ui(ตั้งค่า): ย้าย \"เวอร์ชันระบบจดจำใบหน้า\" ขึ้นไปอยู่ใต้ \"ระบบจดจำใบหน้า\" — จัดกลุ่มฟังก์ชันที่เกี่ยวข้องกัน"
-    ]
-  },
-  {
-    "ver": "v187",
-    "date": "05/06/2569",
-    "items": [
-      "exp(ทดลอง): ซิงค์สดหลายอุปกรณ์ (Pro) — poll list หน้าปัจจุบันทุก 12 วิ เห็นข้อมูลจากเครื่องอื่น · toggle ในตั้งค่า default OFF · frontend-only reversible (RT-SYNC-EXPERIMENT)"
-    ]
-  },
-  {
-    "ver": "v186",
-    "date": "04/06/2569",
-    "items": [
-      "perf: callApi cache (อ่าน list/get แคช 60 วิ) + dedupe call พร้อมกัน + ล้าง cache เมื่อเขียน — ลดภาระ backend (Stage 1 scaling)"
-    ]
-  },
-  {
-    "ver": "v185",
-    "date": "04/06/2569",
-    "items": [
-      "ui(การเงิน): กวาด ฿ ออกทุกที่ → ต่อท้าย \"บาท\" (ราคา/ใบเสร็จ/QR/คลังยา/รายงาน) แบบ X บาท"
-    ]
-  },
-  {
-    "ver": "v184",
-    "date": "04/06/2569",
-    "items": [
-      "ui(การเงิน): เอา ฿ หน้าเงินออก → ต่อท้าย \"บาท\" (บรีฟ + การ์ดรายรับ) · เอาปุ่ม \"จัดการ\" ออกจากการ์ดรายงานประจำวัน"
-    ]
-  },
-  {
-    "ver": "v183",
-    "date": "04/06/2569",
-    "items": [
-      "feat(ภาพรวม): การ์ดสถิติที่ 4 \"ความพึงพอใจ\" → \"รายรับวันนี้\" (income วันนี้)"
-    ]
-  },
-  {
-    "ver": "v182",
-    "date": "04/06/2569",
-    "items": [
-      "feat(สต็อก): ตั้งค่าแจ้งเตือนต่อยา (โมดอลปรับสต็อก) — ใช้ค่าเริ่มต้นตามหน่วย / เตือนเมื่อ<N / ไม่แจ้งเตือน · เก็บใน min_quantity · จำนวน optional + เพิ่มช่องราคาทุนใต้จำนวน"
-    ]
-  },
-  {
-    "ver": "v181",
-    "date": "04/06/2569",
-    "items": [
-      "style(face): ปุ่มค้นหาด้วยใบหน้าทุกที่ ใส่ไอคอนหน้ายิ้ม (faceVec SVG) แบบ avatar หน้าแรก"
-    ]
-  },
-  {
-    "ver": "v180",
-    "date": "04/06/2569",
-    "items": [
-      "feat(สต็อก): สถานะยาตามหน่วย — 0=หมด · ใกล้หมด เม็ด/แคปซูล≤200, ขวด≤5, ซอง≤10 (แทน min_quantity) · ใช้ทั้ง list/สต็อก/stat/แจ้งเตือน/บรีฟ"
-    ]
-  },
-  {
-    "ver": "v179",
-    "date": "04/06/2569",
-    "items": [
-      "fix(แจ้งเตือน): toast ยาใกล้หมด แจ้งเฉพาะยาขายบ่อยที่เริ่มขาด (ไม่เด้งทุกตัวที่ stock ต่ำ) + เด้งครั้งเดียวต่อ session"
-    ]
-  },
-  {
-    "ver": "v178",
-    "date": "04/06/2569",
-    "items": [
-      "feat(ภาพรวม): รายงานประจำวันใหม่ — การเงินสุทธิ เมื่อวาน/สัปดาห์/เดือน + ผู้ป่วยเมื่อวาน(มารับบริการ) + ยาขายดีที่เริ่มขาด + ฟีดความเคลื่อนไหววันนี้"
-    ]
-  },
-  {
-    "ver": "v177",
-    "date": "04/06/2569",
-    "items": [
-      "ui: label \"ผลการรักษาและคำแนะนำ\" → \"บันทึกการรักษาครั้งนี้\" · QR รับเงินเพิ่มหมายเหตุ \"เกิน 3 นาทีเช็ควิธีอื่น\" + ขยาย poll เป็น 3 นาที"
-    ]
-  },
-  {
-    "ver": "v176",
-    "date": "04/06/2569",
-    "items": [
-      "feat(PAYVERIFY): match ยอดอีเมลแบบ OR (500 หรือ 500.00) · เลขล้วนใช้ boundary กันชนเลขอื่น (Code.gs @14)"
-    ]
-  },
-  {
-    "ver": "v175",
-    "date": "04/06/2569",
-    "items": [
-      "fix(PAYVERIFY): จับยอดอีเมลเฉพาะรูปแบบมีทศนิยม (500.00/1,500.00) กัน false positive (Code.gs @13)"
-    ]
-  },
-  {
-    "ver": "v174",
-    "date": "04/06/2569",
-    "items": [
-      "feat(รับชำระเงิน): Gmail auto-verify ที่ superclinic ด้วย — ผ่าน Apps Script GmailApp (action checkpayment) อ่านอีเมลเจ้าของสคริปต์ จับยอด+ใน 10 นาที · poll 15 วิ/2.5 นาที"
-    ]
-  },
-  {
-    "ver": "v173",
-    "date": "04/06/2569",
-    "items": [
-      "feat(รับชำระเงิน): log บันทึก source (topbar/หน้าบันทึกรักษา) + วิธียืนยัน (กดเอง) · (Gmail auto-verify เฉพาะ scproject)"
-    ]
-  },
-  {
-    "ver": "v172",
-    "date": "04/06/2569",
-    "items": [
-      "feat(การเงิน): จุดรับชำระเงิน — ปุ่มบน topbar + ในฟอร์มบันทึกรักษา (ผูกชื่อผู้ป่วย+prefill ยอด) · เลือกเงินสด/QR → ชำระแล้ว → เข้ารายได้ → ✅ ปิดเอง 3 วิ"
-    ]
-  },
-  {
-    "ver": "v171",
-    "date": "04/06/2569",
-    "items": [
-      "feat(การเงิน): ปุ่ม \"แสดง QR รับเงิน\" — โชว์ QR PromptPay บนจอให้ลูกค้าสแกน (ไม่ต้องออกบิล) + กรอกยอด/เว้นว่างให้ลูกค้ากรอกเอง"
-    ]
-  },
-  {
-    "ver": "v170",
-    "date": "04/06/2569",
-    "items": [
-      "feat(การเงิน): ป๊อปอัพตั้งค่า PromptPay เพิ่มช่อง \"อีเมลรับแจ้งเตือนจากธนาคาร\" (เก็บ setting promptpay_verify_email สำหรับอ้างอิงตรวจสอบยอด)"
-    ]
-  },
-  {
-    "ver": "v169",
-    "date": "04/06/2569",
-    "items": [
-      "fix(ui): หน้าลงทะเบียน เปลี่ยน label \"อาการที่มา / ความต้องการ\" → \"อาการป่วยที่เป็นอยู่\""
-    ]
-  },
-  {
-    "ver": "v168",
-    "date": "04/06/2569",
-    "items": [
-      "feat(สมุนไพร): list ยาสำเร็จรูป&ตำรับ + สมุนไพรสด เรียงตาม stock มาก→น้อย (ของที่มีของขึ้นก่อน) + โชว์ 8 รายการแรก"
-    ]
-  },
-  {
-    "ver": "v167",
-    "date": "04/06/2569",
-    "items": [
-      "feat(บันทึกรักษา): นัดครั้งต่อไป เพิ่มปุ่ม \"สร้างนัด\" — ช่องวันที่/เวลา/ประเภท disable+จาง จนกว่าจะกด (กดแล้ววันที่เด้งเป็นวันนี้)"
-    ]
-  },
-  {
     "ver": "v166",
-    "date": "04/06/2569",
+    "date": "09/06/2569",
     "items": [
-      "feat(ui): พื้นหลังหลัก (.main) ลายดอก luxury แบบจาง + เพิ่มหน้าโหลด (splash) ลายดอก auto-fade ~2 วิ"
+      "update"
     ]
   },
   {
     "ver": "v165",
-    "date": "04/06/2569",
+    "date": "09/06/2569",
     "items": [
-      "feat(ประวัติรักษา): แต่ละแถวโชว์ 5 ช่องคงที่ (อาการ/วินิจฉัย/หัตถการ/ยาที่จ่าย/ผล-คำแนะนำ) ช่องว่าง=ไม่มีข้อมูล + เวลา/ราคา/ประเภทว่าง=ไม่ระบุ"
+      "feat(v211): ปุ่ม edit+delete ในประวัติการรักษา"
     ]
   },
   {
     "ver": "v164",
-    "date": "04/06/2569",
+    "date": "09/06/2569",
     "items": [
-      "feat(ประวัติรักษา): โซนประวัติในหน้าบันทึกรักษา + ช่องค้นหา (เฉพาะโซนนี้) + แบ่งหน้า 5 รายการ/หน้า"
-    ]
-  },
-  {
-    "ver": "v163",
-    "date": "04/06/2569",
-    "items": [
-      "fix(บันทึกรักษา): placeholder ผลการรักษา → \"บันทึกการรักษา\" · ปุ่มบันทึกจุดปวด = เซฟแผนที่จุดเจ็บลงข้อมูลคนไข้ (DB) ทันที"
-    ]
-  },
-  {
-    "ver": "v162",
-    "date": "04/06/2569",
-    "items": [
-      "fix(บันทึกรักษา): ปุ่มค้างหลังบันทึกสำเร็จ — submitTreatment ไม่เรียก _done() → เพิ่ม finally{_done()} ปลดล็อกปุ่ม"
-    ]
-  },
-  {
-    "ver": "v161",
-    "date": "04/06/2569",
-    "items": [
-      "fix(บันทึกรักษา): \"now is not defined\" ตอนบันทึกการรักษา (มีอาการ/ยา/นัด) → ปุ่มค้าง · นิยาม now ใน submitTreatment"
-    ]
-  },
-  {
-    "ver": "v160",
-    "date": "04/06/2569",
-    "items": [
-      "fix(ui): คอลัมน์รายชื่อผู้ป่วย เปลี่ยนจากแสดงธาตุ → แสดง อาการหลัก จริง + ตัดข้อความยาว"
-    ]
-  },
-  {
-    "ver": "v159",
-    "date": "04/06/2569",
-    "items": [
-      "feat(backup): banner คลิก → เลือก ดาวน์โหลด zip เข้ารหัส / ส่งเข้าอีเมล (ผ่าน Apps Script MailApp) · backend action emailbackup"
-    ]
-  },
-  {
-    "ver": "v158",
-    "date": "04/06/2569",
-    "items": [
-      "feat(ux): แสดง pill \"กำลังบันทึก...\" กลางบนจอ ระหว่างรอ save (เพิ่ม/แก้ไข/ลบ) ก่อนขึ้นผลสำเร็จ/ล้มเหลว"
-    ]
-  },
-  {
-    "ver": "v157",
-    "date": "04/06/2569",
-    "items": [
-      "feat(clinic-tools): การ์ดจัดการข้อมูลในหน้าตั้งค่า — 3 ปุ่ม (demo 20 คน bulk / ล้างข้อมูล+softbackup.zip / กู้คืน) + gate รหัส 2 รอบ (=รหัสการเงิน) + ตั้ง/เปลี่ยนรหัส + recovery escrow (RSA) · backend bulkcreate/cleardata (Code.gs v10)"
-    ]
-  },
-  {
-    "ver": "v156",
-    "date": "04/06/2569",
-    "items": [
-      "fix(ui): toast แจ้งผลเคยโผล่หลัง modal จางอ่านไม่ออก → ดัน z-index เหนือทุก popup"
-    ]
-  },
-  {
-    "ver": "v155",
-    "date": "04/06/2569",
-    "items": [
-      "fix(ui): icon หัวข้อ \"ข้อมูลใบหน้า\" ใส่ใบหน้าในวงกลมเขียว (มินิ-avatar) ให้ชัด เหมือน avatar คนไข้"
-    ]
-  },
-  {
-    "ver": "v154",
-    "date": "04/06/2569",
-    "items": [
-      "fix(bodymap): หน้าคนไข้ กดขยายแผนที่จุดเจ็บปวด → โชว์ map ทันที (เดิมต้องกดปุ่ม ▼ ขยาย ซ้ำอีกที)"
-    ]
-  },
-  {
-    "ver": "v153",
-    "date": "04/06/2569",
-    "items": [
-      "feat(BACKUP-V1): เตือน backup ใน topbar (banner 6 สถานะตามอายุ backup) + คลิกดาวน์โหลดสำรองข้อมูลทุกตาราง (.json) — standalone client-side"
-    ]
-  },
-  {
-    "ver": "v152",
-    "date": "04/06/2569",
-    "items": [
-      "feat(ui): เปลี่ยนไอคอนใบหน้าจาก face-id (หน้ากาก) เป็น vector ใบหน้าเส้นเรียบ (ยิ้ม) — avatar คนไข้ (รายชื่อ+ค้นหา) + หัวข้อ \"ข้อมูลใบหน้า\""
-    ]
-  },
-  {
-    "ver": "v151",
-    "date": "04/06/2569",
-    "items": [
-      "fix(บั๊ก A): กดชื่อคนไข้แล้วชื่อไม่ขึ้น (เห็นแต่ HN+เบอร์) — viewPatient ค้น allPatients 2 แหล่ง (lexical/window) เลือกตัวมีชื่อ",
-      "feat(bodymap): แผนที่จุดเจ็บปวดในหน้าคนไข้ = lazy load พับไว้ก่อน กดค่อยโหลด+วาด"
-    ]
-  },
-  {
-    "ver": "v150",
-    "date": "04/06/2569",
-    "items": [
-      "fix(face-dd): ปุ่ม pulldown สแกนใบหน้า (patients) เมนูไม่มีสไตล์ — ROOT CAUSE .fsd-opt CSS ติดใน modal openAddAppt → ย้ายไป global head + เมนูโทนทอง (เหมือนที่แก้ scproject)"
-    ]
-  },
-  {
-    "ver": "v149",
-    "date": "04/06/2569",
-    "items": [
-      "chore: ลบ demo ส่วนที่เหลือ (reports charts + dashboard การรักษายอดนิยม) -> empty-state · MERGE-1a เสร็จสมบูรณ์ ไม่เหลือ demo เลข/ชื่อปลอมทุกหน้า · charts รอ wire real data (REPORTS-1)"
-    ]
-  },
-  {
-    "ver": "v148",
-    "date": "04/06/2569",
-    "items": [
-      "chore: ลบ demo ที่เหลือ (herbs/stock/reports stat + donut + ▲% trend ปลอม) -> placeholder ให้ load เติม · MERGE-1a ลบ demo เสร็จครบทุกหน้า"
-    ]
-  },
-  {
-    "ver": "v147",
-    "date": "04/06/2569",
-    "items": [
-      "chore: ลบ demo hardcode — dashboard (เลข/นัด Marvel) + patients (ตาราง/count 348) + finance (เลข/รายการ Marvel) -> placeholder ให้ loadXxx เติม real · ชื่อปลอมหมดแล้ว (MERGE-1a)"
-    ]
-  },
-  {
-    "ver": "v146",
-    "date": "04/06/2569",
-    "items": [
-      "style(face): ทำปุ่ม face ทุกปุ่มเป็นโทนทอง (ค้นหา×2 + dropdown + แก้ไข/เพิ่ม + ถ่ายรูป) — parity กับ scproject (MERGE-1)"
-    ]
-  },
-  {
-    "ver": "v145",
-    "date": "03/06/2569",
-    "items": [
-      "v145 UI ตั้งค่าพร้อมเพย์: เปลี่ยนเป็นปุ่มในกรอบ → เปิด popup ให้กรอก + ติ๊กถูก ✓ เมื่อตั้งค่าแล้ว (หน้าการเงิน)"
-    ]
-  },
-  {
-    "ver": "v144",
-    "date": "03/06/2569",
-    "items": [
-      "v144 ฟอร์มตั้งค่าพร้อมเพย์บนหน้าการเงิน (กรอกเบอร์มือถือ/เลขบัตร 13 หลัก → รับเงิน QR ในใบเสร็จ) — PAY-B"
-    ]
-  },
-  {
-    "ver": "v143",
-    "date": "03/06/2569",
-    "items": [
-      "v143 ระบบรับชำระเงิน: PromptPay QR + ยืนยันจ่าย (มือ/สลิป SlipOK) + ส่งใบเสร็จเข้าอีเมล (ในหน้าออกใบเสร็จ) + ตั้งค่าการชำระเงิน — PAY-B/m/s"
+      "feat(v211): ปุ่ม edit+delete ในประวัติการรักษา"
     ]
   },
   {
@@ -579,13 +137,6 @@
     "date": "01/06/2569",
     "items": [
       "update"
-    ]
-  },
-  {
-    "ver": "v126",
-    "date": "01/06/2569",
-    "items": [
-      "v126 timezone fix (Code.gs force plain text), เวลานัดเปลี่ยนเป็น dropdown 24h"
     ]
   },
   {
@@ -771,6 +322,146 @@
     ]
   },
   {
+    "ver": "v99",
+    "date": "31/05/2569",
+    "items": [
+      "v99 auto-open 52% with margin guard"
+    ]
+  },
+  {
+    "ver": "v98",
+    "date": "31/05/2569",
+    "items": [
+      "v98 read mode auto-search"
+    ]
+  },
+  {
+    "ver": "v97",
+    "date": "31/05/2569",
+    "items": [
+      "v94 camera first + no stop on search"
+    ]
+  },
+  {
+    "ver": "v96",
+    "date": "31/05/2569",
+    "items": [
+      "v94 camera first + no stop search"
+    ]
+  },
+  {
+    "ver": "v95",
+    "date": "31/05/2569",
+    "items": [
+      "v94 fix camera black + show camera first"
+    ]
+  },
+  {
+    "ver": "v94",
+    "date": "31/05/2569",
+    "items": [
+      "v94 fix camera black on search"
+    ]
+  },
+  {
+    "ver": "v93",
+    "date": "31/05/2569",
+    "items": [
+      "v93 keep camera on during face search"
+    ]
+  },
+  {
+    "ver": "v92",
+    "date": "31/05/2569",
+    "items": [
+      "v92 fix face model URL + search bug + revert avatar"
+    ]
+  },
+  {
+    "ver": "v91",
+    "date": "31/05/2569",
+    "items": [
+      "v90+v91 fix face search + revert avatar"
+    ]
+  },
+  {
+    "ver": "v90",
+    "date": "31/05/2569",
+    "items": [
+      "v89 face icon in avatar + scan fix"
+    ]
+  },
+  {
+    "ver": "v89",
+    "date": "30/05/2569",
+    "items": [
+      "v89 face icon replaces avatar in patient table"
+    ]
+  },
+  {
+    "ver": "v88",
+    "date": "30/05/2569",
+    "items": [
+      "v88 refresh patient view after face save"
+    ]
+  },
+  {
+    "ver": "v87",
+    "date": "30/05/2569",
+    "items": [
+      "v87 face save debug + success "
+    ]
+  },
+  {
+    "ver": "v86",
+    "date": "30/05/2569",
+    "items": [
+      "fix face save HN format bug"
+    ]
+  },
+  {
+    "ver": "v85",
+    "date": "30/05/2569",
+    "items": [
+      "fix face save hn"
+    ]
+  },
+  {
+    "ver": "v84",
+    "date": "30/05/2569",
+    "items": [
+      "face recognition UI improvements"
+    ]
+  },
+  {
+    "ver": "v83",
+    "date": "30/05/2569",
+    "items": [
+      "face recognition UI improvements"
+    ]
+  },
+  {
+    "ver": "v82",
+    "date": "30/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v81",
+    "date": "30/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v80",
+    "date": "30/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
     "ver": "v79",
     "date": "30/05/2569",
     "items": [
@@ -869,108 +560,153 @@
     ]
   },
   {
+    "ver": "v65",
+    "date": "30/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v64",
+    "date": "29/05/2569",
+    "items": [
+      "ลบ spectrum bar ออก"
+    ]
+  },
+  {
+    "ver": "v63",
+    "date": "29/05/2569",
+    "items": [
+      "update"
+    ]
+  },
+  {
+    "ver": "v62",
+    "date": "28/05/2569",
+    "items": [
+      "face modal spectrum bar + video margin"
+    ]
+  },
+  {
+    "ver": "v61",
+    "date": "28/05/2569",
+    "items": [
+      "face modal UI redesign - white text, status+save row, no strip"
+    ]
+  },
+  {
+    "ver": "v60",
+    "date": "28/05/2569",
+    "items": [
+      "fix face modal layout + ลบกรอบ bounding box"
+    ]
+  },
+  {
+    "ver": "v59",
+    "date": "28/05/2569",
+    "items": [
+      "fix face modal center popup inline style"
+    ]
+  },
+  {
+    "ver": "v58",
+    "date": "28/05/2569",
+    "items": [
+      "face modal popup กลางจอ + auto best-frame"
+    ]
+  },
+  {
+    "ver": "v57",
+    "date": "28/05/2569",
+    "items": [
+      "face modal popup กลางจอ + max-height",
+      "auto best-frame capture พร้อม thumbnail strip",
+      "ปุ่ม Reset Features ใน Settings"
+    ]
+  },
+  {
+    "ver": "v56",
+    "date": "28/05/2569",
+    "items": [
+      "face modal แสดงกลางจอ ไม่ล้นออกข้างล่าง",
+      "video max-height + scroll",
+      "initFeatures force-enable default"
+    ]
+  },
+  {
+    "ver": "v55",
+    "date": "28/05/2569",
+    "items": [
+      "fix feature toggle reset",
+      "face auto best-frame + preview strip"
+    ]
+  },
+  {
+    "ver": "v54",
+    "date": "28/05/2569",
+    "items": [
+      "fix face-api script src → gh CDN"
+    ]
+  },
+  {
     "ver": "v53",
     "date": "28/05/2569",
     "items": [
-      "update"
+      "fix face-api weights URL ใช้งานได้จริง",
+      "changelog modal ดูทั้งหมด",
+      "logo 160px",
+      "bodymap collapsible"
+    ]
+  },
+  {
+    "ver": "v52",
+    "date": "28/05/2569",
+    "items": [
+      "fix bodymap collapsible + raw-NL SyntaxError",
+      "sidebar changelog แสดง 3 รายการล่าสุด"
+    ]
+  },
+  {
+    "ver": "v51",
+    "date": "28/05/2569",
+    "items": [
+      "fix SyntaxError openAddUserModal",
+      "medcert logo 160px",
+      "fix ESC/POS rawNL"
+    ]
+  },
+  {
+    "ver": "v50",
+    "date": "28/05/2569",
+    "items": [
+      "logo คลินิกในใบรับรองแพทย์",
+      "changelog.json แยกไฟล์",
+      "sidebar ดู 3 รายการล่าสุด + modal ดูทั้งหมด"
+    ]
+  },
+  {
+    "ver": "v49",
+    "date": "28/05/2569",
+    "items": [
+      "fix bodymap collapsible ย่อ/ขยายได้",
+      "fix SyntaxError ESC/POS rawNL"
+    ]
+  },
+  {
+    "ver": "v48",
+    "date": "28/05/2569",
+    "items": [
+      "fix SyntaxError openAddUserModal",
+      "medcert print Windows Driver",
+      "body map collapsible"
     ]
   },
   {
     "ver": "v42",
     "date": "28/05/2569",
     "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v34",
-    "date": "28/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v33",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v32",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v31",
-    "date": "26/05/2569",
-    "items": [
-      "cd C:UsersacerDesktopClaudesuperclinic"
-    ]
-  },
-  {
-    "ver": "v30",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v29",
-    "date": "26/05/2569",
-    "items": [
-      "[System.Environment]::SetEnvironmentVariable(PYTHONUTF8, 1, User)"
-    ]
-  },
-  {
-    "ver": "v28",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v26",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v27",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v26",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v25",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v24",
-    "date": "26/05/2569",
-    "items": [
-      "update"
-    ]
-  },
-  {
-    "ver": "v23",
-    "date": "26/05/2569",
-    "items": [
-      "update"
+      "rebuild จาก v34 แก้ไฟล์ truncated",
+      "integrity guard push-now.bat"
     ]
   },
   {

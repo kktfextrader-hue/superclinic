@@ -5,6 +5,17 @@
 
 ---
 
+## 0. ⭐ CLINIC CODE CONVENTION (ตั้ง 2026-06-04)
+
+> **งานแก้โค้ดเรื่อง clinic (UI/ฟีเจอร์) ต่อไปนี้ ต้องแก้ทั้ง 2 แอป (scproject + superclinic) พร้อมกันเสมอ**
+> **ยกเว้น** ส่วนที่ superclinic เป็น **standalone** — data/auth layer ต่างกัน:
+> - superclinic = SCL- token + ยิง Apps Script ตรง (ชีตเดียว) · **ไม่มี** LS proxy / OAuth(Google) / sheet_id ต่อ tenant / Google-login lockdown
+> - scproject = LS proxy + token ต่อ tenant + Google-login
+> → ฟีเจอร์/UI ร่วม = แก้คู่กัน · ส่วน standalone (เช่น backup กลไก, login flow) = ปรับเฉพาะ superclinic ตามสถาปัตยกรรมของมัน
+> เหตุผล: superclinic เป็น standalone version ของ scproject (merge เท่าที่ทำได้)
+
+---
+
 ## 1. Project Identity
 
 | รายการ | ข้อมูล |
@@ -214,6 +225,12 @@ rm -rf $TMP
 - ❌ ใช้ npm, jQuery, หรือ Framework ใดๆ
 - ❌ แก้ `appt-pat-input` / `apptPatSearch` / `apptPatSelect` โดยไม่จำเป็น
 - ❌ ใช้ inline `onclick="fn('${name}')"` กับข้อความภาษาไทย — ใช้ `data-*` + `addEventListener` แทน
+
+## 11c. ปุ่ม "ค้นหาด้วยใบหน้า" — ไอคอนหน้ายิ้ม (FACE-SCAN-ICON, v61/v181)
+
+**กฎ:** ปุ่ม scan / ค้นหาด้วยใบหน้า **ทุกที่** ต้องมีไอคอน **หน้ายิ้ม (faceVec SVG)** นำหน้า — แบบเดียวกับ avatar คนไข้หน้าแรก · **ห้ามใช้ `ti-face-id`** (หน้ากาก/กรอบสแกน)
+- SVG: `stroke="currentColor"` (สีตามปุ่ม) · ~15px · `<circle r=9.2> + 2 ตา(fill) + path เส้นยิ้ม`
+- ใช้แล้วที่: dashboard (นัดหมายวันนี้) + หน้าทะเบียนผู้ป่วย · **เพิ่มปุ่ม face ที่ใหม่ ต้องใช้รูปแบบนี้เสมอ**
 
 ## 11b. Loading Spinner Convention (v58+)
 

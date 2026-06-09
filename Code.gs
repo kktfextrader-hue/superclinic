@@ -181,11 +181,27 @@ function handleRequest(e, method) {
       return jsonResponse_({ ok: true, action: 'emailReceipt', data: emailReceipt_(_b) }, 200);
     }
 
+    // ── action=emailbackup: ส่งไฟล์ backup (zip เข้ารหัส) เข้าอีเมล ──
+    if (action === 'emailbackup') {
+      var _bb = {};
+      if (e.postData && e.postData.contents) { try { _bb = JSON.parse(e.postData.contents); } catch (_) {} }
+      return jsonResponse_({ ok: true, action: 'emailBackup', data: emailBackup_(_bb) }, 200);
+    }
+
     // ── action=verifyslip: ตรวจสลิปผ่าน SlipOK (PAY-s) ──
     if (action === 'verifyslip') {
       var _s = {};
       if (e.postData && e.postData.contents) { try { _s = JSON.parse(e.postData.contents); } catch (_) {} }
       return jsonResponse_({ ok: true, action: 'verifySlip', data: verifySlip_(_s) }, 200);
+    }
+
+    // ── action=checkpayment: ตรวจอีเมลแจ้งเงินเข้า (PAYVERIFY) ──
+    if (action === 'checkpayment') {
+      var _cp = {};
+      if (e.postData && e.postData.contents) { try { _cp = JSON.parse(e.postData.contents); } catch (_) {} }
+      var _amt = _cp.amount || params.amount || '';
+      var _mins = parseInt(_cp.minutes || params.minutes || '10', 10);
+      return jsonResponse_({ ok: true, action: 'checkPayment', data: checkPaymentEmail_(_amt, _mins) }, 200);
     }
 
     const sheet = (params.sheet || '').toLowerCase();
@@ -209,6 +225,8 @@ function handleRequest(e, method) {
       case 'create': result = withLock_(() => createRow_(sheet, body));                        break;
       case 'update': result = withLock_(() => updateRow_(sheet, body.id || params.id, body));  break;
       case 'delete': result = withLock_(() => deleteRow_(sheet, body.id || params.id));        break;
+      case 'bulkcreate': result = withLock_(() => bulkCreateRows_(sheet, body.rows || []));      break;
+      case 'cleardata':  result = withLock_(() => clearData_(body.sheets || []));                break;
       case 'notify': result = handleLineNotify_(body);                                         break;
       default:
         return jsonResponse_({ ok: false, error: 'Unknown action: ' + action }, 400);
@@ -659,6 +677,52 @@ function updateRow_(sheetName, id, body) {
   return getRow_(sheetName, id);
 }
 
+function bulkCreateRows_(sheetName, rows) {
+  if (!rows || !rows.length) return { created: 0, ids: [] };
+  var sheet = openSheet_(sheetName);
+  var headers = getHeaders_(sheet);
+  var idCfg = CONFIG.ID_PREFIX[sheetName];
+  var startNum = 1;
+  if (idCfg) {
+    var col = headers.indexOf(idCfg.col), max = 0;
+    if (col !== -1) {
+      var vals = sheet.getDataRange().getValues();
+      for (var i = 1; i < vals.length; i++) {
+        var v = String(vals[i][col] || '');
+        if (v.indexOf(idCfg.prefix) === 0) { var n = parseInt(v.slice(idCfg.prefix.length), 10); if (!isNaN(n) && n > max) max = n; }
+      }
+    }
+    startNum = max + 1;
+  }
+  var now = nowBKK_(), ids = [];
+  var out = rows.map(function (body, k) {
+    body = body || {};
+    if (idCfg && !body[idCfg.col]) body[idCfg.col] = idCfg.prefix + String(startNum + k).padStart(idCfg.pad, '0');
+    if (sheetName === 'patients' && headers.indexOf('id') !== -1 && !body.id && body.hn) body.id = body.hn;
+    if (headers.indexOf('created_at') !== -1 && !body.created_at) body.created_at = now;
+    if (headers.indexOf('updated_at') !== -1 && !body.updated_at) body.updated_at = now;
+    if (headers.indexOf('is_active') !== -1 && body.is_active === undefined) body.is_active = 'TRUE';
+    if (idCfg) ids.push(body[idCfg.col]);
+    return headers.map(function (h) { return body[h] !== undefined ? body[h] : ''; });
+  });
+  sheet.getRange(sheet.getLastRow() + 1, 1, out.length, headers.length).setValues(out);
+  return { created: out.length, ids: ids };
+}
+
+function clearData_(sheetsList) {
+  var PROTECT = ['herbs', 'settings'];   // ห้ามล้าง คลังยา + ตั้งค่า
+  var res = {};
+  (sheetsList || []).forEach(function (name) {
+    if (PROTECT.indexOf(name) !== -1) { res[name] = 'protected'; return; }
+    try {
+      var sh = openSheet_(name);
+      var last = sh.getLastRow();
+      if (last > 1) { sh.deleteRows(2, last - 1); res[name] = last - 1; } else res[name] = 0;
+    } catch (e) { res[name] = 'err:' + (e.message || e); }
+  });
+  return res;
+}
+
 function deleteRow_(sheetName, id) {
   if (!id) throw new Error('Missing id');
   const sheet   = openSheet_(sheetName);
@@ -804,6 +868,19 @@ function emailReceipt_(body) {
   return { sent: true, to: to, remainingQuota: MailApp.getRemainingDailyQuota() };
 }
 
+function emailBackup_(body) {
+  var to = String((body && body.to) || '').trim();
+  if (!to || to.indexOf('@') < 1) throw new Error('อีเมลผู้รับไม่ถูกต้อง');
+  var b64 = String((body && body.zip_base64) || '');
+  if (!b64) throw new Error('ไม่มีข้อมูลไฟล์สำรอง');
+  var fname = String((body && body.filename) || 'softbackup.zip');
+  var subject = String((body && body.subject) || 'Backup ข้อมูลคลินิก');
+  var text = String((body && body.text) || 'ไฟล์สำรองข้อมูลแนบมาด้วย (zip เข้ารหัส)');
+  var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'application/zip', fname);
+  MailApp.sendEmail({ to: to, subject: subject, body: text, attachments: [blob], name: 'Superclinic' });
+  return { sent: true, to: to, remainingQuota: MailApp.getRemainingDailyQuota() };
+}
+
 /** PAY-s: ตรวจสลิปผ่าน SlipOK API (อ่าน key/branch จาก settings) */
 function verifySlip_(body) {
   var apiKey = readSetting_('slipok_api_key');
@@ -846,6 +923,53 @@ function getLineToken_() {
   } catch (e) {}
   return '';
 }
+function authorizeGmail() {
+  // ?????????????????????????? Apps Script editor ?????????????????????? Gmail (PAYVERIFY)
+  var n = GmailApp.search('newer_than:1d', 0, 1).length;
+  return 'authorized ? inbox reachable (' + n + ' recent thread checked)';
+}
+
+function _cpayHasBareInt_(text, intStr){
+  if(!intStr) return false;
+  var idx=-1, from=0, bad=/[0-9.,]/;
+  while((idx=text.indexOf(intStr, from))>=0){
+    var before=idx>0?text.charAt(idx-1):'';
+    var after=(idx+intStr.length)<text.length?text.charAt(idx+intStr.length):'';
+    if(!bad.test(before) && !bad.test(after)) return true;
+    from=idx+1;
+  }
+  return false;
+}
+function _cpayTextMatch_(text, amt){
+  var decs=[amt.toFixed(2)];
+  try{ decs.push(amt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})); }catch(_){}
+  for(var i=0;i<decs.length;i++){ if(decs[i] && text.indexOf(decs[i])>=0) return true; }
+  var ints=[String(Math.round(amt))];
+  try{ var gg=Math.round(amt).toLocaleString('en-US'); if(gg!==ints[0]) ints.push(gg); }catch(_){}
+  for(var k=0;k<ints.length;k++){ if(_cpayHasBareInt_(text, ints[k])) return true; }
+  return false;
+}
+
+function checkPaymentEmail_(amount, minutes) {
+  var amt = Number(amount) || 0;
+  if (!(amt > 0)) return { matched: false };
+  var mins = minutes > 0 ? minutes : 10;
+  var cutoff = new Date(Date.now() - mins * 60 * 1000);
+  var threads = GmailApp.search('newer_than:1h', 0, 20);
+  for (var i = 0; i < threads.length; i++) {
+    var msgs = threads[i].getMessages();
+    for (var j = 0; j < msgs.length; j++) {
+      var m = msgs[j];
+      if (m.getDate() < cutoff) continue;
+      var text = (m.getSubject() || '') + ' ' + (m.getPlainBody() || '');
+      if (_cpayTextMatch_(text, amt)) {
+        return { matched: true, ref: String(m.getId()).slice(-6), from: m.getFrom() };
+      }
+    }
+  }
+  return { matched: false };
+}
+
 function handleLineNotify_(body) {
   const token = body.token || getLineToken_();
   if (!token) throw new Error('ไม่พบ LINE Notify Token');

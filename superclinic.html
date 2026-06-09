@@ -3407,7 +3407,7 @@ var qrcode = function() {
             </select></div>
           <div class="form-group"><label class="form-label">ระยะเวลา (นาที)</label><input class="form-input" name="duration" type="number" value="90"></div>
           <div class="form-group"><label class="form-label">ค่าบริการ (บาท)</label><input class="form-input" name="price" type="number" value="" placeholder="0"></div>
-          <div class="form-group" style="grid-column:1/-1;"><label class="form-label">อาการ / การวินิจฉัย</label><textarea class="form-textarea" name="symptoms" rows="3" placeholder="อาการที่พบ..."></textarea></div>
+          <div class="form-group" style="grid-column:1/-1;"><label class="form-label" style="display:flex;align-items:center;gap:7px;">📋 อาการป่วยที่เป็นอยู่<span style="font-size:11px;color:#aaa;font-weight:400;">(จากการลงทะเบียน)</span></label><div id="treat-reg-symptoms" style="padding:9px 13px;background:#f9f6f0;border:1.5px solid #e5ddd0;border-radius:10px;font-size:13.5px;color:#555;min-height:44px;line-height:1.65;">—</div><input type="hidden" name="symptoms" id="treat-symptoms-hidden" value=""></div>
           <!-- BODY MAP — บันทึกหลังรักษา -->
           <div style="grid-column:1/-1;" id="treat-bodymap-wrap-outer">
             <div id="treat-bodymap-wrap"></div>
@@ -7120,6 +7120,15 @@ async function selectTreatPat(id){
       ${vvLatestVitals(id,p)}
     </div>
   </div>`;
+  // อาการป่วยที่เป็นอยู่ จากลงทะเบียนวันนี้ → read-only display + hidden input
+  var _todayStr=(typeof todayISO==='function'?todayISO():'');
+  var _todayAp=(window.allAppts||[]).filter(function(a){return a&&(a.patient_id===id)&&(typeof dateToISO==='function'?dateToISO(a.date):a.date)===_todayStr&&(a.status||'')!=='cancelled';}).sort(function(a,b){return (b.time_start||'').localeCompare(a.time_start||'');})[0]||null;
+  var _regSym=_todayAp?((_todayAp.note||'').match(/อาการ:\s*([^|]+)/)||[])[1]||'':'';
+  _regSym=_regSym.trim();
+  var _sdEl=document.getElementById('treat-reg-symptoms');
+  var _shEl=document.getElementById('treat-symptoms-hidden');
+  if(_sdEl) _sdEl.textContent=_regSym||'—';
+  if(_shEl) _shEl.value=_regSym||'';
   _thLoadedFor=null;
   const hist=document.getElementById('treat-history');
   if(hist){ hist.style.display='none'; hist.innerHTML=''; }
@@ -7136,19 +7145,28 @@ function thItemHtml(t){
   const NA='<span style="color:#c4b9a6;font-style:italic;">ไม่มีข้อมูล</span>';
   const fields=[
     ['อาการ',            noteOf('symptoms') || t.symptoms  || ''],
-    ['การวินิจฉัย',       noteOf('diagnosis')|| t.diagnosis || ''],
-    ['หัตถการ/วิธีรักษา',  noteOf('procedure')|| t.procedure || ''],
+    ['หัตถการ/วิธีรักษา',  noteOf('procedure')|| t.procedure || t.type || ''],
     ['ยาที่จ่าย',         noteOf('herbs_note')|| t.herbs_used|| ''],
     ['ผลการรักษา/คำแนะนำ', noteOf('advice')   || t.result || t.advice || ''],
+    ['ค่าบริการ',         (t.price&&t.price!=='0'&&t.price!==''&&t.price!==null)?String(t.price)+' บาท':''],
   ];
   const fieldsHtml=`<div style="margin-top:7px;font-size:12px;line-height:1.75;background:rgba(200,169,107,.06);padding:9px 12px;border-radius:8px;border-left:3px solid var(--go);">
     ${fields.map(([lbl,val])=>`<div><span style="font-weight:600;color:#7a6f5d;">${lbl}:</span> ${val?String(val):NA}</div>`).join('')}
   </div>`;
   const dur=t.duration?`${t.duration} นาที`:'ไม่ระบุเวลา';
   const price=(t.price!==''&&t.price!==undefined&&t.price!==null&&t.price!=='0')?`${t.price} บาท`:'ไม่ระบุราคา';
+  const _tid=String(t.id||'').replace(/'/g,'');
   return `<div class="tl-item"><div class="tl-dot"></div><div class="tl-content">
-    <div class="tl-title">${t.type?t.type:'<span style="color:#c4b9a6;font-style:italic;">ไม่ระบุประเภทการรักษา</span>'}</div>
-    <div class="tl-sub">${toThaiDisplay(t.date)} • ${t.doctor||'Dr. Strange'} • ${dur} • ${price}</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+      <div style="flex:1;">
+        <div class="tl-title">${t.type?t.type:'<span style="color:#c4b9a6;font-style:italic;">ไม่ระบุประเภทการรักษา</span>'}</div>
+        <div class="tl-sub">${toThaiDisplay(t.date)} • ${t.doctor||'Dr. Strange'} • ${dur} • ${price}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0;margin-top:2px;">
+        <button onclick="thEditItem('${_tid}')" style="padding:4px 10px;border:1px solid #d9e8d4;border-radius:8px;background:#f3f8f4;font-size:12px;cursor:pointer;color:var(--g1);" title="แก้ไข"><i class="ti ti-pencil"></i></button>
+        <button onclick="thDeleteItem('${_tid}')" style="padding:4px 10px;border:1px solid #f5d5d0;border-radius:8px;background:#fef7f6;font-size:12px;cursor:pointer;color:var(--er);" title="ลบ"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
     ${fieldsHtml}
     ${updStr}
   </div></div>`;
@@ -7170,7 +7188,7 @@ async function treatHistToggle(){
       hist.innerHTML='<div style="padding:20px;text-align:center;color:#aaa;"><i class="ti ti-loader" style="font-size:18px;"></i> กำลังโหลด...</div>';
       try{
         const [tRes,nRes]=await Promise.all([callApi('treatments','list'),callApi('treatment_notes','list').catch(()=>({ok:true,data:{rows:[]}}))]);
-        const items=(tRes.data?.rows||[]).filter(t=>t.patient_id===selTreatPat).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
+        const items=(tRes.data?.rows||[]).filter(t=>t.patient_id===selTreatPat).sort((a,b)=>{var ai=(typeof dateToISO==='function'?dateToISO(a.date):null)||a.date||'';var bi=(typeof dateToISO==='function'?dateToISO(b.date):null)||b.date||'';return bi.localeCompare(ai)||(b.created_at||'').localeCompare(a.created_at||'');});
         const notes=nRes.data?.rows||[];
         window._TH={ items, notes, page:1, q:'', perPage:5 };
         thMount();
@@ -7181,6 +7199,67 @@ async function treatHistToggle(){
     hist.style.display='none';
     if(chev) chev.textContent='▼ ดูประวัติการรักษา';
   }
+}
+async function thDeleteItem(id){
+  if(!confirm('ลบประวัติการรักษานี้?')) return;
+  try{
+    await callApi('treatments','update',{id:id,is_active:'FALSE',updated_at:new Date().toISOString()});
+    if(window._TH) window._TH.items=window._TH.items.filter(t=>t.id!==id);
+    thRender(); showToast('ลบประวัติการรักษาแล้ว');
+  }catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
+}
+function thEditItem(id){
+  if(!window._TH) return;
+  const t=window._TH.items.find(x=>x.id===id); if(!t) return;
+  const notes=window._TH.notes||[];
+  const getNoteVal=f=>{const n=notes.find(x=>x.treatment_id===id&&x.field_name===f);return n?n.content||'':t[f]||'';};
+  openModal('✏️ แก้ไขประวัติการรักษา',`
+    <form id="th-edit-form" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">วันที่รักษา</label>
+        <div class="dp-wrap"><input type="text" id="th-e-date-disp" class="form-input dp-input" placeholder="วว/ดด/ปปปป" readonly><input type="hidden" id="th-e-date" value=""></div></div>
+      <div class="form-group"><label class="form-label">ประเภทการรักษา</label>
+        <select class="form-select" name="type">
+          <option value="นวดแผนไทย">นวดแผนไทย</option>
+          <option value="ประคบสมุนไพร">ประคบสมุนไพร</option>
+          <option value="อบสมุนไพร">อบสมุนไพร</option>
+          <option value="ฝังเข็ม">ฝังเข็ม</option>
+          <option value="ครอบแก้ว">ครอบแก้ว</option>
+          <option value="นวด + ประคบ">นวด + ประคบ</option>
+          <option value="ปรึกษาแพทย์">ปรึกษาแพทย์</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">ระยะเวลา (นาที)</label><input class="form-input" name="duration" type="number" value="${t.duration||''}"></div>
+      <div class="form-group"><label class="form-label">ค่าบริการ (บาท)</label><input class="form-input" name="price" type="number" value="${t.price||''}"></div>
+      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">ผลการรักษา / คำแนะนำ</label>
+        <textarea class="form-textarea" name="result" rows="3" style="min-height:80px;">${getNoteVal('advice')}</textarea></div>
+    </form>`,
+    `<button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn btn-primary" onclick="thEditSubmit('${id}')"><i class="ti ti-device-floppy"></i> บันทึก</button>`
+  );
+  setTimeout(()=>{
+    dpInit('th-e-date-disp','th-e-date',t.date||todayISO());
+    const sel=document.querySelector('#th-edit-form [name="type"]');
+    if(sel&&t.type){ const opt=[...sel.options].find(o=>o.value===t.type); if(opt) sel.value=t.type; }
+  },60);
+}
+async function thEditSubmit(id){
+  const _done=showLoading(document.querySelector('.modal-footer .btn-primary'));
+  try{
+    const data={id,updated_at:new Date().toISOString()};
+    data.date=document.getElementById('th-e-date').value||'';
+    ['type','duration','price'].forEach(k=>{ const el=document.querySelector('#th-edit-form [name="'+k+'"]'); if(el) data[k]=el.value; });
+    const result=(document.querySelector('#th-edit-form [name="result"]')||{}).value||'';
+    await callApi('treatments','update',data);
+    if(result){
+      const notes=window._TH?.notes||[];
+      const ex=notes.find(n=>n.treatment_id===id&&n.field_name==='advice');
+      const now=new Date().toISOString();
+      if(ex){ await callApi('treatment_notes','update',{id:ex.id,content:result,updated_at:now}).catch(()=>{}); ex.content=result; }
+      else{ const r=await callApi('treatment_notes','create',{treatment_id:id,patient_id:selTreatPat,field_name:'advice',content:result,created_at:now,updated_at:now,updated_by:'Dr. Stephen Strange'}).catch(()=>null); if(r?.data?.id) notes.push({id:r.data.id,treatment_id:id,field_name:'advice',content:result}); }
+    }
+    const idx=window._TH?.items?.findIndex(x=>x.id===id);
+    if(idx>=0) Object.assign(window._TH.items[idx],data);
+    _done(); closeModal(); thRender(); showToast('✅ แก้ไขสำเร็จ');
+  }catch(e){ _done(); showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
 }
 function thMount(){
   const hist=document.getElementById('treat-history'); if(!hist) return;
@@ -8911,6 +8990,12 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v166', date:'09/06/2569', items:['update'] },
+  { ver:'v165', date:'09/06/2569', items:['feat(v211): ปุ่ม edit+delete ในประวัติการรักษา'] },
+  { ver:'v164', date:'09/06/2569', items:['feat(v211): ปุ่ม edit+delete ในประวัติการรักษา'] },
+  { ver:'v211', date:'09/06/2569', items:['feat(ประวัติรักษา): ปุ่ม ✏️ แก้ไข + 🗑️ ลบ ในแต่ละรายการประวัติ'] },
+  { ver:'v210', date:'09/06/2569', items:['fix(ประวัติรักษา): เรียงล่าสุดก่อน + ลบการวินิจฉัย + วิธีรักษา fallback type + เพิ่มค่าบริการ'] },
+  { ver:'v209', date:'09/06/2569', items:['feat(รักษา): แถวอาการในฟอร์มเปลี่ยนเป็น read-only ดึงจากลงทะเบียนวันนี้ (ลบ textarea ซ้ำซ้อน)'] },
   { ver:'v208', date:'06/06/2569', items:['ui: เปลี่ยนหัวข้อหน้าเป็น "บันทึกหลังการรักษา" ให้ตรงกับเมนูซ้าย (เดิม "ประวัติการรักษา")'] },
   { ver:'v207', date:'06/06/2569', items:['feat(รักษา): การ์ดผู้ป่วยแสดงสัญญาณชีพล่าสุด 4 ค่า (ความดัน/น้ำหนัก/ส่วนสูง/ชีพจร) · ประวัติการรักษาเป็น collapse + lazy load (กดหัวข้อเพื่อขยาย+โหลด)'] },
   { ver:'v206', date:'06/06/2569', items:['fix(สถานะ): ซิงค์ allAppts ↔ window.allAppts — ปฏิทิน/แดชบอร์ด/นัดวันนี้ เห็นนัดล่าสุดทันที ไม่ค้าง'] },
