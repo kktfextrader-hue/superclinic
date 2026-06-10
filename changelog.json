@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v172",
+    "date": "10/06/2569",
+    "items": [
+      "fix(v213): tablet - ปุ่ม hamburger เปิด sidebar ได้ (เพิ่ม click handler) + breakpoint 768->1024px"
+    ]
+  },
+  {
     "ver": "v171",
     "date": "10/06/2569",
     "items": [

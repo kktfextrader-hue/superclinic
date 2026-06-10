@@ -467,7 +467,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:1px;position
 }
 #sidebar-backdrop.open { display: block; }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   /* Layout: เปลี่ยนเป็น 1 column */
   .app {
     grid-template-columns: 1fr !important;
@@ -3002,6 +3002,28 @@ var qrcode = function() {
 <!-- TOPBAR -->
 <header class="topbar">
   <button id="hamburger-btn" title="เมนู" aria-label="เปิด/ปิดเมนู"><i class="ti ti-menu-2"></i></button>
+<script>
+/* SIDEBAR-DRAWER-V1 — ปุ่ม hamburger เปิด/ปิด sidebar (drawer) บน tablet/มือถือ ≤1024px */
+(function(){
+  function wire(){
+    var btn=document.getElementById('hamburger-btn');
+    var sb=document.querySelector('.sidebar');
+    var bd=document.getElementById('sidebar-backdrop');
+    if(!btn||!sb||!bd) return;
+    if(btn.dataset.sdWired) return; btn.dataset.sdWired='1';
+    function openSb(){ sb.classList.add('open'); bd.classList.add('open'); }
+    function closeSb(){ sb.classList.remove('open'); bd.classList.remove('open'); }
+    function toggleSb(){ sb.classList.contains('open')?closeSb():openSb(); }
+    btn.addEventListener('click', function(e){ e.stopPropagation(); toggleSb(); });
+    bd.addEventListener('click', closeSb);
+    sb.addEventListener('click', function(e){ var n=e.target.closest && e.target.closest('.nav-item'); if(n && window.innerWidth<=1024) closeSb(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSb(); });
+    window.addEventListener('resize', function(){ if(window.innerWidth>1024) closeSb(); });
+    window.toggleSidebar=toggleSb; window.closeSidebar=closeSb;
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', wire); else setTimeout(wire,0);
+})();
+</script>
   <div class="topbar-title" id="topbar-title" style="font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:0.04em;background:linear-gradient(135deg,#F5DFA0,#C8A96B,#E8C97A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">✦ Superclinic</div>
   <div class="topbar-right">
     <button onclick="openCollectPay()" title="รับชำระเงิน" style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#2F5D50,#3f7a68);color:#fff;border:none;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;"><i class="ti ti-cash-register"></i> รับชำระเงิน</button>
@@ -9004,6 +9026,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v172', date:'10/06/2569', items:['fix(v213): tablet - ปุ่ม hamburger เปิด sidebar ได้ (เพิ่ม click handler) + breakpoint 768->1024px'] },
+  { ver:'v213', date:'10/06/2569', items:['fix(tablet): ปุ่มเมนู hamburger เปิด sidebar ได้ + breakpoint 1024px'] },
   { ver:'v171', date:'10/06/2569', items:['feat(v212): patient detail redesign - color sections+chevron+all fields, edit form ครบ 20 fields'] },
   { ver:'v212', date:'10/06/2569', items:['feat(ข้อมูลคนไข้): redesign sections highlight+collapse+all fields, edit form ครบ fields'] },
   { ver:'v170', date:'09/06/2569', items:['fix(v212): update PAT + credential.helper bypass'] },
