@@ -5217,7 +5217,7 @@ function openAddPatient(prefillName){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label class="form-label">เบอร์โทรศัพท์ <span style="color:var(--er)">*</span></label><input class="form-input" name="phone" required placeholder="0XX-XXX-XXXX"></div>
-        <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" name="email" placeholder="email@example.com"></div>
+        <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="text" name="email" placeholder="email@example.com"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label class="form-label">เบอร์ฉุกเฉิน</label><input class="form-input" name="emergency_contact" placeholder="ชื่อ — เบอร์โทร"></div>
@@ -5474,7 +5474,7 @@ function openEditPatient(id){
       <div class="form-group"><label class="form-label">อายุ</label><input class="form-input" name="age" type="number" value="${p.age||''}" placeholder="ปี"></div>
       <div class="form-group"><label class="form-label">ประเภทผู้ป่วย</label>${sel('patient_type',p.patient_type||'new',[['new','ผู้ป่วยใหม่'],['regular','ผู้ป่วยประจำ'],['vip','VIP']])}</div>
       <div class="form-group"><label class="form-label">เบอร์โทรศัพท์</label><input class="form-input" name="phone" value="${p.phone||''}"></div>
-      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="email" name="email" value="${p.email||''}"></div>
+      <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="text" name="email" value="${p.email||''}"></div>
       <div class="form-group"><label class="form-label">เบอร์ฉุกเฉิน</label><input class="form-input" name="emergency_contact" value="${p.emergency_contact||''}" placeholder="ชื่อ — เบอร์โทร"></div>
       <div class="form-group"><label class="form-label">ธาตุประจำตัว</label>${sel('element',p.element||'',[['','ไม่ระบุ'],['ดิน','ดิน'],['น้ำ','น้ำ'],['ลม','ลม'],['ไฟ','ไฟ']])}</div>
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">ที่อยู่</label><input class="form-input" name="address" value="${p.address||''}" placeholder="ที่อยู่"></div>
@@ -9026,6 +9026,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v173', date:'10/06/2569', items:['fix(v214): ช่องอีเมลฟอร์มผู้ป่วยไม่บังคับ format (email->text) คงชื่อ+เบอร์บังคับ'] },
+  { ver:'v214', date:'10/06/2569', items:['fix(เพิ่ม/แก้ผู้ป่วย): ช่องอีเมลไม่บังคับ format อีกต่อไป (type email->text)'] },
   { ver:'v172', date:'10/06/2569', items:['fix(v213): tablet - ปุ่ม hamburger เปิด sidebar ได้ (เพิ่ม click handler) + breakpoint 768->1024px'] },
   { ver:'v213', date:'10/06/2569', items:['fix(tablet): ปุ่มเมนู hamburger เปิด sidebar ได้ + breakpoint 1024px'] },
   { ver:'v171', date:'10/06/2569', items:['feat(v212): patient detail redesign - color sections+chevron+all fields, edit form ครบ 20 fields'] },
