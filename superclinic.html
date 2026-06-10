@@ -7627,8 +7627,8 @@ async function cpayPickQR(){
   setTimeout(function(){ if(typeof cpayStartEmailPoll==='function') cpayStartEmailPoll(amt); },60);
   body.innerHTML='<div style="text-align:center;"><div style="background:linear-gradient(135deg,#001b94,#0030d0);color:#fff;border-radius:8px;padding:6px;font-weight:700;font-size:12px;margin-bottom:10px;">PromptPay</div>'
     +(qrUrl?'<img src="'+qrUrl+'" style="width:210px;height:210px;max-width:100%;border:1px solid #eee;border-radius:10px;">':'<div style="color:#C0392B;">สร้าง QR ไม่ได้</div>')
-    +'<div style="font-size:11px;color:#888;margin-top:6px;">รับเงินเข้า: '+ppid+'</div>'
-    +'<div style="font-size:26px;font-weight:700;color:var(--g1);margin:2px 0 8px;">&#3647;'+amt.toLocaleString()+'</div>'
+    +'<div style="font-size:11px;color:var(--g1);margin-top:6px;">รับเงินเข้า: '+ppid+'</div>'
+    +'<div style="font-size:26px;font-weight:700;color:#1a1a2e;margin:2px 0 8px;">&#3647;'+amt.toLocaleString()+'</div>'
     +'<div style="font-size:11.5px;color:#2f7d4f;background:#eefaf1;border:1px solid #bfe6cd;border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.5;">&#128161; หากได้รับอีเมลยืนยันเงินเข้า หน้านี้จะปิดให้อัตโนมัติ &mdash; หรือกด ชำระแล้ว เมื่อยืนยันเอง<br>&#9888; หากเกิน 3 นาทีให้เช็คด้วยวิธีอื่น</div>'
     +'<div id="cpay-email-status" style="font-size:11.5px;margin-bottom:8px;min-height:15px;"></div>'
     +'<button class="btn btn-green" style="width:100%;justify-content:center;background:var(--ok);font-weight:700;padding:13px;" onclick="cpayConfirm()">&#10003; ชำระแล้ว (บันทึกรายได้)</button>'
@@ -7683,9 +7683,9 @@ function _payQRrender(){
   var amt=amtEl?parseFloat(amtEl.value):0; if(!(amt>0)) amt=0;
   var qrUrl=''; try{ var qr=qrcode(0,'M'); qr.addData(promptPayPayload(ppid,amt)); qr.make(); qrUrl=qr.createDataURL(7,10); }catch(e){}
   box.innerHTML=(qrUrl?'<img src="'+qrUrl+'" style="width:260px;height:260px;max-width:100%;border:1px solid #eee;border-radius:10px;">':'<div style="color:#C0392B;font-size:13px;">สร้าง QR ไม่ได้</div>')
-    +'<div style="font-size:12px;color:#888;margin-top:8px;">รับเงินเข้า: '+ppid+'</div>'
-    +'<div style="font-size:24px;font-weight:700;color:var(--g1);margin-top:2px;">'+(amt>0?(''+amt.toLocaleString()+' บาท'):'<span style="font-size:14px;color:#999;">ลูกค้ากรอกยอดเอง</span>')+'</div>'
-    +'<div style="font-size:11px;color:#aaa;margin-top:6px;">ให้ลูกค้าสแกนด้วยแอปธนาคารเพื่อจ่าย</div>';
+    +'<div style="font-size:12px;color:var(--g1);margin-top:8px;">รับเงินเข้า: '+ppid+'</div>'
+    +'<div style="font-size:24px;font-weight:700;color:#1a1a2e;margin-top:2px;">'+(amt>0?(''+amt.toLocaleString()+' บาท'):'<span style="font-size:14px;color:#999;">ลูกค้ากรอกยอดเอง</span>')+'</div>'
+    +'<div style="font-size:11px;color:var(--g1);margin-top:6px;">ให้ลูกค้าสแกนด้วยแอปธนาคารเพื่อจ่าย</div>';
 }
 function openPromptPaySetup(){
   if(document.getElementById('pp-setup-overlay')) return;
@@ -8407,8 +8407,8 @@ async function rcptRenderQrZone(){
   z.innerHTML=`<div style="background:#fff;border:1px solid #e3dcc8;border-radius:12px;padding:13px;text-align:center;">
     <div style="background:linear-gradient(135deg,#001b94,#0030d0);color:#fff;border-radius:8px;padding:6px;font-weight:700;font-size:12px;margin-bottom:10px;">PromptPay</div>
     ${qrUrl?`<img src="${qrUrl}" style="width:180px;height:180px;border:1px solid #eee;border-radius:8px;">`:`<div style="color:#C0392B;font-size:12px;">สร้าง QR ไม่ได้</div>`}
-    <div style="font-size:11px;color:#888;margin-top:6px;">รับเงินเข้า: ${ppid}</div>
-    <div style="font-size:20px;font-weight:700;color:var(--g1);margin:2px 0 6px;">${total.toLocaleString()} บาท</div>
+    <div style="font-size:11px;color:var(--g1);margin-top:6px;">รับเงินเข้า: ${ppid}</div>
+    <div style="font-size:20px;font-weight:700;color:#1a1a2e;margin:2px 0 6px;">${total.toLocaleString()} บาท</div>
     <div id="rcpt-pay-status" style="font-size:12px;color:#b8860b;margin-bottom:8px;">⏳ รอลูกค้าสแกนจ่าย</div>
     <button class="btn btn-green" style="width:100%;background:var(--ok);justify-content:center;margin-bottom:7px;" onclick="rcptConfirmPaid('manual')">✓ ยืนยันรับเงินแล้ว</button>
     <label style="display:block;border:1.5px dashed #b9c2d8;border-radius:9px;padding:9px;font-size:12px;color:#3a55c0;cursor:pointer;background:#f6f8ff;">📎 แนบสลิป → ตรวจอัตโนมัติ (SlipOK)<input type="file" accept="image/*" style="display:none;" onchange="rcptVerifySlip(this)"></label>
@@ -9026,6 +9026,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v174', date:'10/06/2569', items:['style(v215): จอ QR พร้อมเพย์ - ข้อความสีเขียว ตัวเลขเงินสีดำ (3 จอ: ใบเสร็จ/รับชำระ/โมดัล QR)'] },
+  { ver:'v215', date:'10/06/2569', items:['style(QR): ข้อความในจอ QR เป็นสีเขียว ตัวเลขเงินเป็นสีดำ (3 จอ)'] },
   { ver:'v173', date:'10/06/2569', items:['fix(v214): ช่องอีเมลฟอร์มผู้ป่วยไม่บังคับ format (email->text) คงชื่อ+เบอร์บังคับ'] },
   { ver:'v214', date:'10/06/2569', items:['fix(เพิ่ม/แก้ผู้ป่วย): ช่องอีเมลไม่บังคับ format อีกต่อไป (type email->text)'] },
   { ver:'v172', date:'10/06/2569', items:['fix(v213): tablet - ปุ่ม hamburger เปิด sidebar ได้ (เพิ่ม click handler) + breakpoint 768->1024px'] },
