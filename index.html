@@ -5322,6 +5322,39 @@ async function submitAddPatient(e){
 /* ===== VOICE-VITALS START (พูดกรอกสัญญาณชีพ scoped) ===== */
 window.VV_LOC={reg:{bp:'reg-bp',weight:'reg-weight',height:'reg-height',trans:'vv-trans-reg'},edit:{bp:'vve-bp',weight:'vve-weight',height:'vve-height',trans:'vv-trans-edit'}};
 function vvVoiceOn(){ return localStorage.getItem('voice_enabled')!=='0'; }
+/* ===== VV-DICT (v216): พจนานุกรมแก้คำเพี้ยน ASR — 2 ชั้น (กลาง VV_DICT + ผู้ใช้ vv_dict_user) ===== */
+var VV_DICT = [
+  ['ความดับ','ความดัน'],['ความดาน','ความดัน'],['ความดั่น','ความดัน'],
+  ['น้ำหนับ','น้ำหนัก'],['น้ำหนาก','น้ำหนัก'],
+  ['ส่วนสูบ','ส่วนสูง'],
+  ['ชีพจอน','ชีพจร'],['ชีบจอน','ชีพจร'],['ชีบจร','ชีพจร'],
+  ['อุณภูมิ','อุณหภูมิ'],['อุนหภูมิ','อุณหภูมิ'],
+  ['มิลลิเมตรปลอด','มิลลิเมตรปรอท'],['องสา','องศา'],
+  ['ท้องอืดท้องเฝือ','ท้องอืดท้องเฟ้อ'],['เวียนหัวบ้านหมุด','เวียนหัวบ้านหมุน'],
+  ['ปวดเมื่อบ','ปวดเมื่อย'],['นอนไม่หลับๆ','นอนไม่หลับ'],
+  ['ประคบสมุนไพล','ประคบสมุนไพร'],['นวดกดจุก','นวดกดจุด'],['ลมปราน','ลมปราณ']
+];
+var VV_CTX = [
+  { re:/ไข่/g, to:'ไข้', near:/ตัวร้อน|หนาวสั่น|ปวดหัว|เป็นไข่|มีไข่|ไข่สูง|ไข่ต่ำ|เจ็บคอ/ }
+];
+function vvUserDict(){ try{ var u=JSON.parse(localStorage.getItem('vv_dict_user')||'[]'); return Array.isArray(u)?u:[]; }catch(_){ return []; } }
+/* แทนคำพจนานุกรม — แยกชื่อจาก vvNorm() เดิม (ค้นหาด้วยเสียง) เพื่อไม่ให้ชนกัน */
+function vvDictNorm(t){
+  t=(t||'').toString();
+  for(var i=0;i<VV_DICT.length;i++){ t=t.split(VV_DICT[i][0]).join(VV_DICT[i][1]); }
+  var u=vvUserDict();
+  for(var k=0;k<u.length;k++){ if(u[k]&&u[k][0]) t=t.split(u[k][0]).join(u[k][1]); }
+  for(var j=0;j<VV_CTX.length;j++){ var c=VV_CTX[j]; if(c.near.test(t)) t=t.replace(c.re,c.to); }
+  return t;
+}
+function vvUserDictAdd(heard,correct){
+  if(!heard||!correct||heard===correct) return;
+  var u=vvUserDict();
+  for(var i=0;i<u.length;i++){ if(u[i][0]===heard){ u[i][1]=correct; localStorage.setItem('vv_dict_user',JSON.stringify(u)); return; } }
+  u.push([heard,correct]); localStorage.setItem('vv_dict_user',JSON.stringify(u));
+}
+function vvErrMsg(err){ return ({'not-allowed':'กรุณาอนุญาตไมโครโฟน','service-not-allowed':'เบราว์เซอร์บล็อกไมโครโฟน','no-speech':'ไม่ได้ยินเสียง','audio-capture':'ไม่พบไมโครโฟน','network':'การเชื่อมต่อขัดข้อง'})[err]||err; }
+function vvErrFatal(err){ return err==='not-allowed'||err==='audio-capture'||err==='service-not-allowed'; }
 var VV_DIGIT={'ศูนย์':0,'สูญ':0,'หนึ่ง':1,'เอ็ด':1,'สอง':2,'ยี่':2,'สาม':3,'สี่':4,'ห้า':5,'หก':6,'เจ็ด':7,'แปด':8,'เก้า':9};
 var VV_SCALE={'สิบ':10,'ร้อย':100,'พัน':1000};
 var VV_NW=['พัน','ร้อย','สิบ','ศูนย์','สูญ','หนึ่ง','เอ็ด','สอง','ยี่','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
@@ -5330,15 +5363,15 @@ function vvScaled(r){r=r.replace(/\s/g,'');var i=0,t=0,c=0;while(i<r.length){var
 function vvDigits(r){r=r.replace(/\s/g,'');var i=0,o='';while(i<r.length){var m=false;for(var d in VV_DIGIT){if(r.indexOf(d,i)===i){o+=VV_DIGIT[d];i+=d.length;m=true;break;}}if(!m)i++;}return o;}
 function vvConv(r){return /สิบ|ร้อย|พัน/.test(r)?String(vvScaled(r)):(vvDigits(r)||r);}
 function vvToArabic(t){return t.replace(VV_RE,function(m){return vvConv(m);});}
-function vvParse(raw){var t=(raw||'').toLowerCase().replace(/ทับ|หาร/g,'/').replace(/จุด/g,'.');t=vvToArabic(t);var o={},m;
+function vvParse(raw){var t=vvDictNorm((raw||'').toLowerCase()).replace(/ทับ|หาร/g,'/').replace(/จุด/g,'.');t=vvToArabic(t);var o={},m;
   m=t.match(/(?:ความดัน|ดัน|บีพี|bp)[^0-9]*(\d{2,3})\s*\/\s*(\d{2,3})/);if(!m)m=t.match(/(?:ความดัน|ดัน|บีพี|bp)[^0-9]*(\d{2,3})[^0-9]+(\d{2,3})/);if(m){o.sys=+m[1];o.dia=+m[2];}
   m=t.match(/(?:น้ำหนัก|หนัก|นน|weight)[^0-9]*(\d{1,3}(?:\.\d)?)/);if(m)o.weight=parseFloat(m[1]);
   m=t.match(/(?:ส่วนสูง|สูง|height)[^0-9]*(\d{2,3}(?:\.\d)?)/);if(m)o.height=parseFloat(m[1]);
   return o;}
 function vvSet(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==''&&!(typeof val==='number'&&isNaN(val))){el.value=val;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},700);return true;}return false;}
 function vvFill(loc,v){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;if(v.sys&&v.dia){if(vvSet(c.bp,v.sys+'/'+v.dia))n++;}if(v.weight!==undefined){if(vvSet(c.weight,v.weight))n++;}if(v.height!==undefined){if(vvSet(c.height,v.height))n++;}return n;}
-var _vvRecog=null,_vvActive=null;
-function vvStop(){ if(_vvRecog){ try{_vvRecog.stop();}catch(_){} } }
+var _vvRecog=null,_vvActive=null,_vvUserStop=false;
+function vvStop(){ _vvUserStop=true; if(_vvRecog){ try{_vvRecog.stop();}catch(_){} } }
 /* ---- VOICE-SEARCH (ค้นหาผู้ป่วยด้วยเสียง) ---- */
 function vvNorm(s){return (s||'').toString().toLowerCase().replace(/\s+/g,'').replace(/[^ก-๙a-z0-9]/g,'');}
 function vvLev(a,b){var m=a.length,n=b.length;if(!m)return n;if(!n)return m;var d=[],i,j;for(i=0;i<=m;i++)d[i]=[i];for(j=0;j<=n;j++)d[0][j]=j;for(i=1;i<=m;i++)for(j=1;j<=n;j++){var c=a.charAt(i-1)===b.charAt(j-1)?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);}return d[m][n];}
@@ -5421,16 +5454,16 @@ function vvMic(loc){
   if(!vvVoiceOn()){ try{showToast('เปิด "กรอกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ try{showToast('เบราว์เซอร์ไม่รองรับเสียง (ใช้ Chrome)','error');}catch(_){} return; }
-  if(_vvActive===loc){ try{_vvRecog.stop();}catch(_){} return; }
+  if(_vvActive===loc){ _vvUserStop=true; try{_vvRecog.stop();}catch(_){} return; }
   if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
-  _vvActive=loc;
+  _vvActive=loc; _vvUserStop=false;
   var btn=document.getElementById('vv-mic-'+loc); if(btn) btn.classList.add('vv-rec');
   var dn=document.getElementById('vv-done-'+loc); if(dn) dn.style.display='inline-flex';
   var tr=document.getElementById((window.VV_LOC[loc]||{}).trans); if(tr) tr.textContent='🔴 กำลังฟัง...';
   _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=true; _vvRecog.continuous=true; var fin='';
   _vvRecog.onresult=function(e){var itm='';for(var i=e.resultIndex;i<e.results.length;i++){var r=e.results[i];if(r.isFinal)fin+=r[0].transcript+' ';else itm+=r[0].transcript;}var sh=(fin+itm).trim();if(tr)tr.textContent='🎧 '+sh;vvFill(loc,vvParse(sh));};
-  _vvRecog.onerror=function(e){if(tr)tr.textContent='⚠️ '+e.error;};
-  _vvRecog.onend=function(){if(btn)btn.classList.remove('vv-rec');var dn=document.getElementById('vv-done-'+loc);if(dn)dn.style.display='none';_vvActive=null;};
+  _vvRecog.onerror=function(e){ if(vvErrFatal(e.error))_vvUserStop=true; if(tr)tr.textContent='⚠️ '+vvErrMsg(e.error); };
+  _vvRecog.onend=function(){ if(_vvActive===loc&&!_vvUserStop){ try{_vvRecog.start();return;}catch(_){} } if(btn)btn.classList.remove('vv-rec'); var dn2=document.getElementById('vv-done-'+loc); if(dn2)dn2.style.display='none'; if(_vvActive===loc)_vvActive=null; };
   try{_vvRecog.start();}catch(_){}
 }
 function vvDictate(fieldId,btnId){
@@ -5438,19 +5471,19 @@ function vvDictate(fieldId,btnId){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ try{showToast('เบราว์เซอร์ไม่รองรับเสียง (ใช้ Chrome)','error');}catch(_){} return; }
   var el=document.getElementById(fieldId),btn=document.getElementById(btnId);
-  if(_vvActive==='d:'+fieldId){ try{_vvRecog.stop();}catch(_){} return; }
+  if(_vvActive==='d:'+fieldId){ _vvUserStop=true; try{_vvRecog.stop();}catch(_){} return; }
   if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
-  _vvActive='d:'+fieldId;
+  _vvActive='d:'+fieldId; _vvUserStop=false;
   if(btn) btn.classList.add('vv-rec');
   var stt=document.getElementById('vv-stat-'+fieldId); if(stt) stt.textContent='🔴 กำลังฟัง... กดอีกครั้งเพื่อจบการทำงาน';
   _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=false; _vvRecog.continuous=true;
   var base=el?el.value:'';
-  _vvRecog.onresult=function(e){var add='';for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)add+=e.results[i][0].transcript;}add=add.trim();if(add&&el){el.value=(base?base+' ':'')+add;base=el.value;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},600);}};
-  _vvRecog.onerror=function(){};
-  _vvRecog.onend=function(){if(btn)btn.classList.remove('vv-rec');if(stt)stt.textContent='';_vvActive=null;};
+  _vvRecog.onresult=function(e){var add='';for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)add+=e.results[i][0].transcript;}add=vvDictNorm(add.trim());if(add&&el){el.value=(base?base+' ':'')+add;base=el.value;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},600);}};
+  _vvRecog.onerror=function(e){ if(vvErrFatal(e.error))_vvUserStop=true; var s2=document.getElementById('vv-stat-'+fieldId); if(s2)s2.textContent='⚠️ '+vvErrMsg(e.error); };
+  _vvRecog.onend=function(){ if(_vvActive==='d:'+fieldId&&!_vvUserStop){ try{_vvRecog.start();return;}catch(_){} } if(btn)btn.classList.remove('vv-rec'); var s3=document.getElementById('vv-stat-'+fieldId); if(s3&&_vvUserStop)s3.textContent=''; if(_vvActive==='d:'+fieldId)_vvActive=null; };
   try{_vvRecog.start();}catch(_){}
 }
-function vvToggleVoice(){ localStorage.setItem('voice_enabled', vvVoiceOn()?'0':'1'); vvApplyVoiceUI(); try{showToast(vvVoiceOn()?'🎤 เปิดกรอกด้วยเสียง':'ปิดกรอกด้วยเสียง');}catch(_){} }
+function vvToggleVoice(){ var was=vvVoiceOn(); localStorage.setItem('voice_enabled', was?'0':'1'); if(was) vvStop(); vvApplyVoiceUI(); try{showToast(vvVoiceOn()?'🎤 เปิดกรอกด้วยเสียง':'ปิดกรอกด้วยเสียง');}catch(_){} }
 function vvApplyVoiceUI(){var on=vvVoiceOn();var b=document.getElementById('toggle-voice');if(b)b.classList.toggle('on',on);var st=document.getElementById('feat-voice-status');if(st){st.textContent=on?'● เปิด':'● ปิด';st.style.color=on?'var(--ok)':'var(--er)';}if(document.body)document.body.classList.toggle('vv-off',!on);}
 (function(){function _v(){if(!document.getElementById('vv-style')){var s=document.createElement('style');s.id='vv-style';s.textContent='.vv-off .vv-only{display:none!important}@keyframes vvpulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.6)}70%{box-shadow:0 0 0 8px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}.vv-rec{background:var(--er)!important;color:#fff!important;border-color:var(--er)!important;animation:vvpulse 1.1s infinite!important}';(document.head||document.documentElement).appendChild(s);}vvApplyVoiceUI();}if(document.readyState!=='loading')_v();else document.addEventListener('DOMContentLoaded',_v);})();
 /* ===== VOICE-VITALS END ===== */
@@ -9026,6 +9059,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v175', date:'11/06/2569', items:['feat(v216 voiceP1): VV_DICT พจนานุกรมแก้คำเพี้ยน ASR (2 ชั้น) + จุดเชื่อม vvDictNorm + auto-restart fix + error ภาษาคน'] },
+  { ver:'v216', date:'10/06/2569', items:['feat(voice P1): VV_DICT พจนานุกรมแก้คำเพี้ยน + auto-restart + error ภาษาคน'] },
   { ver:'v174', date:'10/06/2569', items:['style(v215): จอ QR พร้อมเพย์ - ข้อความสีเขียว ตัวเลขเงินสีดำ (3 จอ: ใบเสร็จ/รับชำระ/โมดัล QR)'] },
   { ver:'v215', date:'10/06/2569', items:['style(QR): ข้อความในจอ QR เป็นสีเขียว ตัวเลขเงินเป็นสีดำ (3 จอ)'] },
   { ver:'v173', date:'10/06/2569', items:['fix(v214): ช่องอีเมลฟอร์มผู้ป่วยไม่บังคับ format (email->text) คงชื่อ+เบอร์บังคับ'] },

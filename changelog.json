@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v175",
+    "date": "11/06/2569",
+    "items": [
+      "feat(v216 voiceP1): VV_DICT พจนานุกรมแก้คำเพี้ยน ASR (2 ชั้น) + จุดเชื่อม vvDictNorm + auto-restart fix + error ภาษาคน"
+    ]
+  },
+  {
     "ver": "v174",
     "date": "10/06/2569",
     "items": [
