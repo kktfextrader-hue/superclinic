@@ -5410,8 +5410,8 @@ function vvParse(raw){
   });
   return o;
 }
-function vvSet(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==''&&!(typeof val==='number'&&isNaN(val))){el.value=val;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},700);return true;}return false;}
-function vvFill(loc,v){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;VV_FIELDS.forEach(function(f){if(v[f.id]===undefined)return;var id=c[f.id];if(id&&vvSet(id,v[f.id]))n++;});return n;}
+function vvSet(id,val,lowConf){var el=document.getElementById(id);if(el&&val!==undefined&&val!==''&&!(typeof val==='number'&&isNaN(val))){el.value=val;el.style.transition='background .4s';el.style.background=lowConf?'#fff4d6':'#eafaf0';setTimeout(function(){el.style.background='';},lowConf?1400:700);return true;}return false;}
+function vvFill(loc,v,lowConf){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;VV_FIELDS.forEach(function(f){if(v[f.id]===undefined)return;var id=c[f.id];if(id&&vvSet(id,v[f.id],lowConf))n++;});return n;}
 var _vvRecog=null,_vvActive=null,_vvUserStop=false;
 function vvStop(){ _vvUserStop=true; if(_vvRecog){ try{_vvRecog.stop();}catch(_){} } }
 /* ---- VOICE-SEARCH (ค้นหาผู้ป่วยด้วยเสียง) ---- */
@@ -5492,6 +5492,16 @@ function vvSearchPick(p,raw){
   if(raw){ try{showToast('🧠 จำไว้แล้ว: "'+raw+'" = '+name);}catch(_){} }
 }
 
+var _vvLastHeard='', _vvUndoSnap=null;
+function vvSnapshot(loc){ var c=window.VV_LOC[loc]; if(!c)return; var vals={}; VV_FIELDS.forEach(function(f){var id=c[f.id]; if(id){var e=document.getElementById(id); if(e)vals[id]=e.value;}}); _vvUndoSnap={loc:loc,vals:vals}; }
+function vvUndo(loc){ if(!_vvUndoSnap||_vvUndoSnap.loc!==loc)return; var vals=_vvUndoSnap.vals; Object.keys(vals).forEach(function(id){var e=document.getElementById(id); if(e){e.value=vals[id]; e.style.transition='background .4s'; e.style.background='#fde8e8'; setTimeout(function(){e.style.background='';},700);}}); try{showToast('↩️ คืนค่าก่อนพูดแล้ว');}catch(_){} }
+function vvTrainCustomFrom(){ var w=(_vvLastHeard||'').trim(); if(typeof vvTrainOpen!=='function')return; vvTrainOpen(); setTimeout(function(){ if(typeof vvTrainCustomPrompt==='function'){ vvTrainCustomPrompt(); setTimeout(function(){ var i=document.getElementById('vvt-custom-inp'); if(i&&w){i.value=w;} },90); } },60); }
+function vvBarBtns(loc){
+  var bar=document.getElementById('vv-bar-'+loc); if(!bar)return;
+  var mk=function(id,title,html,fn){ if(document.getElementById(id))return; var b=document.createElement('button'); b.type='button'; b.id=id; b.title=title; b.onclick=fn; b.style.cssText='border:1px solid var(--go);background:#fff;color:var(--g1);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:12px;flex-shrink:0;'; b.innerHTML=html; bar.appendChild(b); };
+  mk('vv-undo-'+loc,'คืนค่าก่อนพูด','<i class="ti ti-arrow-back-up"></i>',function(){vvUndo(loc);});
+  mk('vv-train-'+loc,'เทรนคำที่เพิ่งพูด','🎓',function(){vvTrainCustomFrom();});
+}
 function vvMic(loc){
   if(!vvVoiceOn()){ try{showToast('เปิด "กรอกด้วยเสียง" ในตั้งค่าก่อน','error');}catch(_){} return; }
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -5499,11 +5509,12 @@ function vvMic(loc){
   if(_vvActive===loc){ _vvUserStop=true; try{_vvRecog.stop();}catch(_){} return; }
   if(_vvRecog){ try{_vvRecog.stop();}catch(_){} }
   _vvActive=loc; _vvUserStop=false;
+  vvSnapshot(loc); vvBarBtns(loc);
   var btn=document.getElementById('vv-mic-'+loc); if(btn) btn.classList.add('vv-rec');
   var dn=document.getElementById('vv-done-'+loc); if(dn) dn.style.display='inline-flex';
   var tr=document.getElementById((window.VV_LOC[loc]||{}).trans); if(tr) tr.textContent='🔴 กำลังฟัง...';
   _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=true; _vvRecog.continuous=true; var fin='';
-  _vvRecog.onresult=function(e){var itm='';for(var i=e.resultIndex;i<e.results.length;i++){var r=e.results[i];if(r.isFinal)fin+=r[0].transcript+' ';else itm+=r[0].transcript;}var sh=(fin+itm).trim();if(tr)tr.textContent='🎧 '+sh;vvFill(loc,vvParse(sh));};
+  _vvRecog.onresult=function(e){var itm='',conf=1;for(var i=e.resultIndex;i<e.results.length;i++){var r=e.results[i];if(r.isFinal){fin+=r[0].transcript+' ';if(typeof r[0].confidence==='number'&&r[0].confidence>0)conf=Math.min(conf,r[0].confidence);}else itm+=r[0].transcript;}var sh=(fin+itm).trim();_vvLastHeard=sh;if(tr)tr.textContent='🎧 '+sh;vvFill(loc,vvParse(sh),conf<0.6);};
   _vvRecog.onerror=function(e){ if(vvErrFatal(e.error))_vvUserStop=true; if(tr)tr.textContent='⚠️ '+vvErrMsg(e.error); };
   _vvRecog.onend=function(){ if(_vvActive===loc&&!_vvUserStop){ try{_vvRecog.start();return;}catch(_){} } if(btn)btn.classList.remove('vv-rec'); var dn2=document.getElementById('vv-done-'+loc); if(dn2)dn2.style.display='none'; if(_vvActive===loc)_vvActive=null; };
   try{_vvRecog.start();}catch(_){}
@@ -5518,9 +5529,19 @@ function vvDictate(fieldId,btnId){
   _vvActive='d:'+fieldId; _vvUserStop=false;
   if(btn) btn.classList.add('vv-rec');
   var stt=document.getElementById('vv-stat-'+fieldId); if(stt) stt.textContent='🔴 กำลังฟัง... กดอีกครั้งเพื่อจบการทำงาน';
-  _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=false; _vvRecog.continuous=true;
-  var base=el?el.value:'';
-  _vvRecog.onresult=function(e){var add='';for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)add+=e.results[i][0].transcript;}add=vvDictNorm(add.trim());if(add&&el){el.value=(base?base+' ':'')+add;base=el.value;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},600);}};
+  _vvRecog=new SR(); _vvRecog.lang='th-TH'; _vvRecog.interimResults=true; _vvRecog.continuous=true;
+  var base=el?el.value:'', prev=base;
+  _vvRecog.onresult=function(e){
+    var add='',itm='';
+    for(var i=e.resultIndex;i<e.results.length;i++){ if(e.results[i].isFinal)add+=e.results[i][0].transcript; else itm+=e.results[i][0].transcript; }
+    if(itm&&stt){ stt.textContent='🎧 '+itm; }
+    add=(add||'').trim(); if(!add) return; _vvLastHeard=add;
+    var cmd=vvDictNorm(add).replace(/\s/g,'');
+    if(cmd==='ยกเลิก'||cmd==='ลบ'||cmd==='ถอน'){ if(el){ el.value=prev; base=prev; } if(stt)stt.textContent='↩️ ยกเลิกประโยคล่าสุดแล้ว'; return; }
+    if(cmd==='ขึ้นบรรทัดใหม่'||cmd==='บรรทัดใหม่'||cmd==='เคาะบรรทัด'){ if(el){ prev=el.value; el.value=(el.value?el.value+'\n':''); base=el.value; } return; }
+    add=vvDictNorm(add);
+    if(el){ prev=el.value; el.value=(base?base+' ':'')+add; base=el.value; el.style.transition='background .4s'; el.style.background='#eafaf0'; setTimeout(function(){el.style.background='';},600); if(stt)stt.textContent='🔴 กำลังฟัง... กดอีกครั้งเพื่อจบ'; }
+  };
   _vvRecog.onerror=function(e){ if(vvErrFatal(e.error))_vvUserStop=true; var s2=document.getElementById('vv-stat-'+fieldId); if(s2)s2.textContent='⚠️ '+vvErrMsg(e.error); };
   _vvRecog.onend=function(){ if(_vvActive==='d:'+fieldId&&!_vvUserStop){ try{_vvRecog.start();return;}catch(_){} } if(btn)btn.classList.remove('vv-rec'); var s3=document.getElementById('vv-stat-'+fieldId); if(s3&&_vvUserStop)s3.textContent=''; if(_vvActive==='d:'+fieldId)_vvActive=null; };
   try{_vvRecog.start();}catch(_){}
@@ -9223,6 +9244,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v178', date:'11/06/2569', items:['feat(v219 voiceP4): undo (ปุ่ม + พูดยกเลิก) + ขึ้นบรรทัดใหม่ + โชว์สดโหมด B + confidence ต่ำเหลือง + ปุ่ม 🎓 เทรนคำ'] },
+  { ver:'v219', date:'11/06/2569', items:['feat(voice P4): undo (ปุ่ม ↶ + พูด "ยกเลิก") + ขึ้นบรรทัดใหม่ + โชว์สดโหมด B + confidence ต่ำ flash เหลือง + ปุ่ม 🎓 เทรนคำ'] },
   { ver:'v177', date:'11/06/2569', items:['feat(v218 voiceP3): หน้าเทรนสั่งงานด้วยเสียง — 3 ชุด อ่าน 3 รอบ grade Y/N/R + จำเสียง user dict + consent + GAS VoiceTraining + ปุ่มในตั้งค่า'] },
   { ver:'v218', date:'11/06/2569', items:['feat(voice P3): หน้าเทรนสั่งงานด้วยเสียง — 3 ชุด อ่าน 3 รอบ grade Y/N/R + จำเสียง (user dict) + consent + ส่งฐาน'] },
   { ver:'v176', date:'11/06/2569', items:['feat(v217 voiceP2): VV_FIELDS table-driven parser รองรับ อุณหภูมิ/ชีพจร + range validation + value-slotting + นโยบาย §0.0 + lessons.md'] },
