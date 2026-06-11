@@ -211,6 +211,13 @@ function handleRequest(e, method) {
       return jsonResponse_({ ok: true, action: 'voiceTraining', data: handleVoiceTraining_(_vt) }, 200);
     }
 
+    // ── action=voicetraininglist: อ่านข้อมูลเทรนเสียงทั้งแท็บ (หน้าวิเคราะห์ของเจ้าของ) ──
+    if (action === 'voicetraininglist') {
+      var _vdb = SpreadsheetApp.openById(getDbId_());
+      var _vsh = _vdb.getSheetByName('VoiceTraining');
+      return jsonResponse_({ ok: true, action: 'voiceTrainingList', data: { rows: _vsh ? _vsh.getDataRange().getValues() : [] } }, 200);
+    }
+
     const sheet = (params.sheet || '').toLowerCase();
     if (!sheet || !CONFIG.TABS[sheet]) {
       return jsonResponse_({ ok: false, error: 'Invalid or missing sheet name' }, 400);

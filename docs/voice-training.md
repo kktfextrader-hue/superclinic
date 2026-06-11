@@ -50,3 +50,11 @@
 - ใช้ Chrome/Edge + HTTPS · Web Speech ส่งเสียงขึ้น Google (privacy — เป้าหมายระยะถัดไป: เอนจินไทยของตัวเอง ตามนโยบาย §0.0 ข้อ 7)
 - ยังไม่ auto-update VV_DICT กลางจากฐาน / ยังไม่ tune 0.45 (รอข้อมูลจริงในแท็บ VoiceTraining)
 - ชุด thaimed เป็นชื่อยาที่ ASR เพี้ยนบ่อย — ปรับจากชีต herbs จริงได้
+
+## วิเคราะห์ข้อมูล (VV-ANALYZE — superclinic เท่านั้น, เครื่องมือเจ้าของ)
+- ปุ่ม **📊 วิเคราะห์** ข้าง "เริ่มเทรน" ในตั้งค่า → modal สรุป:
+  ชิป รวม/ผู้ใช้/คลินิก/Y%/N/R · ตารางคู่เพี้ยนยอดฮิต (นับครั้ง/คน/คลินิก + เช็คว่า dict ปัจจุบันแก้แล้วหรือยัง)
+  · กล่องโค้ดแนะนำเข้า VV_DICT (**ทั้งวลีเสมอ — exact match ปลอดภัย** + comment จุดต่าง เช่น "ร"→"ล") พร้อมปุ่มคัดลอก · รายการ R รีวิวสำเนียง
+- แหล่งข้อมูล: superclinic GAS `?action=voicetraininglist&token=` (อัตโนมัติ) + License Server `?action=voicetraininglist&admin_token=` (เจ้าของใส่ ADMIN_TOKEN ครั้งเดียว เก็บ localStorage `vv_ls_admin`)
+- endpoint: superclinic Code.gs (ใน handleRequest, token-auth) @16 · LS `listVoiceTraining_` ผ่าน `adminGuard_` @25
+- กรองแถว TEST* ออกจากการวิเคราะห์ · **ห้าม**ใส่หน้านี้ใน scproject (ลูกค้าห้ามเห็นข้อมูลข้ามคลินิก)

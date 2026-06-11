@@ -3855,7 +3855,7 @@ var qrcode = function() {
             <div class="setting-label"><i class="ti ti-school" style="color:var(--g1);margin-right:6px;"></i>เทรนระบบสั่งงานด้วยเสียง</div>
             <div class="setting-sub">อ่านบทให้ระบบรู้จักเสียงคุณ — ยิ่งเทรน ยิ่งแม่นขึ้น (จำในเครื่อง)</div>
           </div>
-          <button class="btn btn-green" style="background:var(--g1);flex-shrink:0;" onclick="vvTrainOpen()"><i class="ti ti-microphone"></i> เริ่มเทรน</button>
+          <div style="display:flex;gap:8px;flex-shrink:0;"><button class="btn btn-green" style="background:var(--g1);" onclick="vvTrainOpen()"><i class="ti ti-microphone"></i> เริ่มเทรน</button><button class="btn btn-outline" style="border-color:var(--g1);color:var(--g1);" onclick="vvAnalyzeOpen()" title="สรุปคำเพี้ยนจากทุกเครื่อง/ทุกคลินิก"><i class="ti ti-chart-bar"></i> วิเคราะห์</button></div>
         </div>
         <div class="setting-row" style="padding:14px 0;border-top:1px solid rgba(0,0,0,.07);">
           <div style="flex:1;">
@@ -5673,6 +5673,112 @@ function vvTrainFinish(){
   _vvTrain=null;
 }
 /* ===== VV-TRAIN END ===== */
+/* ===== VV-ANALYZE (v221): วิเคราะห์ข้อมูลเทรนเสียง — เครื่องมือเจ้าของ (superclinic only) ===== */
+var VVA_LS_URL='https://script.google.com/macros/s/AKfycbw0rurw72JgCpkx0N3IiXybGuOGDB8Xqf1W0BWU0gk2vvQHDBLGFdIHjZ3aK3w7aw0XCg/exec';
+var _vvaRows=[];
+function vvaClose(){ var o=document.getElementById('vva-overlay'); if(o)o.remove(); }
+function vvaSet(html){ var b=document.getElementById('vva-body'); if(b)b.innerHTML=html; }
+function vvaEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function vvaDiff(exp,heard){ /* ตัด prefix/suffix ร่วม → เหลือเฉพาะส่วนที่ต่าง (เดาคำเพี้ยนระดับคำ) */
+  var a=String(exp||''),b=String(heard||''),i=0,j=0;
+  while(i<a.length&&i<b.length&&a[i]===b[i])i++;
+  while(j<(a.length-i)&&j<(b.length-i)&&a[a.length-1-j]===b[b.length-1-j])j++;
+  return [b.slice(i,b.length-j).trim(), a.slice(i,a.length-j).trim()];
+}
+function vvAnalyzeOpen(){
+  if(document.getElementById('vva-overlay'))return;
+  var ov=document.createElement('div'); ov.id='vva-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:10040;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Sarabun,sans-serif;';
+  ov.innerHTML='<div style="background:#fff;border-radius:20px;width:100%;max-width:680px;max-height:92vh;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.3);">'
+    +'<div style="background:linear-gradient(135deg,#2F5D50,#3f7a68);color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1;">'
+    +'<div style="font-size:15px;font-weight:700;">📊 วิเคราะห์ข้อมูลเทรนเสียง</div>'
+    +'<button onclick="vvaClose()" style="background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:16px;">✕</button></div>'
+    +'<div id="vva-body" style="padding:16px 20px;"><div style="text-align:center;color:#888;padding:30px;">⏳ กำลังโหลดข้อมูลจากฐาน superclinic...</div></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov)vvaClose(); });
+  _vvaRows=[]; vvaLoadOwn();
+}
+function vvaNormRows(raw,src){ var out=[]; (raw||[]).forEach(function(r){ if(!r||!r.length||String(r[0])==='timestamp')return; if(String(r[1]).indexOf('TEST')===0)return; out.push({ts:r[0],user:String(r[1]||''),set:String(r[2]||''),line:r[3],att:r[4],exp:String(r[5]||''),raw:String(r[6]||''),norm:String(r[7]||''),st:String(r[8]||''),src:src}); }); return out; }
+function vvaLoadOwn(){
+  fetch(API_URL+'?action=voicetraininglist&token='+encodeURIComponent(API_TOKEN),{redirect:'follow'})
+    .then(function(r){return r.json();})
+    .then(function(j){ _vvaRows=_vvaRows.concat(vvaNormRows(j&&j.data&&j.data.rows,'SUPER')); vvaRender(); })
+    .catch(function(e){ vvaSet('<div style="color:var(--er);padding:20px;text-align:center;">โหลดไม่สำเร็จ: '+vvaEsc(e.message)+'</div>'); });
+}
+function vvaLoadLS(){
+  var inp=document.getElementById('vva-ls-token'); var tok=(inp?inp.value:'').trim();
+  if(!tok){ if(inp)inp.focus(); return; }
+  try{localStorage.setItem('vv_ls_admin',tok);}catch(_){}
+  var st=document.getElementById('vva-ls-stat'); if(st)st.textContent='⏳ กำลังโหลด...';
+  fetch(VVA_LS_URL+'?action=voicetraininglist&admin_token='+encodeURIComponent(tok),{redirect:'follow'})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(!j||j.ok===false){ if(st)st.textContent='⚠️ '+((j&&j.error)==='unauthorized'?'token ไม่ถูกต้อง':vvaEsc((j&&j.error)||'ผิดพลาด')); return; }
+      _vvaRows=_vvaRows.filter(function(r){return r.src!=='LS';}).concat(vvaNormRows(j.rows||(j.data&&j.data.rows),'LS'));
+      vvaRender(true);
+    }).catch(function(e){ if(st)st.textContent='⚠️ '+vvaEsc(e.message); });
+}
+function vvaRender(lsLoaded){
+  var rows=_vvaRows;
+  var users={},clinics={},Y=0,N=0,R=0;
+  rows.forEach(function(r){ users[r.user]=1; var c=r.user.indexOf(':')>-1?r.user.split(':')[0]:(r.src==='SUPER'?'superclinic':'(ไม่ระบุ)'); r.clinic=c; clinics[c]=1; if(r.st==='Y')Y++;else if(r.st==='N')N++;else if(r.st==='R')R++; });
+  var total=rows.length, rate=total?Math.round(Y*100/total):0;
+  /* group คู่เพี้ยน N */
+  var g={};
+  rows.forEach(function(r){ if(r.st!=='N')return; var k=r.exp+'|'+r.norm; if(!g[k])g[k]={exp:r.exp,heard:r.norm,n:0,users:{},clinics:{}}; g[k].n++; g[k].users[r.user]=1; g[k].clinics[r.clinic]=1; });
+  var pairs=Object.keys(g).map(function(k){ var x=g[k]; x.nu=Object.keys(x.users).length; x.nc=Object.keys(x.clinics).length;
+    x.fixed=(vvTrainCanon(x.heard)===vvTrainCanon(x.exp)); var d=vvaDiff(x.exp,x.heard); x.dHeard=d[0]; x.dExp=d[1]; return x; })
+    .sort(function(a,b){ return (b.nu-a.nu)||(b.n-a.n); });
+  /* แนะนำเข้า VV_DICT: ยังไม่ถูกแก้ + (ซ้ำ>=2 ครั้ง หรือ >=2 คน) + ชิ้น diff ยาวพอ */
+  var rec=pairs.filter(function(x){ return !x.fixed && (x.n>=2||x.nu>=2) && x.heard && x.heard!==x.exp; });
+  var recLines=rec.map(function(x){ var hint=(x.dHeard&&x.dExp&&x.dHeard.length<=8)?(' · จุดต่าง: "'+x.dHeard+'"→"'+x.dExp+'"'):''; return "['"+x.heard.replace(/'/g,"\\'")+"','"+x.exp.replace(/'/g,"\\'")+"'], // "+x.n+'ครั้ง/'+x.nu+'คน'+hint; });
+  /* R list */
+  var rrows=rows.filter(function(r){return r.st==='R';}).slice(-10).reverse();
+  var chip=function(t){ return '<span style="background:#f3f8f4;border:1px solid #d9e4d6;border-radius:8px;padding:4px 11px;font-size:12px;white-space:nowrap;">'+t+'</span>'; };
+  var html='';
+  /* แหล่งข้อมูล + LS loader */
+  var savedTok=''; try{savedTok=localStorage.getItem('vv_ls_admin')||'';}catch(_){}
+  html+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">'+chip('🗂️ superclinic: โหลดแล้ว')+(lsLoaded?chip('🌐 ทุกคลินิกเช่า (LS): โหลดแล้ว'):'')+'</div>';
+  if(!lsLoaded) html+='<div style="background:#f6f8ff;border:1px dashed #b9c2d8;border-radius:10px;padding:10px 12px;margin-bottom:14px;">'
+    +'<div style="font-size:12px;color:#3a55c0;font-weight:600;margin-bottom:6px;">🌐 รวมข้อมูลจากทุกคลินิกเช่า (License Server) — ใส่ admin token ครั้งเดียว</div>'
+    +'<div style="display:flex;gap:6px;"><input id="vva-ls-token" type="password" class="form-input form-control" placeholder="ADMIN_TOKEN" value="'+vvaEsc(savedTok)+'" style="flex:1;font-size:12px;">'
+    +'<button class="btn btn-outline" style="border-color:#3a55c0;color:#3a55c0;flex-shrink:0;" onclick="vvaLoadLS()">โหลด</button></div>'
+    +'<div id="vva-ls-stat" style="font-size:11px;color:#888;margin-top:4px;min-height:14px;"></div></div>';
+  /* สรุป */
+  html+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">'
+    +chip('รวม <b>'+total+'</b> ครั้งอ่าน')+chip('ผู้ใช้ <b>'+Object.keys(users).length+'</b>')+chip('คลินิก <b>'+Object.keys(clinics).length+'</b>')
+    +chip('✅ ตรง <b>'+Y+'</b> ('+rate+'%)')+chip('⚠️ เพี้ยน <b>'+N+'</b>')+chip('🚫 ไม่รับ <b>'+R+'</b>')+'</div>';
+  if(!total){ html+='<div style="text-align:center;color:#999;padding:24px;">ยังไม่มีข้อมูลเทรน — ชวนผู้ใช้กด "เริ่มเทรน" ก่อน</div>'; vvaSet(html); return; }
+  /* ตารางคู่เพี้ยน */
+  html+='<div style="font-size:12px;font-weight:700;color:var(--g1);margin-bottom:6px;">⚠️ คู่เพี้ยนยอดฮิต (status N) — เรียงตามจำนวนคนที่เพี้ยนเหมือนกัน</div>';
+  if(!pairs.length) html+='<div style="font-size:12px;color:#999;margin-bottom:12px;">ไม่มีคู่เพี้ยน 🎉</div>';
+  else{
+    html+='<div style="border:1px solid #eee;border-radius:10px;overflow:hidden;margin-bottom:14px;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'
+      +'<tr style="background:#f6f8f4;color:#666;"><th style="padding:7px 9px;text-align:left;">บทอ่าน → ได้ยิน</th><th style="padding:7px 5px;">ครั้ง</th><th style="padding:7px 5px;">คน</th><th style="padding:7px 5px;">คลินิก</th><th style="padding:7px 9px;">dict</th></tr>';
+    pairs.slice(0,15).forEach(function(x){
+      html+='<tr style="border-top:1px solid #f0ede6;"><td style="padding:7px 9px;line-height:1.5;">'+vvaEsc(x.exp)+'<br><span style="color:#c0392b;">→ '+vvaEsc(x.heard)+'</span></td>'
+        +'<td style="padding:7px 5px;text-align:center;font-weight:700;">'+x.n+'</td><td style="padding:7px 5px;text-align:center;">'+x.nu+'</td><td style="padding:7px 5px;text-align:center;">'+x.nc+'</td>'
+        +'<td style="padding:7px 9px;text-align:center;">'+(x.fixed?'<span style="color:var(--ok);font-weight:700;">แก้แล้ว</span>':'<span style="color:#b8860b;font-weight:700;">ยังไม่แก้</span>')+'</td></tr>';
+    });
+    html+='</table></div>';
+  }
+  /* แนะนำเข้า VV_DICT */
+  html+='<div style="font-size:12px;font-weight:700;color:var(--g1);margin-bottom:6px;">💡 แนะนำเพิ่มเข้า VV_DICT กลาง (ยังไม่ถูกแก้ + เพี้ยนซ้ำ/หลายคน)</div>';
+  if(!recLines.length) html+='<div style="font-size:12px;color:#999;margin-bottom:12px;">ยังไม่มีรายการเข้าเกณฑ์ (ต้องเพี้ยนซ้ำ ≥2 ครั้ง หรือ ≥2 คน)</div>';
+  else html+='<div style="position:relative;background:#1e2a26;border-radius:10px;padding:12px 14px;margin-bottom:14px;">'
+    +'<pre id="vva-rec" style="margin:0;color:#a8d5c2;font-size:12px;font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-all;">'+vvaEsc(recLines.join('\n'))+'</pre>'
+    +'<button onclick="(function(){try{navigator.clipboard.writeText(document.getElementById(\'vva-rec\').textContent);showToast(\'📋 คัดลอกแล้ว\');}catch(_){}})()" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:7px;padding:4px 10px;cursor:pointer;font-size:11px;">คัดลอก</button></div>';
+  /* R review */
+  if(rrows.length){
+    html+='<div style="font-size:12px;font-weight:700;color:var(--g1);margin-bottom:6px;">🚫 ฟังไม่ออกล่าสุด (รีวิวสำเนียง/เสียงหลุด — ไม่เข้า dict)</div><div style="font-size:11.5px;color:#777;line-height:1.7;margin-bottom:10px;">';
+    rrows.forEach(function(r){ html+='• '+vvaEsc(r.exp)+' → <span style="color:#c0392b;">'+vvaEsc(r.raw||r.norm)+'</span> <span style="color:#bbb;">('+vvaEsc(r.clinic)+')</span><br>'; });
+    html+='</div>';
+  }
+  html+='<div style="font-size:10.5px;color:#aaa;border-top:1px solid #f0ede6;padding-top:8px;">ไม่รวมแถวทดสอบ (TEST*) · "แก้แล้ว" = พจนานุกรมเวอร์ชันปัจจุบันแก้คู่นี้ได้แล้ว · คัดลอกโค้ดไปวางใน VV_DICT แล้ว deploy ทั้ง 2 แอป</div>';
+  vvaSet(html);
+}
+/* ===== VV-ANALYZE END ===== */
+
 /* ===== VOICE-VITALS END ===== */
 function openEditPatient(id){
   const p=allPatients.find(x=>(x.hn===id||x.id===id)); if(!p) return;
@@ -9246,6 +9352,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v182', date:'11/06/2569', items:['feat(v221 voice): หน้าวิเคราะห์เทรนเสียง — คู่เพี้ยนยอดฮิตข้ามคลินิก + แนะนำ VV_DICT (ทั้งวลี ปลอดภัย) + endpoint voicetraininglist @16'] },
+  { ver:'v221', date:'11/06/2569', items:['feat(voice): หน้าวิเคราะห์ข้อมูลเทรนเสียง — คู่เพี้ยนยอดฮิตข้ามคลินิก + แนะนำเข้า VV_DICT พร้อมคัดลอก (เครื่องมือเจ้าของ)'] },
   { ver:'v181', date:'11/06/2569', items:['docs(voice): sync-up routing 2 ปลายทาง (แก้เอกสารให้ตรง)'] },
   { ver:'v180', date:'11/06/2569', items:['feat(v220 voice): refactor upload ผ่าน vvTrainUpload (superclinic→GAS ตัวเอง เหมือนเดิม)'] },
   { ver:'v220', date:'11/06/2569', items:['feat(voice): ส่งข้อมูลเทรนเข้าฐานกลาง — superclinic→GAS ตัวเอง (ไม่เปลี่ยนพฤติกรรม)'] },
