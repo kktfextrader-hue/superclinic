@@ -5556,9 +5556,13 @@ var VV_TRAIN_SETS = {
   thaimed:{ name:'ศัพท์แพทย์แผนไทย', lines:['นวดกดจุดสัญญาณ','ประคบสมุนไพรบริเวณบ่า','อบไอน้ำสมุนไพร','ยาหอมนวโกฐ','ฟ้าทะลายโจรแคปซูล','ขมิ้นชันแคปซูล','ยาธาตุอบเชย','เถาวัลย์เปรียง','ยาประสะไพล','ยาจันทน์ลีลา','ยาเหลืองปิดสมุทร','ยาเบญจกูล','ยาหอมเทพจิตร','รากชะเอมเทศ','ยาแก้ลมอัมพฤกษ์'] }
 };
 var VV_SIM_REJECT = 0.45;
-function vvUid(){ var u=localStorage.getItem('vv_uid'); if(!u){ u='u'+Math.random().toString(36).slice(2,10); try{localStorage.setItem('vv_uid',u);}catch(_){}} return u; }
+function vvUid(){ var u=localStorage.getItem('vv_uid'); if(!u){ u='u'+Math.random().toString(36).slice(2,10); try{localStorage.setItem('vv_uid',u);}catch(_){}} var c=''; try{c=localStorage.getItem('sc_clinic_id')||'';}catch(_){} return (c?c+':':'')+u; }
 function vvTrainConsent(){ return localStorage.getItem('vv_train_consent')==='1'; }
-function vvTrainCanUpload(){ return (typeof API_URL!=='undefined' && typeof API_TOKEN!=='undefined' && typeof LS_URL==='undefined'); }
+function vvTrainCanUpload(){ return !!((typeof LS_URL!=='undefined'&&LS_URL) || (typeof API_URL!=='undefined'&&API_URL)); }
+function vvTrainUpload(rows){ if(!rows||!rows.length)return false; var url=null, body=JSON.stringify({rows:rows});
+  if(typeof LS_URL!=='undefined'&&LS_URL){ url=LS_URL+'?action=voicetraining'; }                       /* scproject → License Server กลาง (เรา) */
+  else if(typeof API_URL!=='undefined'&&API_URL){ url=API_URL+'?action=voicetraining'+((typeof API_TOKEN!=='undefined'&&API_TOKEN)?('&token='+encodeURIComponent(API_TOKEN)):''); } /* superclinic → GAS ตัวเอง */
+  if(!url)return false; try{ fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body}).catch(function(){}); }catch(_){} return true; }
 function vvTrainCanon(s){ s=vvDictNorm((s||'').toLowerCase()); s=s.replace(/ทับ|หาร/g,'/').replace(/จุด/g,'.'); s=vvToArabic(s); return s.replace(/[\s,，。.!?ๆ]/g,'').replace(/\.+$/,''); }
 function vvTrainMatch(exp,heard){ var a=vvTrainCanon(exp),b=vvTrainCanon(heard); return a===b||(b.length>3&&(a.indexOf(b)>-1||b.indexOf(a)>-1)); }
 function vvTrainSim(exp,heard){ var a=vvTrainCanon(exp),b=vvTrainCanon(heard); if(!a.length||!b.length)return 0; return 1-vvLev(a,b)/Math.max(a.length,b.length); }
@@ -5659,9 +5663,7 @@ function vvTrainSkipLine(){ var T=_vvTrain; if(!T)return; T.rep=1; T.idx++; T.re
 function vvTrainFinish(){
   var T=_vvTrain; if(!T){ vvTrainChooser(); return; }
   var rows=T.rows, total=T.Y+T.N+T.R, uploaded=false;
-  if(vvTrainConsent() && vvTrainCanUpload() && rows.length){ uploaded=true;
-    try{ fetch(API_URL+'?action=voicetraining&token='+encodeURIComponent(API_TOKEN), {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({rows:rows})}).catch(function(){}); }catch(_){}
-  }
+  if(vvTrainConsent() && rows.length){ uploaded=vvTrainUpload(rows); }
   vvtSet('<div style="text-align:center;padding:8px 0;"><div style="font-size:40px;">🎉</div>'
     +'<div style="font-size:17px;font-weight:700;color:var(--g1);margin-bottom:4px;">เทรนเสร็จแล้ว ขอบคุณครับ</div>'
     +'<div style="font-size:13px;color:#666;margin-bottom:12px;">ตรง '+T.Y+' · เพี้ยน '+T.N+' · ฟังไม่ออก '+T.R+' (จาก '+total+' ครั้ง)</div>'
@@ -9244,6 +9246,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v180', date:'11/06/2569', items:['feat(v220 voice): refactor upload ผ่าน vvTrainUpload (superclinic→GAS ตัวเอง เหมือนเดิม)'] },
+  { ver:'v220', date:'11/06/2569', items:['feat(voice): ส่งข้อมูลเทรนเข้าฐานกลาง — superclinic→GAS ตัวเอง (ไม่เปลี่ยนพฤติกรรม)'] },
   { ver:'v179', date:'11/06/2569', items:['docs(voice): as-built voice-training.md + lessons L6 (multi-app gate)'] },
   { ver:'v178', date:'11/06/2569', items:['feat(v219 voiceP4): undo (ปุ่ม + พูดยกเลิก) + ขึ้นบรรทัดใหม่ + โชว์สดโหมด B + confidence ต่ำเหลือง + ปุ่ม 🎓 เทรนคำ'] },
   { ver:'v219', date:'11/06/2569', items:['feat(voice P4): undo (ปุ่ม ↶ + พูด "ยกเลิก") + ขึ้นบรรทัดใหม่ + โชว์สดโหมด B + confidence ต่ำ flash เหลือง + ปุ่ม 🎓 เทรนคำ'] },
