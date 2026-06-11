@@ -30,11 +30,12 @@
 - **user dict auto-add** (`vvTrainCountMiss`): เฉพาะ N · ไม่รวม vitals · เพี้ยนซ้ำ ≥2 (2/3 รอบ) · heard ≥3 ตัว · 3 รอบ 3 แบบ→ไม่ add
 - เรียนแล้วมีผลทันที (vvDictNorm อ่าน user dict สดทุกครั้ง)
 
-## เก็บข้อมูล (backend — superclinic เท่านั้น)
-- **gate:** `vvTrainCanUpload()` = มี `API_URL`+`API_TOKEN` และ **ไม่มี `LS_URL`** → superclinic ส่ง, scproject เทรน local อย่างเดียว (ไม่มี consent box)
-- **consent** (`vv_train_consent` localStorage) ต้องติ๊กก่อนส่ง · ไม่ติ๊ก = เทรน+user dict ได้ แต่ไม่ส่ง
-- ส่ง **batch จบชุด** → `POST {API_URL}?action=voicetraining` body `{rows:[...]}`
-- GAS `handleVoiceTraining_` → แท็บ `VoiceTraining`: `timestamp|userId|setId|lineId|attempt|expected|heard_raw|heard_norm|status|browser`
+## เก็บข้อมูล (backend — รวมมาที่เรา 2 ปลายทาง)
+- **routing (`vvTrainUpload`)**: superclinic (ไม่มี LS_URL) → POST GAS ตัวเอง `?action=voicetraining&token=` → แท็บ VoiceTraining ของ superclinic · **scproject (มี LS_URL) → POST License Server กลาง `?action=voicetraining`** (ไม่ต้อง token) → แท็บ VoiceTraining ใน LS_SHEET ของเรา (**รวมทุกคลินิกเช่ามาที่เรา**)
+- `userId` = `vvUid()` มี **clinic_id นำหน้า** บน scproject (เช่น `SC001:uXXXX`) → แยกได้ว่ามาจากคลินิกไหน · superclinic = uid เปล่า
+- **consent** (`vv_train_consent`) ต้องติ๊กก่อนส่ง (ทั้ง 2 แอปโชว์ consent) · ไม่ติ๊ก = เทรน + user dict local ได้ แต่ไม่ส่ง
+- ส่ง **batch จบชุด** body `{rows:[...]}` · schema: `timestamp|userId|setId|lineId|attempt|expected|heard_raw|heard_norm|status|browser`
+- handler: superclinic `handleVoiceTraining_` (Code.gs) · **License Server `saveVoiceTraining_`** (action `voicetraining` — additive, public append, ไม่แตะ tenant CRUD; deploy version 24)
 - **ไม่เก็บไฟล์เสียง** (ข้อความเท่านั้น)
 
 ## UX (เฟส 4)
