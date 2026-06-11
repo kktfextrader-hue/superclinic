@@ -34,3 +34,10 @@
 - **สาเหตุ:** SpeechRecognition `continuous=true` ยังถูก engine ตัดเมื่อเงียบ → onend ถูกเรียก
 - **วิธีแก้:** flag `_vvUserStop` + restart ใน onend ถ้าไม่ใช่ผู้ใช้สั่งหยุด · ไม่ restart เมื่อ fatal error (not-allowed/audio-capture) กัน loop
 - **วิธีกันซ้ำ:** ใช้ continuous ASR ต้องจัดการ auto-restart + แยก fatal vs non-fatal error เสมอ
+
+
+## L6 — 2 แอป lockstep ต้องพฤติกรรมต่างกัน → detect runtime config อย่า hardcode
+- **อาการ:** ฟีเจอร์เก็บข้อมูลเทรน (upload) ต้องทำเฉพาะ superclinic แต่ตอนแรก gate ด้วย `typeof API_URL` → scproject ก็มี API_URL เลยจะ upload ผิด
+- **สาเหตุ:** 2 แอป (lockstep โค้ดชุดเดียว) มี config คล้ายกัน — ต่างกันที่ scproject มี `LS_URL`/`USE_LS_PROXY` (ผ่าน License Server)
+- **วิธีแก้:** gate ด้วย `typeof API_URL!==undefined && typeof LS_URL===undefined` (มี LS_URL = scproject = ไม่ upload) — โค้ดชุดเดียว env-detected
+- **วิธีกันซ้ำ:** เวลาต้องการให้ 2 แอป lockstep พฤติกรรมต่างกัน ให้ตรวจ runtime config ที่มีอยู่จริง (LS_URL ฯลฯ) แทนการ hardcode flag แยกไฟล์ → คงโค้ดชุดเดียว patch พร้อมกันได้
