@@ -204,6 +204,13 @@ function handleRequest(e, method) {
       return jsonResponse_({ ok: true, action: 'checkPayment', data: checkPaymentEmail_(_amt, _mins) }, 200);
     }
 
+    // ── action=voicetraining: เก็บผลเทรนเสียงเข้าแท็บ VoiceTraining (batch, ข้อความล้วน) ──
+    if (action === 'voicetraining') {
+      var _vt = {};
+      if (e.postData && e.postData.contents) { try { _vt = JSON.parse(e.postData.contents); } catch (_) {} }
+      return jsonResponse_({ ok: true, action: 'voiceTraining', data: handleVoiceTraining_(_vt) }, 200);
+    }
+
     const sheet = (params.sheet || '').toLowerCase();
     if (!sheet || !CONFIG.TABS[sheet]) {
       return jsonResponse_({ ok: false, error: 'Invalid or missing sheet name' }, 400);
@@ -968,6 +975,20 @@ function checkPaymentEmail_(amount, minutes) {
     }
   }
   return { matched: false };
+}
+
+function handleVoiceTraining_(p) {
+  var db = SpreadsheetApp.openById(getDbId_());
+  var sh = db.getSheetByName('VoiceTraining');
+  if (!sh) {
+    sh = db.insertSheet('VoiceTraining');
+    sh.appendRow(['timestamp','userId','setId','lineId','attempt','expected','heard_raw','heard_norm','status','browser']);
+  }
+  var rows = (p && p.rows) || [];
+  if (rows.length) {
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  return { ok: true, saved: rows.length };
 }
 
 function handleLineNotify_(body) {
