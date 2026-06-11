@@ -5320,7 +5320,7 @@ async function submitAddPatient(e){
 }
 
 /* ===== VOICE-VITALS START (พูดกรอกสัญญาณชีพ scoped) ===== */
-window.VV_LOC={reg:{bp:'reg-bp',weight:'reg-weight',height:'reg-height',trans:'vv-trans-reg'},edit:{bp:'vve-bp',weight:'vve-weight',height:'vve-height',trans:'vv-trans-edit'}};
+window.VV_LOC={reg:{bp:'reg-bp',weight:'reg-weight',height:'reg-height',temp:'reg-temp',pulse:'reg-pulse',trans:'vv-trans-reg'},edit:{bp:'vve-bp',weight:'vve-weight',height:'vve-height',temp:'vve-temp',pulse:'vve-pulse',trans:'vv-trans-edit'}};
 function vvVoiceOn(){ return localStorage.getItem('voice_enabled')!=='0'; }
 /* ===== VV-DICT (v216): พจนานุกรมแก้คำเพี้ยน ASR — 2 ชั้น (กลาง VV_DICT + ผู้ใช้ vv_dict_user) ===== */
 var VV_DICT = [
@@ -5363,13 +5363,48 @@ function vvScaled(r){r=r.replace(/\s/g,'');var i=0,t=0,c=0;while(i<r.length){var
 function vvDigits(r){r=r.replace(/\s/g,'');var i=0,o='';while(i<r.length){var m=false;for(var d in VV_DIGIT){if(r.indexOf(d,i)===i){o+=VV_DIGIT[d];i+=d.length;m=true;break;}}if(!m)i++;}return o;}
 function vvConv(r){return /สิบ|ร้อย|พัน/.test(r)?String(vvScaled(r)):(vvDigits(r)||r);}
 function vvToArabic(t){return t.replace(VV_RE,function(m){return vvConv(m);});}
-function vvParse(raw){var t=vvDictNorm((raw||'').toLowerCase()).replace(/ทับ|หาร/g,'/').replace(/จุด/g,'.');t=vvToArabic(t);var o={},m;
-  m=t.match(/(?:ความดัน|ดัน|บีพี|bp)[^0-9]*(\d{2,3})\s*\/\s*(\d{2,3})/);if(!m)m=t.match(/(?:ความดัน|ดัน|บีพี|bp)[^0-9]*(\d{2,3})[^0-9]+(\d{2,3})/);if(m){o.sys=+m[1];o.dia=+m[2];}
-  m=t.match(/(?:น้ำหนัก|หนัก|นน|weight)[^0-9]*(\d{1,3}(?:\.\d)?)/);if(m)o.weight=parseFloat(m[1]);
-  m=t.match(/(?:ส่วนสูง|สูง|height)[^0-9]*(\d{2,3}(?:\.\d)?)/);if(m)o.height=parseFloat(m[1]);
-  return o;}
+/* VV_FIELDS (v217 P2): table-driven parser — bp/weight/height/temp/pulse */
+var VV_FIELDS = [
+  { id:'bp',     keys:['ความดัน','ดัน','บีพี','bp'], pair:true, range:[[70,250],[40,150]] },
+  { id:'temp',   keys:['อุณหภูมิ','ไข้','temp'],      range:[34,43],  dec:1 },
+  { id:'pulse',  keys:['ชีพจร','pulse'],              range:[30,220] },
+  { id:'weight', keys:['น้ำหนัก','หนัก','นน','weight'],range:[20,250], dec:1 },
+  { id:'height', keys:['ส่วนสูง','สูง','height'],      range:[100,230] }
+];
+function _vvFmt(v,f){ var d=(f&&f.dec)?f.dec:0; var p=Math.pow(10,d); return (d?(Math.round(v*p)/p):Math.round(v)).toString(); }
+function _vvIn(v,r){ return v>=r[0]&&v<=r[1]; }
+function vvParse(raw){
+  var t=vvDictNorm((raw||'').toLowerCase()).replace(/ทับ|หาร/g,'/').replace(/จุด/g,'.');
+  t=vvToArabic(t);
+  var o={}, bf=null, i;
+  for(i=0;i<VV_FIELDS.length;i++){ if(VV_FIELDS[i].id==='bp'){ bf=VV_FIELDS[i]; break; } }
+  /* 1) ความดัน = คู่ xx/yy เสมอ (range-check; หลุดช่วง=ไม่เติม แต่ consume เลขทิ้งกัน re-slot) */
+  if(bf){ var bpm=t.match(/(\d{2,3})\s*\/\s*(\d{2,3})/);
+    if(bpm){ if(_vvIn(+bpm[1],bf.range[0])&&_vvIn(+bpm[2],bf.range[1])) o.bp=(+bpm[1])+'/'+(+bpm[2]); t=t.replace(bpm[0],' '); } }
+  /* 2) เก็บเลขทั้งหมด (ตำแหน่ง+มีจุดทศนิยมไหม) */
+  var nums=[], re=/\d+(?:\.\d+)?/g, mm;
+  while((mm=re.exec(t))!==null){ nums.push({v:parseFloat(mm[0]), i:mm.index, dec:mm[0].indexOf('.')>-1, used:false}); }
+  /* 3) keyword (ไม่รวม bp) เรียงตามตำแหน่ง */
+  var kw=[];
+  VV_FIELDS.forEach(function(f){ if(f.id==='bp') return;
+    f.keys.forEach(function(k){ var idx=t.indexOf(k); while(idx>-1){ kw.push({f:f,i:idx}); idx=t.indexOf(k,idx+k.length); } });
+  });
+  kw.sort(function(a,b){ return a.i-b.i; });
+  /* 4) keyword จับเลขใกล้สุดที่อยู่ในช่วง (ไม่สนลำดับหน้า/หลัง) */
+  kw.forEach(function(K){ if(o[K.f.id]!==undefined) return;
+    var best=null,bd=1e9; nums.forEach(function(N){ if(N.used||!_vvIn(N.v,K.f.range)) return; var d=Math.abs(N.i-K.i); if(d<bd){bd=d;best=N;} });
+    if(best){ best.used=true; o[K.f.id]=_vvFmt(best.v,K.f); }
+  });
+  /* 5) value-based slotting: เลขไม่มี keyword → ช่องว่างช่วงแคบสุดที่รับได้ (เลขมีจุด→เลือกช่อง dec) */
+  nums.forEach(function(N){ if(N.used) return;
+    var cand=VV_FIELDS.filter(function(f){ return f.id!=='bp' && o[f.id]===undefined && _vvIn(N.v,f.range); });
+    if(N.dec){ var dc=cand.filter(function(f){return f.dec;}); if(dc.length) cand=dc; }
+    if(cand.length){ cand.sort(function(a,b){ return (a.range[1]-a.range[0])-(b.range[1]-b.range[0]); }); o[cand[0].id]=_vvFmt(N.v,cand[0]); N.used=true; }
+  });
+  return o;
+}
 function vvSet(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==''&&!(typeof val==='number'&&isNaN(val))){el.value=val;el.style.transition='background .4s';el.style.background='#eafaf0';setTimeout(function(){el.style.background='';},700);return true;}return false;}
-function vvFill(loc,v){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;if(v.sys&&v.dia){if(vvSet(c.bp,v.sys+'/'+v.dia))n++;}if(v.weight!==undefined){if(vvSet(c.weight,v.weight))n++;}if(v.height!==undefined){if(vvSet(c.height,v.height))n++;}return n;}
+function vvFill(loc,v){var c=window.VV_LOC[loc];if(!c)return 0;var n=0;VV_FIELDS.forEach(function(f){if(v[f.id]===undefined)return;var id=c[f.id];if(id&&vvSet(id,v[f.id]))n++;});return n;}
 var _vvRecog=null,_vvActive=null,_vvUserStop=false;
 function vvStop(){ _vvUserStop=true; if(_vvRecog){ try{_vvRecog.stop();}catch(_){} } }
 /* ---- VOICE-SEARCH (ค้นหาผู้ป่วยด้วยเสียง) ---- */
@@ -9059,6 +9094,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v176', date:'11/06/2569', items:['feat(v217 voiceP2): VV_FIELDS table-driven parser รองรับ อุณหภูมิ/ชีพจร + range validation + value-slotting + นโยบาย §0.0 + lessons.md'] },
+  { ver:'v217', date:'11/06/2569', items:['feat(voice P2): VV_FIELDS table-driven parser — รองรับ อุณหภูมิ/ชีพจร + range validation + slotting'] },
   { ver:'v175', date:'11/06/2569', items:['feat(v216 voiceP1): VV_DICT พจนานุกรมแก้คำเพี้ยน ASR (2 ชั้น) + จุดเชื่อม vvDictNorm + auto-restart fix + error ภาษาคน'] },
   { ver:'v216', date:'10/06/2569', items:['feat(voice P1): VV_DICT พจนานุกรมแก้คำเพี้ยน + auto-restart + error ภาษาคน'] },
   { ver:'v174', date:'10/06/2569', items:['style(v215): จอ QR พร้อมเพย์ - ข้อความสีเขียว ตัวเลขเงินสีดำ (3 จอ: ใบเสร็จ/รับชำระ/โมดัล QR)'] },
