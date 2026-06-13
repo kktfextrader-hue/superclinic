@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v187",
+    "date": "13/06/2569",
+    "items": [
+      "feat(vvcmd): phonetic snap fallback in vvParse + drop ambiguous short key nn"
+    ]
+  },
+  {
     "ver": "v186",
     "date": "13/06/2569",
     "items": [

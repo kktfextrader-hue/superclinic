@@ -53,3 +53,10 @@
 - **สาเหตุ:** real-time sync ต้องการ infrastructure (Firebase/WebSocket) + การ resolve conflict ซับซ้อน
 - **วิธีแก้:** **local-first + eventual consistency** — local อ่านทันที (zero latency) · push debounced 5s (กัน spam ไม่ ddos GAS) · pull on init+เปิดเทรน · merge by key+ts (last-write-wins) — ใช้ของฟรีที่มีอยู่แล้ว (settings sheet + LockService.waitLock)
 - **วิธีกันซ้ำ:** sync ฟีเจอร์ที่ไม่ urgent (dict, settings, preferences) → ใช้ pattern นี้เสมอ · เก็บ ts กับทุก entry ตั้งแต่แรก (ไม่ใช่เพิ่มทีหลัง — ทำให้ backward compat ยุ่ง) · เก็บ uid ผู้สร้างไว้ debug ได้ ไม่บังคับ
+
+## L9 — Default fallback ที่ผ่อนปรนทำให้ cap ไม่ enforce จริง
+- **อาการ:** `PLAN_TIER` default = `pro` (ไม่ cap) + `LICENSE.patient_limit || 20` (fallback ต่ำเกินจริง) → freemium cap ที่ตกลงไว้ 50 คน ใช้ไม่ได้ทั้งคู่ ในขณะที่ planCheckPatient เช็คเฉพาะ tier===free ที่ไม่เคยถูก set
+- **สาเหตุ:** เผื่อ debug/dev mode ตั้ง default 'pro' กับ fallback ผ่อนปรน — แต่ลืมจัดการ production = default ฟรี + fallback ตามสเปกจริง
+- **วิธีแก้:** (1) default tier = ดึงจาก LICENSE.plan โดยตรง · fallback = 'free' (เข้มสุด ไม่ใช่ผ่อนปรนสุด) (2) cap ส่งจาก single source of truth (server side) ไม่ hardcode client-side
+- **วิธีกันซ้ำ:** quotas/limits/cap ทุกตัว → default ให้เข้มสุดเสมอ ปลอดภัยกว่า · ใช้ server-driven config (single source of truth) ไม่ hardcode 2 ที่ · เมื่อมี policy change บนเอกสาร → grep ทุก hardcoded reference ก่อน ship (เคสนี้ 50 อยู่ frontend แต่ fallback 20 ทำให้ไหลผ่าน)
+

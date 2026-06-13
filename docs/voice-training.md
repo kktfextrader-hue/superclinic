@@ -21,6 +21,14 @@
 - เพิ่มฟิลด์ใหม่ = เพิ่ม 1 แถวใน VV_FIELDS + map id ใน `VV_LOC`
 - ช่องจริง: reg-bp/reg-temp/reg-pulse/reg-weight/reg-height
 
+## VV-CMD (phonetic snap fallback — 2026-06-13, รอ push)
+ชั้น fallback ต่อจาก `vvDictNorm`: keyword/คำสั่งที่ exact dict + `indexOf` ไม่ครอบ → **snap เข้า keyword ที่ "ใกล้เสียง" สุด** (phonetic ไทย) โดยไม่ต้องรอเทรน
+- `vvPhon(s)` = phonetic key (รวมเสียงสับสน: ร/ล, บ/ป, ผ/พ/ภ, สระสั้น/ยาว, ตัดวรรณยุกต์) · `vvPhonSim` = 1−Lev(phon)/len (ใช้ `vvLev` เดิม)
+- จุดเชื่อม: ใน `vvParse` หลังเก็บ keyword exact → token ที่ยังไม่ match → `vvPhonSim` เทียบ keys ทุก field → snap ถ้า ≥ **0.55**
+- ตัด keyword `'นน'` (น้ำหนัก) ออก — ย่อเกิน substring ไปชน "วั**นน**ี้" (บั๊กเดิม)
+- **พิสูจน์** (`D:\claudeproject\vv-snap`): engine กู้ VV_DICT 20/20 · คำเพี้ยนใหม่(ไม่อยู่ dict) 16/16 · ปฏิเสธคำมั่ว 5/5 · เสียบ vvParse แล้ว **regression old==new 5/5** · เคสกำกวม keyword เพี้ยน 3/3 (เช่น "น้ำนัก 60 ส่วนสุง 165": เดิม→pulse:60 ผิด → ใหม่→weight:60)
+- additive ล้วน (ไม่แตะ vvNorm/vvDictNorm/value-slotting เดิม) · patch `patch_vvcmd.py` (รับชื่อไฟล์ argv → 2 แอป) · backup `*.PRE-VVCMD.html` · verified โค้ดจริงจากไฟล์ทั้ง 2 แอป
+
 ## เทรน (vvTrain)
 - ชุด `VV_TRAIN_SETS`: vitals(10) / symptoms(10) / thaimed(15) + โหมด custom (พิมพ์คำเอง)
 - อ่าน 3 รอบ/บรรทัด · เกรด **`vvTrainGrade`**:

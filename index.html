@@ -5410,11 +5410,16 @@ var VV_FIELDS = [
   { id:'bp',     keys:['ความดัน','ดัน','บีพี','bp'], pair:true, range:[[70,250],[40,150]] },
   { id:'temp',   keys:['อุณหภูมิ','ไข้','temp'],      range:[34,43],  dec:1 },
   { id:'pulse',  keys:['ชีพจร','pulse'],              range:[30,220] },
-  { id:'weight', keys:['น้ำหนัก','หนัก','นน','weight'],range:[20,250], dec:1 },
+  { id:'weight', keys:['น้ำหนัก','หนัก','weight'],range:[20,250], dec:1 },
   { id:'height', keys:['ส่วนสูง','สูง','height'],      range:[100,230] }
 ];
 function _vvFmt(v,f){ var d=(f&&f.dec)?f.dec:0; var p=Math.pow(10,d); return (d?(Math.round(v*p)/p):Math.round(v)).toString(); }
 function _vvIn(v,r){ return v>=r[0]&&v<=r[1]; }
+/* ===== VV-CMD: phonetic snap — แก้คำสั่งเพี้ยนที่ dict exact ไม่ครอบ (รวมเสียงไทยสับสน ร/ล, บ/ป, สั้น/ยาว, ตัวสะกด) ===== */
+var VV_STRIP=/[\u0E47\u0E48\u0E49\u0E4A\u0E4B\u0E4C\u0E46\u0E4D\u0E3A\u0E2F\s\u200B]/g;
+var VV_PMAP={'ก':'k','ข':'k','ฃ':'k','ค':'k','ฅ':'k','ฆ':'k','ง':'g','จ':'j','ฉ':'c','ช':'c','ฌ':'c','ซ':'s','ศ':'s','ษ':'s','ส':'s','ญ':'y','ย':'y','ฎ':'d','ด':'d','ฏ':'t','ต':'t','ฐ':'t','ฑ':'t','ฒ':'t','ถ':'t','ท':'t','ธ':'t','ณ':'n','น':'n','บ':'b','ป':'b','ผ':'p','พ':'p','ภ':'p','ฝ':'f','ฟ':'f','ม':'m','ร':'r','ล':'r','ฬ':'r','ฤ':'r','ว':'w','ห':'h','ฮ':'h','อ':'','ะ':'a','ั':'a','า':'a','ๅ':'a','ิ':'i','ี':'i','ึ':'v','ื':'v','ุ':'u','ู':'u','เ':'e','แ':'x','โ':'o','ใ':'I','ไ':'I','ำ':'am'};
+function vvPhon(s){s=(s||'').toString().toLowerCase().replace(VV_STRIP,'');var o='',i,ch;for(i=0;i<s.length;i++){ch=s.charAt(i);o+=(VV_PMAP.hasOwnProperty(ch)?VV_PMAP[ch]:ch);}return o;}
+function vvPhonSim(a,b){var pa=vvPhon(a),pb=vvPhon(b);var L=Math.max(pa.length,pb.length)||1;return 1-vvLev(pa,pb)/L;}
 function vvParse(raw){
   var t=vvDictNorm((raw||'').toLowerCase()).replace(/ทับ|หาร/g,'/').replace(/จุด/g,'.');
   t=vvToArabic(t);
@@ -5430,6 +5435,13 @@ function vvParse(raw){
   var kw=[];
   VV_FIELDS.forEach(function(f){ if(f.id==='bp') return;
     f.keys.forEach(function(k){ var idx=t.indexOf(k); while(idx>-1){ kw.push({f:f,i:idx}); idx=t.indexOf(k,idx+k.length); } });
+  });
+  /* VV-CMD: phonetic fallback — snap token ที่ exact key พลาด เข้า field ใกล้เสียงสุด (thr 0.55) */
+  t.replace(/\d+(?:\.\d+)?/g,' ').replace(/[\/]/g,' ').split(/\s+/).forEach(function(tok){
+    if(!tok) return;
+    if(VV_FIELDS.some(function(f){return f.id!=='bp'&&f.keys.some(function(k){return tok.indexOf(k)>-1;});})) return;
+    var bf=null,bs=0; VV_FIELDS.forEach(function(f){ if(f.id==='bp') return; f.keys.forEach(function(k){ var s=vvPhonSim(tok,k); if(s>bs){bs=s;bf=f;} }); });
+    if(bf&&bs>=0.55){ var ix=t.indexOf(tok); kw.push({f:bf,i:ix>-1?ix:0}); }
   });
   kw.sort(function(a,b){ return a.i-b.i; });
   /* 4) keyword จับเลขใกล้สุดที่อยู่ในช่วง (ไม่สนลำดับหน้า/หลัง) */
@@ -9437,6 +9449,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v187', date:'13/06/2569', items:['feat(vvcmd): phonetic snap fallback in vvParse + drop ambiguous short key nn'] },
   { ver:'v186', date:'13/06/2569', items:['docs(voice): multi-device sync section + L8 (local-first eventual + LWW pattern)'] },
   { ver:'v185', date:'13/06/2569', items:['feat(v223 voice SYNC): multi-device sync user dict ผ่าน settings.vv_dict_user_clinic (T1 ผสมทั้งคลินิก) + ts/uid + debounce 5s + last-write-wins + flush on TrainFinish'] },
   { ver:'v185', date:'13/06/2569', items:['feat(v223 voice SYNC): multi-device sync ของ user dict ผ่าน settings.vv_dict_user_clinic (T1, ผสมทั้งคลินิก) + ts/uid metadata, debounced push 5s, last-write-wins'] },
