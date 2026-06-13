@@ -31,6 +31,24 @@
 
 ---
 
+### §0.2 UPGRADE LOGGING PROTOCOL — บันทึก upgrade ลง log ครบทุกที่ (ตั้ง 2026-06-13)
+
+> **ทุกครั้งที่ upgrade/เพิ่มฟีเจอร์ ต้องบันทึกลง log ให้ครบ** เพื่อตามรอยพัฒนาการของแต่ละระบบ — ห้ามปล่อย log เลื่อนลอย (เคสเสีย: ตาราง §15 ค้างที่ v66 ทั้งที่ของจริง v220+)
+
+**อัตโนมัติ — `push-now.bat` → `update_version.py` ทำให้ (ไม่ต้องแตะมือ):**
+- `changelog.json` (in-app fetch ตัวนี้) + `const CHANGELOG=[` ใน html (fallback) + version + backup `superclinic-v<N>.html`
+- → **commit message = ตัว log** เขียนให้ดี: `feat(v<internal> <module>): <ทำอะไร — จุดเด่น>` (ส่งเป็น arg: `push-now.bat "ข้อความ"`)
+
+**ทำมือ — Claude อัปเดตเองทุก upgrade ก่อน/พร้อม push:**
+- `docs/<feature>.md` (as-built) — โมดูลไหนเปลี่ยน อัปให้ตรงจริง
+- `docs/lessons.md` — เฉพาะถ้าแก้บั๊ก/กับดัก (อาการ→เหตุ→แก้→กันซ้ำ, §0.0-6)
+- `kkcallmd/done-log.md` — archive ข้ามแอป (วันที่ + เวอร์ชันทั้ง 2 แอป + รายละเอียด)
+- memory `project_*` — ถ้า state โปรเจกต์ขยับ
+
+**§15 ด้านล่าง = ประวัติเก่า v1-v66 (historical) · log สดจริง = `changelog.json` (อย่าเปิด 2 รางให้ drift อีก)**
+
+---
+
 ## 1. Project Identity
 
 | รายการ | ข้อมูล |
@@ -326,6 +344,8 @@ callApi('settings','update',{ key:'herb_stock_value', value: String(Math.round(v
 ---
 
 ## 15. Changelog
+
+> ⚠️ ตารางนี้ = ประวัติเก่า v1-v66 (historical) · **log สดจริง = `changelog.json`** (update_version.py อัปอัตโนมัติตอน push) — ดู §0.2
 
 | วันที่ | Version | การเปลี่ยนแปลง |
 |---|---|---|

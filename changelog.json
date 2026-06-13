@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v183",
+    "date": "13/06/2569",
+    "items": [
+      "feat(v222 voice): CER scorecard in VV-ANALYZE - measure vvDictNorm before/after dict (exact-match + CER reduction + per-set table), additive"
+    ]
+  },
+  {
     "ver": "v182",
     "date": "11/06/2569",
     "items": [

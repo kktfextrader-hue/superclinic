@@ -5685,6 +5685,52 @@ function vvaDiff(exp,heard){ /* ตัด prefix/suffix ร่วม → เห�
   while(j<(a.length-i)&&j<(b.length-i)&&a[a.length-1-j]===b[b.length-1-j])j++;
   return [b.slice(i,b.length-j).trim(), a.slice(i,a.length-j).trim()];
 }
+function vvaLNorm(s){ return String(s||'').replace(/[๐-๙]/g,function(d){return '๐๑๒๓๔๕๖๗๘๙'.indexOf(d);}).replace(/\s+/g,''); }
+function vvaLev(a,b){ a=vvaLNorm(a);b=vvaLNorm(b); var m=a.length,n=b.length; if(!m)return n; if(!n)return m;
+  var prev=[],cur=[],i,j; for(j=0;j<=n;j++)prev[j]=j;
+  for(i=1;i<=m;i++){ cur[0]=i; for(j=1;j<=n;j++){ var c=a[i-1]===b[j-1]?0:1; cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+c);} var t=prev;prev=cur;cur=t; }
+  return prev[n]; }
+function vvaScorePanel(rows){
+  var SETLBL={vitals:'สัญญาณชีพ',symptoms:'อาการ',thaimed:'ชื่อยา',custom:'กำหนดเอง'};
+  var ev=rows.filter(function(r){return r.st==='Y'||r.st==='N';});
+  if(!ev.length) return '';
+  var Rn=rows.filter(function(r){return r.st==='R';}).length;
+  var eRaw=0,eNorm=0,refC=0,exRaw=0,exNorm=0,bySet={};
+  ev.forEach(function(r){ var rl=vvaLNorm(r.exp).length||0; refC+=rl;
+    var dr=vvaLev(r.raw||r.norm,r.exp), dn=vvaLev(r.norm||r.raw,r.exp); eRaw+=dr; eNorm+=dn;
+    if(vvaLNorm(r.raw||r.norm)===vvaLNorm(r.exp))exRaw++; if(vvaLNorm(r.norm||r.raw)===vvaLNorm(r.exp))exNorm++;
+    var s=r.set||'(ไม่ระบุ)'; if(!bySet[s])bySet[s]={n:0,e:0,c:0,ex:0}; bySet[s].n++; bySet[s].e+=dn; bySet[s].c+=rl; if(vvaLNorm(r.norm||r.raw)===vvaLNorm(r.exp))bySet[s].ex++; });
+  var cerRaw=refC?eRaw/refC:0, cerNorm=refC?eNorm/refC:0;
+  var redu=cerRaw?Math.round((cerRaw-cerNorm)/cerRaw*100):0;
+  var exRawP=ev.length?Math.round(exRaw*100/ev.length):0, exNormP=ev.length?Math.round(exNorm*100/ev.length):0;
+  var pc=function(v){return (v*100).toFixed(1)+'%';};
+  var H='';
+  H+='<div style="font-size:12px;font-weight:700;color:var(--g1);margin-bottom:6px;">🎯 คะแนนพจนานุกรม (vvDictNorm) — วัดจากข้อมูลจริง</div>';
+  H+='<div style="background:#f6faf7;border:1px solid #d9e4d6;border-radius:12px;padding:14px;margin-bottom:14px;">';
+  H+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">';
+  H+='<div style="background:#fff;border:1px solid #e3ece1;border-radius:10px;padding:10px 12px;">'
+    +'<div style="font-size:11.5px;color:#777;margin-bottom:3px;">ออกถูกเป๊ะ (หลัง dict)</div>'
+    +'<div style="font-size:26px;font-weight:700;color:var(--ok);line-height:1;">'+exNormP+'%</div>'
+    +'<div style="font-size:11.5px;color:#999;margin-top:4px;">ก่อน dict '+exRawP+'% <span style="color:var(--ok);">▲ +'+(exNormP-exRawP)+'</span></div></div>';
+  H+='<div style="background:#fff;border:1px solid #e3ece1;border-radius:10px;padding:10px 12px;">'
+    +'<div style="font-size:11.5px;color:#777;margin-bottom:3px;">ลดความเพี้ยน (CER)</div>'
+    +'<div style="font-size:26px;font-weight:700;color:var(--g1);line-height:1;">−'+redu+'%</div>'
+    +'<div style="font-size:11.5px;color:#999;margin-top:4px;">'+pc(cerRaw)+' <span style="color:#888;">→</span> <b style="color:var(--g1);">'+pc(cerNorm)+'</b></div></div>';
+  H+='</div>';
+  H+='<div style="border:1px solid #e8efe6;border-radius:9px;overflow:hidden;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    +'<tr style="background:#eef4ec;color:#557;"><th style="padding:6px 9px;text-align:left;font-weight:600;">ชุดเทรน</th><th style="padding:6px 5px;font-weight:600;">ครั้ง</th><th style="padding:6px 5px;font-weight:600;">CER หลัง</th><th style="padding:6px 9px;font-weight:600;">ตรงเป๊ะ</th></tr>';
+  Object.keys(bySet).sort(function(a,b){return (bySet[b].e/(bySet[b].c||1))-(bySet[a].e/(bySet[a].c||1));}).forEach(function(s){
+    var x=bySet[s], c=x.c?x.e/x.c:0, ex=x.n?Math.round(x.ex*100/x.n):0, hot=c>=0.03;
+    H+='<tr style="border-top:1px solid #f0ede6;"><td style="padding:6px 9px;">'+vvaEsc(SETLBL[s]||s)+'</td>'
+      +'<td style="padding:6px 5px;text-align:center;">'+x.n+'</td>'
+      +'<td style="padding:6px 5px;text-align:center;font-weight:700;color:'+(hot?'#b8860b':'var(--ok)')+';">'+pc(c)+'</td>'
+      +'<td style="padding:6px 9px;text-align:center;">'+ex+'%</td></tr>';
+  });
+  H+='</table></div>';
+  H+='<div style="font-size:10.5px;color:#999;margin-top:9px;line-height:1.6;">วัดจาก '+ev.length+' ครั้ง (Y+N ที่กู้ได้) · ไม่รวมเสียงหลุด R '+Rn+' ครั้ง (ASR ฟังผิด dict ช่วยไม่ได้) · CER = อัตราผิดระดับตัวอักษร (แก้/ตัวอักษรเป้าหมาย) · เทียบ raw ASR ↔ หลัง vvDictNorm</div>';
+  H+='</div>';
+  return H;
+}
 function vvAnalyzeOpen(){
   if(document.getElementById('vva-overlay'))return;
   var ov=document.createElement('div'); ov.id='vva-overlay';
@@ -5749,6 +5795,8 @@ function vvaRender(lsLoaded){
     +chip('รวม <b>'+total+'</b> ครั้งอ่าน')+chip('ผู้ใช้ <b>'+Object.keys(users).length+'</b>')+chip('คลินิก <b>'+Object.keys(clinics).length+'</b>')
     +chip('✅ ตรง <b>'+Y+'</b> ('+rate+'%)')+chip('⚠️ เพี้ยน <b>'+N+'</b>')+chip('🚫 ไม่รับ <b>'+R+'</b>')+'</div>';
   if(!total){ html+='<div style="text-align:center;color:#999;padding:24px;">ยังไม่มีข้อมูลเทรน — ชวนผู้ใช้กด "เริ่มเทรน" ก่อน</div>'; vvaSet(html); return; }
+  /* 🎯 คะแนนพจนานุกรม (CER ก่อน/หลัง dict) — วัดประสิทธิภาพ vvDictNorm */
+  html+=vvaScorePanel(rows);
   /* ตารางคู่เพี้ยน */
   html+='<div style="font-size:12px;font-weight:700;color:var(--g1);margin-bottom:6px;">⚠️ คู่เพี้ยนยอดฮิต (status N) — เรียงตามจำนวนคนที่เพี้ยนเหมือนกัน</div>';
   if(!pairs.length) html+='<div style="font-size:12px;color:#999;margin-bottom:12px;">ไม่มีคู่เพี้ยน 🎉</div>';
@@ -9352,6 +9400,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v183', date:'13/06/2569', items:['feat(v222 voice): CER scorecard in VV-ANALYZE - measure vvDictNorm before/after dict (exact-match + CER reduction + per-set table), additive'] },
   { ver:'v182', date:'11/06/2569', items:['feat(v221 voice): หน้าวิเคราะห์เทรนเสียง — คู่เพี้ยนยอดฮิตข้ามคลินิก + แนะนำ VV_DICT (ทั้งวลี ปลอดภัย) + endpoint voicetraininglist @16'] },
   { ver:'v221', date:'11/06/2569', items:['feat(voice): หน้าวิเคราะห์ข้อมูลเทรนเสียง — คู่เพี้ยนยอดฮิตข้ามคลินิก + แนะนำเข้า VV_DICT พร้อมคัดลอก (เครื่องมือเจ้าของ)'] },
   { ver:'v181', date:'11/06/2569', items:['docs(voice): sync-up routing 2 ปลายทาง (แก้เอกสารให้ตรง)'] },

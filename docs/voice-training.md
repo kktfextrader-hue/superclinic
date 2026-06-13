@@ -58,3 +58,10 @@
 - แหล่งข้อมูล: superclinic GAS `?action=voicetraininglist&token=` (อัตโนมัติ) + License Server `?action=voicetraininglist&admin_token=` (เจ้าของใส่ ADMIN_TOKEN ครั้งเดียว เก็บ localStorage `vv_ls_admin`)
 - endpoint: superclinic Code.gs (ใน handleRequest, token-auth) @16 · LS `listVoiceTraining_` ผ่าน `adminGuard_` @25
 - กรองแถว TEST* ออกจากการวิเคราะห์ · **ห้าม**ใส่หน้านี้ใน scproject (ลูกค้าห้ามเห็นข้อมูลข้ามคลินิก)
+
+## 🎯 แผงคะแนนพจนานุกรม (CER scorecard — v222, 2026-06-13)
+- อยู่**เหนือตารางคู่เพี้ยน**ใน modal VV-ANALYZE — วัดประสิทธิภาพ `vvDictNorm` จากข้อมูลจริง (ไม่ fetch เพิ่ม — ใช้ `_vvaRows` ที่ modal ดึงมาแล้ว)
+- **2 ตัวเลขหลัก:** (1) **ออกถูกเป๊ะ** ก่อน/หลัง dict (exact-match raw→norm) (2) **CER ลด%** (micro-average ระดับตัวอักษร raw→norm) + **ตารางแยกตามชุดเทรน** (ชี้ชุดที่ dict อ่อนสุด)
+- **ฟังก์ชันใหม่ (เพิ่มล้วน ไม่แตะ logic เดิม):** `vvaLNorm` (เลขไทย→อารบิก+ตัดช่องว่าง **ไม่แตะ dict** กัน dict ปนเปื้อนฝั่ง before) · `vvaLev` (Levenshtein) · `vvaScorePanel(rows)` — เรียกใน `vvaRender` หลัง guard ก่อนตารางคู่เพี้ยน
+- **ตัวหาร = Y+N เท่านั้น (ไม่รวม R)** — R = เสียงหลุด ASR ฟังผิด dict ช่วยไม่ได้ → ถ่วงตัวเลขเกินจริง
+- **ประโยชน์:** เห็นตัวเลขว่า dict ซื้ออะไรให้ + ชี้ชุดที่ต้องเติม dict · อนาคตใช้เป็น **ประตูตัดสินใจ** ว่าถึงจุดต้องทำโมเดลเรียนรู้ไหม (ถ้า CER ตัน) — ตัดสินใจด้วยตัวเลข ไม่ใช่ความรู้สึก
