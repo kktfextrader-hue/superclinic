@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v185",
+    "date": "13/06/2569",
+    "items": [
+      "feat(v223 voice SYNC): multi-device sync user dict ผ่าน settings.vv_dict_user_clinic (T1 ผสมทั้งคลินิก) + ts/uid + debounce 5s + last-write-wins + flush on TrainFinish"
+    ]
+  },
+  {
     "ver": "v184",
     "date": "13/06/2569",
     "items": [
