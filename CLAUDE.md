@@ -170,36 +170,23 @@ bmClear('uid')              // ล้าง
 
 ## 8. Deploy Workflow
 
-**กฎ: หลังแก้ไขเสร็จทุกครั้ง ให้แจ้ง user รัน `push-now.bat` — Claude sandbox ไม่มี network access ออก GitHub**
+**Canonical deploy = `push-now.bat`** (Windows: `C:\Users\acer\Desktop\Claude\superclinic\push-now.bat`)
+**Claude รันเองได้ตรงจาก Windows** (พิสูจน์ 2026-06-13: push v183 = a37b0c7) — เลิกใช้สมมติฐานเดิม "sandbox ออกเน็ตไม่ได้"
 
-```bash
-# Claude push จาก bash sandbox (ทำทุกครั้งหลังแก้ไข):
-PAT=ghp_XXXX_เก็บเฉพาะใน_session_ห้ามใส่ในไฟล์นี้
-USER=kktfextrader-hue
-REPO_NAME=superclinic
-SRC=/sessions/gracious-brave-bardeen/mnt/superclinic
-TMP=/tmp/SC-push
+**วิธีรัน (Claude):** ส่ง commit msg เป็น arg เพื่อข้าม prompt `set /p`:
 
-# ตรวจก่อน push
-grep -n "async async" $SRC/superclinic.html  # ต้องไม่มี output
-
-# clone + copy + push
-rm -rf $TMP && mkdir $TMP
-git clone https://$PAT@github.com/$USER/$REPO_NAME.git $TMP
-cp $SRC/superclinic.html $TMP/index.html
-cp $SRC/superclinic.html $TMP/superclinic.html
-cp $SRC/Code.gs $TMP/Code.gs
-cp $SRC/CLAUDE.md $TMP/CLAUDE.md
-cd $TMP
-git config user.email "kktfextrader@gmail.com"
-git config user.name "KK"
-git add -A
-git commit -m "feat: vXX — [description]"
-git push https://$PAT@github.com/$USER/$REPO_NAME.git main
-rm -rf $TMP
+```
+& cmd.exe /c '"C:\Users\acer\Desktop\Claude\superclinic\push-now.bat" "feat(vXXX module): สิ่งที่ทำ"'
 ```
 
-> ⚠️ session path `/sessions/gracious-brave-bardeen/` อาจเปลี่ยนทุก session — ตรวจสอบจาก system prompt ก่อนรัน
+- PowerShell tool ตั้ง **`dangerouslyDisableSandbox: true`** (git ต้องออกเน็ต) · probe ก่อนได้ `git ls-remote <url> main`
+- **commit msg = ASCII เท่านั้น** (ผ่าน cmd `%1` ภาษาไทยเพี้ยน mojibake) · changelog ภาษาไทยอื่นไม่กระทบ (`update_version.py` เขียน UTF-8 เอง)
+
+**bat ทำอัตโนมัติ 6 ขั้น:** [0] `check_integrity.py` (>500k chars / ไม่มี `async async` / tag ครบ) → [1] หา version ล่าสุดจาก `superclinic-v*.html` +1 → `update_version.py` แทรก `changelog.json` + `CHANGELOG[]` (fallback) → [2] backup `superclinic-v<N>.html` → [3] clone → [4] copy (`index.html` `superclinic.html` `bodymap-component.html` `Code.gs` `BODYMAP.md` `CLAUDE.md` `changelog.json` `docs/` `weights/`) → [5] commit + push → [6] cleanup
+- ⚠️ integrity/update fail → bat `pause` (**ค้างใน non-interactive**) → แก้ก่อนรันใหม่
+- PAT อยู่ใน `push-now.bat` (local, **ไม่ถูก copy ขึ้น repo**) · ห้ามใส่ PAT ในไฟล์ที่ commit
+
+> วิธีเดิม push จาก Linux sandbox (`/sessions/.../mnt`, manual git) = เลิกใช้ · อยู่ใน git history ถ้าต้องการ
 
 ---
 
