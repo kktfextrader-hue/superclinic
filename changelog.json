@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v186",
+    "date": "13/06/2569",
+    "items": [
+      "docs(voice): multi-device sync section + L8 (local-first eventual + LWW pattern)"
+    ]
+  },
+  {
     "ver": "v185",
     "date": "13/06/2569",
     "items": [

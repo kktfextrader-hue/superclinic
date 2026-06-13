@@ -47,3 +47,9 @@
 - **สาเหตุ:** dict ทำงานแบบ substring replace — pattern สั้นยิงโดนคำดีทั่วทั้งข้อความ
 - **วิธีแก้:** แนะนำ "ทั้งวลี" เสมอ (exact phrase, ปลอดภัย 100%) + แสดงจุดต่างใน comment ให้เจ้าของตัดสินใจย่อเอง
 - **วิธีกันซ้ำ:** กฎ dict ทุกชั้น: pattern ต้องยาวพอ (≥3 ตัวอักษรและเป็นคำ/วลีเต็ม) ห้าม auto-generate pattern สั้นจาก diff
+
+## L8 — sync แบบ local-first eventual: debounce + last-write-wins ปลอดภัยกว่า real-time merge
+- **อาการ:** ต้อง sync user dict ข้ามเครื่องในคลินิกเดียวกัน หลายคนเทรนพร้อมกัน อาจชนกัน
+- **สาเหตุ:** real-time sync ต้องการ infrastructure (Firebase/WebSocket) + การ resolve conflict ซับซ้อน
+- **วิธีแก้:** **local-first + eventual consistency** — local อ่านทันที (zero latency) · push debounced 5s (กัน spam ไม่ ddos GAS) · pull on init+เปิดเทรน · merge by key+ts (last-write-wins) — ใช้ของฟรีที่มีอยู่แล้ว (settings sheet + LockService.waitLock)
+- **วิธีกันซ้ำ:** sync ฟีเจอร์ที่ไม่ urgent (dict, settings, preferences) → ใช้ pattern นี้เสมอ · เก็บ ts กับทุก entry ตั้งแต่แรก (ไม่ใช่เพิ่มทีหลัง — ทำให้ backward compat ยุ่ง) · เก็บ uid ผู้สร้างไว้ debug ได้ ไม่บังคับ

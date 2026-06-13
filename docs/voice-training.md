@@ -65,3 +65,14 @@
 - **ฟังก์ชันใหม่ (เพิ่มล้วน ไม่แตะ logic เดิม):** `vvaLNorm` (เลขไทย→อารบิก+ตัดช่องว่าง **ไม่แตะ dict** กัน dict ปนเปื้อนฝั่ง before) · `vvaLev` (Levenshtein) · `vvaScorePanel(rows)` — เรียกใน `vvaRender` หลัง guard ก่อนตารางคู่เพี้ยน
 - **ตัวหาร = Y+N เท่านั้น (ไม่รวม R)** — R = เสียงหลุด ASR ฟังผิด dict ช่วยไม่ได้ → ถ่วงตัวเลขเกินจริง
 - **ประโยชน์:** เห็นตัวเลขว่า dict ซื้ออะไรให้ + ชี้ชุดที่ต้องเติม dict · อนาคตใช้เป็น **ประตูตัดสินใจ** ว่าถึงจุดต้องทำโมเดลเรียนรู้ไหม (ถ้า CER ตัน) — ตัดสินใจด้วยตัวเลข ไม่ใช่ความรู้สึก
+
+## Multi-device sync ของ user dict (v223/v99 — T1 ผสมทั้งคลินิก)
+- **ที่เก็บ:** `settings` sheet, key `vv_dict_user_clinic` (precedent: `vsearch_dict`) — ของแต่ละคลินิก, ไม่ข้ามคลินิก
+- **format:** `[[heard, expected, ts, by_uid], ...]` · backward compat: เก่า `[[h,e]]` (ไม่มี ts) ยังอ่านได้ (vvDictNorm ใช้แค่ index 0,1)
+- **กลไก:**
+  - **Pull** (`vvUserDictPull`) — on app init (delay 2s กัน block) + ตอน `vvTrainOpen` (force=true) · throttle 30s ระหว่าง pull โดย default
+  - **Push** (`vvUserDictPushDebounced`) — debounce 5s หลัง `vvUserDictAdd` (กัน spam) · flush ทันทีตอน `vvTrainFinish`
+  - **Merge**: key = heard · last-write-wins by ts (default 0 สำหรับ legacy → ของใหม่ที่มี ts > 0 ชนะเสมอ)
+- **Offline-safe:** ถ้า callApi fail → ใช้ local ปกติ ไม่พัง · throw จาก fetch กลืนใน try/catch
+- **Routing:** superclinic → `callApi(settings)` → GAS ตัวเอง · scproject → LS proxy → tenant settings sheet (ภายในคลินิกเดียวกันเท่านั้น)
+- **ผ่านเทสต์ (sim mock callApi):** legacy compat · format ใหม่ ts/uid · pull merge · LWW (remote ts ใหม่กว่า ชนะ) · debounce (push ไม่เกิดทันที) · flush on TrainFinish
