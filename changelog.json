@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v190",
+    "date": "16/06/2569",
+    "items": [
+      "chore(security): migrate PAT จาก push-now.bat → push-now.local.bat (gitignored) + .gitignore เพิ่ม *.local.bat — lockstep pattern กับ scproject"
+    ]
+  },
+  {
     "ver": "v189",
     "date": "16/06/2569",
     "items": [
