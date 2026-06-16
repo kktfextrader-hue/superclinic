@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v191",
+    "date": "16/06/2569",
+    "items": [
+      "feat(v224 Push A): สี ชำระแล้ว→แดง (3จุด) · 3 profile เทรนเสียง (p1/p2/p3 + migration) · trust layer email 10 ธ.ไทย (BANK_SENDERS) — GAS @17"
+    ]
+  },
+  {
     "ver": "v190",
     "date": "16/06/2569",
     "items": [

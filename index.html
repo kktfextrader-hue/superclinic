@@ -5344,7 +5344,23 @@ var VV_DICT = [
 var VV_CTX = [
   { re:/ไข่/g, to:'ไข้', near:/ตัวร้อน|หนาวสั่น|ปวดหัว|เป็นไข่|มีไข่|ไข่สูง|ไข่ต่ำ|เจ็บคอ/ }
 ];
-function vvUserDict(){ try{ var u=JSON.parse(localStorage.getItem('vv_dict_user')||'[]'); return Array.isArray(u)?u:[]; }catch(_){ return []; } }
+/* ===== VV-PROFILES v100 (Push A, 2026-06-16) ===== */
+function vvActiveProfile(){ try{ var p=localStorage.getItem('vv_profile_active'); return (p==='p2'||p==='p3')?p:'p1'; }catch(_){ return 'p1'; } }
+function vvProfileLabel(p){ try{ return localStorage.getItem('vv_profile_label_'+p) || ({p1:'Profile 1',p2:'Profile 2',p3:'Profile 3'})[p]; }catch(_){ return p; } }
+function vvSetActiveProfile(p){ try{ localStorage.setItem('vv_profile_active', p); }catch(_){} }
+function vvSetProfileLabel(p, label){ try{ localStorage.setItem('vv_profile_label_'+p, label||''); }catch(_){} }
+function vvDictKey(){ return 'vv_dict_user_' + vvActiveProfile(); }
+function vvDictRemoteKey(){ return 'vv_dict_user_clinic_' + vvActiveProfile(); }
+/* migration ครั้งเดียว: dict เดิม 'vv_dict_user' (ไม่มี profile) → ย้ายไป p1 */
+(function vvMigrateLegacyDict(){
+  try{
+    if(localStorage.getItem('vv_dict_migrated_v100')==='1') return;
+    var legacy=localStorage.getItem('vv_dict_user');
+    if(legacy && !localStorage.getItem('vv_dict_user_p1')){ localStorage.setItem('vv_dict_user_p1', legacy); }
+    localStorage.setItem('vv_dict_migrated_v100','1');
+  }catch(_){}
+})();
+function vvUserDict(){ try{ var u=JSON.parse(localStorage.getItem(vvDictKey())||'[]'); return Array.isArray(u)?u:[]; }catch(_){ return []; } }
 /* แทนคำพจนานุกรม — แยกชื่อจาก vvNorm() เดิม (ค้นหาด้วยเสียง) เพื่อไม่ให้ชนกัน */
 function vvDictNorm(t){
   t=(t||'').toString();
@@ -5357,8 +5373,8 @@ function vvDictNorm(t){
 function vvUserDictAdd(heard,correct){
   if(!heard||!correct||heard===correct) return;
   var u=vvUserDict(), ts=(new Date()).getTime(), uid=(typeof vvUid==='function')?vvUid():'';
-  for(var i=0;i<u.length;i++){ if(u[i][0]===heard){ u[i][1]=correct; u[i][2]=ts; u[i][3]=uid; localStorage.setItem('vv_dict_user',JSON.stringify(u)); if(typeof vvUserDictPushDebounced==='function')vvUserDictPushDebounced(); return; } }
-  u.push([heard,correct,ts,uid]); localStorage.setItem('vv_dict_user',JSON.stringify(u));
+  for(var i=0;i<u.length;i++){ if(u[i][0]===heard){ u[i][1]=correct; u[i][2]=ts; u[i][3]=uid; localStorage.setItem(vvDictKey(),JSON.stringify(u)); if(typeof vvUserDictPushDebounced==='function')vvUserDictPushDebounced(); return; } }
+  u.push([heard,correct,ts,uid]); localStorage.setItem(vvDictKey(),JSON.stringify(u));
   if(typeof vvUserDictPushDebounced==='function')vvUserDictPushDebounced();
 }
 /* ===== VV-SYNC (v223 sync): pull/push user dict ผ่าน settings (sync ทั้งคลินิก, T1) ===== */
@@ -5367,7 +5383,7 @@ async function vvUserDictPull(force){
   if(typeof callApi!=='function') return false;
   if(!force && (Date.now()-_vvSyncLastPull < 30000)) return false;
   try{
-    var r=await callApi('settings','get',null,'vv_dict_user_clinic');
+    var r=await callApi('settings','get',null,vvDictRemoteKey());
     var v=r&&r.data&&r.data.value;
     _vvSyncLastPull=Date.now();
     if(!v) return false;
@@ -5376,7 +5392,7 @@ async function vvUserDictPull(force){
     function put(x){ if(!x||!x[0])return; var t=Number(x[2])||0; var e=map[x[0]]; if(!e||t>=(Number(e[2])||0)) map[x[0]]=[x[0],x[1],t,x[3]||'']; }
     local.forEach(put); remote.forEach(put);
     var merged=Object.keys(map).map(function(k){return map[k];});
-    try{localStorage.setItem('vv_dict_user',JSON.stringify(merged));}catch(_){}
+    try{localStorage.setItem(vvDictKey(),JSON.stringify(merged));}catch(_){}
     return true;
   }catch(_){ return false; }
 }
@@ -5386,9 +5402,10 @@ async function vvUserDictPush(){
   try{
     var json=JSON.stringify(vvUserDict());
     var iso=(typeof todayISO==='function')?todayISO():(new Date().toISOString().slice(0,10));
-    var meta={value:json, description:'พจนานุกรมเสียง: sync ทั้งคลินิก (auto)', updated_at:iso};
-    try{ await callApi('settings','update',meta,'vv_dict_user_clinic'); }
-    catch(_){ try{ await callApi('settings','create',Object.assign({key:'vv_dict_user_clinic'},meta)); }catch(__){} }
+    var rkey=vvDictRemoteKey();
+    var meta={value:json, description:'พจนานุกรมเสียง ('+vvProfileLabel(vvActiveProfile())+'): sync ทั้งคลินิก (auto)', updated_at:iso};
+    try{ await callApi('settings','update',meta,rkey); }
+    catch(_){ try{ await callApi('settings','create',Object.assign({key:rkey},meta)); }catch(__){} }
   }finally{ _vvSyncBusy=false; }
 }
 function vvUserDictPushDebounced(){
@@ -5641,10 +5658,30 @@ function vvTrainChooser(){
     return '<button onclick="vvTrainStart(\''+k+'\')" style="width:100%;text-align:left;border:1.5px solid var(--go);background:#fff;border-radius:12px;padding:13px 15px;margin-bottom:8px;cursor:pointer;font-family:inherit;">'
       +'<div style="font-size:14px;font-weight:700;color:var(--g1);">'+s.name+'</div>'
       +'<div style="font-size:11.5px;color:#888;">'+s.lines.length+' บรรทัด × 3 รอบ</div></button>';}).join('');
-  vvtSet(consentBox
+  var pact=vvActiveProfile();
+  var profileBar='<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;padding:8px;background:#f3f8f4;border-radius:10px;border:1px solid #d9e4d6;">'
+    +'<span style="font-size:11px;color:#666;flex-shrink:0;">โปรไฟล์เสียง:</span>'
+    +['p1','p2','p3'].map(function(p){ var on=(p===pact); return '<button onclick="vvProfileSwitch(\''+p+'\')" style="flex:1;border:1.5px solid '+(on?'#2F5D50':'#d9e4d6')+';background:'+(on?'#2F5D50':'#fff')+';color:'+(on?'#fff':'#666')+';border-radius:8px;padding:5px 8px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:'+(on?'700':'500')+';">'+vvProfileLabel(p)+'</button>'; }).join('')
+    +'<button onclick="vvProfileRename()" title="แก้ชื่อโปรไฟล์ปัจจุบัน" style="border:1px solid #d9e4d6;background:#fff;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:12px;"><i class="ti ti-pencil"></i></button>'
+    +'</div>';
+  vvtSet(consentBox + profileBar
     +'<div style="font-size:12.5px;color:#666;margin-bottom:12px;line-height:1.6;">อ่านออกเสียงตามบทที่ขึ้น <b>บรรทัดละ 3 รอบ</b> ระบบจะเทียบกับที่ได้ยินแล้วเรียนรู้คำที่คุณออกเสียง ให้แม่นขึ้นเรื่อยๆ</div>'
     +sets
     +'<button onclick="vvTrainCustomPrompt()" style="width:100%;border:1.5px dashed #b9c2d8;background:#f6f8ff;color:#3a55c0;border-radius:12px;padding:12px;margin-top:4px;cursor:pointer;font-family:inherit;font-weight:600;">➕ เทรนคำเพิ่มเอง</button>');
+}
+async function vvProfileSwitch(p){
+  if(p!==vvActiveProfile()){
+    vvSetActiveProfile(p);
+    window._vvSyncLastPull=0;  /* บังคับ pull ใหม่ของ profile ที่เพิ่งเลือก */
+    try{ if(typeof vvUserDictPull==='function') await vvUserDictPull(true); }catch(_){}
+    try{ showToast('เปลี่ยนเป็น '+vvProfileLabel(p)); }catch(_){}
+  }
+  vvTrainChooser();
+}
+function vvProfileRename(){
+  var p=vvActiveProfile(); var cur=vvProfileLabel(p);
+  var nv=prompt('แก้ชื่อโปรไฟล์ '+p+':', cur);
+  if(nv!=null && nv.trim()){ vvSetProfileLabel(p, nv.trim()); vvTrainChooser(); }
 }
 function vvTrainCustomPrompt(){
   vvtSet('<div style="font-size:13px;color:#555;margin-bottom:10px;">พิมพ์คำ/วลีที่อยากให้ระบบรู้จัก แล้วกดเริ่ม (จะให้อ่าน 3 รอบ)</div>'
@@ -7990,7 +8027,7 @@ function cpayStartEmailPoll(amount){
     try{
       var r=await callApi('finance','checkpayment',{amount:amount,minutes:10});
       var d=r&&r.data;
-      if(d&&d.matched){ cpayStopEmailPoll(); if(window._CPAY){ window._CPAY.via='email'; window._CPAY.emailRef=d.ref||''; } setStat('<span style="color:#27AE60;font-weight:700;">✅ พบอีเมลยืนยันเงินเข้า — กำลังบันทึก</span>'); cpayConfirm(); }
+      if(d&&d.matched){ cpayStopEmailPoll(); if(window._CPAY){ window._CPAY.via='email'; window._CPAY.emailRef=d.ref||''; } setStat('<span style="color:#C0392B;font-weight:700;">✅ พบอีเมลยืนยันเงินเข้า — กำลังบันทึก</span>'); cpayConfirm(); }
     }catch(err){ /* keep polling เงียบ ๆ — ถ้า backend ยังไม่ authorize Gmail จะ error จนหมดเวลา */ }
   };
   setTimeout(tick, 1500);
@@ -8036,7 +8073,7 @@ function cpayPickCash(){
   var body=document.getElementById('cpay-body'); if(!body) return;
   body.innerHTML='<div style="text-align:center;"><div style="font-size:40px;">&#128181;</div><div style="font-size:14px;color:#555;">รับเงินสด</div>'
     +'<div style="font-size:30px;font-weight:700;color:var(--g1);margin:4px 0 16px;">&#3647;'+amt.toLocaleString()+'</div>'
-    +'<button class="btn btn-green" style="width:100%;justify-content:center;background:var(--ok);font-weight:700;padding:13px;" onclick="cpayConfirm()">&#10003; ชำระแล้ว (บันทึกรายได้)</button>'
+    +'<button class="btn btn-green" style="width:100%;justify-content:center;background:var(--er);font-weight:700;padding:13px;" onclick="cpayConfirm()">&#10003; ชำระแล้ว (บันทึกรายได้)</button>'
     +'<button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;" onclick="cpayReopen()">&larr; กลับ</button></div>';
 }
 async function cpayPickQR(){
@@ -8054,7 +8091,7 @@ async function cpayPickQR(){
     +'<div style="font-size:26px;font-weight:700;color:#1a1a2e;margin:2px 0 8px;">&#3647;'+amt.toLocaleString()+'</div>'
     +'<div style="font-size:11.5px;color:#2f7d4f;background:#eefaf1;border:1px solid #bfe6cd;border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.5;">&#128161; หากได้รับอีเมลยืนยันเงินเข้า หน้านี้จะปิดให้อัตโนมัติ &mdash; หรือกด ชำระแล้ว เมื่อยืนยันเอง<br>&#9888; หากเกิน 3 นาทีให้เช็คด้วยวิธีอื่น</div>'
     +'<div id="cpay-email-status" style="font-size:11.5px;margin-bottom:8px;min-height:15px;"></div>'
-    +'<button class="btn btn-green" style="width:100%;justify-content:center;background:var(--ok);font-weight:700;padding:13px;" onclick="cpayConfirm()">&#10003; ชำระแล้ว (บันทึกรายได้)</button>'
+    +'<button class="btn btn-green" style="width:100%;justify-content:center;background:var(--er);font-weight:700;padding:13px;" onclick="cpayConfirm()">&#10003; ชำระแล้ว (บันทึกรายได้)</button>'
     +'<button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px;" onclick="cpayReopen()">&larr; กลับ</button></div>';
 }
 function cpayReopen(){ var o=window._CPAY||{}; closeCollectPay(); openCollectPay({patName:o.patName,patId:o.patId}); }
@@ -8878,7 +8915,7 @@ function rcptRenderPaidZone(via, info, total){
   if(via==='slip'&&info){ var amt=(info.amount!=null)?(''+Number(info.amount).toLocaleString()+' บาท'):''; var ref=info.transRef?(' • ref '+info.transRef):''; slipInfo=`<div style="background:#eafaf0;border-radius:8px;padding:8px;font-size:11px;color:#1d7a44;margin:8px 0;">✅ SlipOK ยืนยัน: รับเงิน ${amt}${ref}</div>`; }
   var em=_rcptPatEmail();
   z.innerHTML=`<div style="background:#fff;border:1px solid #cfe8d6;border-radius:12px;padding:13px;text-align:center;">
-    <div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:4px;">✅ ชำระเงินแล้ว • ${_rcptData.receiptNo||''}</div>
+    <div style="font-size:13px;font-weight:700;color:var(--er);margin-bottom:4px;">✅ ชำระเงินแล้ว • ${_rcptData.receiptNo||''}</div>
     ${slipInfo}
     <div style="text-align:left;font-size:11px;color:#666;margin:8px 0 4px;">📧 ส่งใบเสร็จเข้าอีเมล (ไม่บังคับ)</div>
     <div style="display:flex;gap:6px;"><input id="rcpt-email" value="${em}" placeholder="อีเมลคนไข้" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:12px;">
@@ -9449,6 +9486,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v191', date:'16/06/2569', items:['feat(v224 Push A): สี ชำระแล้ว→แดง (3จุด) · 3 profile เทรนเสียง (p1/p2/p3 + migration) · trust layer email 10 ธ.ไทย (BANK_SENDERS) — GAS @17'] },
+  { ver:'v224', date:'16/06/2569', items:['feat(Push A): สี ชำระแล้ว→แดง · 3 profile เทรนเสียง + migration · trust layer email 10 ธนาคารไทย'] },
   { ver:'v190', date:'16/06/2569', items:['chore(security): migrate PAT จาก push-now.bat → push-now.local.bat (gitignored) + .gitignore เพิ่ม *.local.bat — lockstep pattern กับ scproject'] },
   { ver:'v189', date:'16/06/2569', items:['docs(CHANGELOG): สร้าง CHANGELOG.md ส่งกรรมการ — v223 voice SYNC (multi-device dict) [retry]'] },
   { ver:'v188', date:'16/06/2569', items:['docs(CHANGELOG): สร้าง CHANGELOG.md ส่งกรรมการ — v223 voice SYNC (multi-device dict)'] },

@@ -943,6 +943,31 @@ function authorizeGmail() {
   return 'authorized ? inbox reachable (' + n + ' recent thread checked)';
 }
 
+/* ── PAY-VERIFY v100: BANK_SENDERS trust layer (10 แบงค์ไทย) ──
+   pattern เดิม (generic catch-all) ยังทำงานเหมือนเดิม 100% — แค่เพิ่ม bank+trust field
+   ถ้า from ตรงกับ sender ของแบงค์ → trust='high' · ไม่ตรง → trust='low' (เดิม) */
+var BANK_SENDERS_ = [
+  { bank:'KBANK',     re:/kasikornbank\.com|k-(plus|cyber|payment)/i },
+  { bank:'SCB',       re:/(scbeasy|ealert)@scb\.co\.th|scb\.co\.th/i },
+  { bank:'BBL',       re:/bangkokbank\.com|bualuang/i },
+  { bank:'KTB',       re:/krungthai\.com|ktbnetbank/i },
+  { bank:'BAY',       re:/krungsri(online)?@?krungsri\.com|krungsri\.com/i },
+  { bank:'TTB',       re:/ttbbank\.com|ttbalert|ttbtouch/i },
+  { bank:'GSB',       re:/gsb\.or\.th|mymo/i },
+  { bank:'BAAC',      re:/baac\.or\.th/i },
+  { bank:'UOB',       re:/uob\.co\.th|tmrwbyuob/i },
+  { bank:'CIMB',      re:/cimbthai\.com|cimbclicks/i },
+  { bank:'TISCO',     re:/tisco\.co\.th/i },
+  { bank:'PROMPTPAY', re:/promptpay|พร้อมเพย์/i }
+];
+function _cpayDetectBank_(from) {
+  if (!from) return null;
+  for (var i = 0; i < BANK_SENDERS_.length; i++) {
+    if (BANK_SENDERS_[i].re.test(from)) return BANK_SENDERS_[i].bank;
+  }
+  return null;
+}
+
 function _cpayHasBareInt_(text, intStr){
   if(!intStr) return false;
   var idx=-1, from=0, bad=/[0-9.,]/;
@@ -977,7 +1002,8 @@ function checkPaymentEmail_(amount, minutes) {
       if (m.getDate() < cutoff) continue;
       var text = (m.getSubject() || '') + ' ' + (m.getPlainBody() || '');
       if (_cpayTextMatch_(text, amt)) {
-        return { matched: true, ref: String(m.getId()).slice(-6), from: m.getFrom() };
+        var _from = m.getFrom(); var _bank = _cpayDetectBank_(_from);
+        return { matched: true, ref: String(m.getId()).slice(-6), from: _from, bank: _bank, trust: _bank ? 'high' : 'low' };
       }
     }
   }
