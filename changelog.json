@@ -1,5 +1,19 @@
 [
   {
+    "ver": "v189",
+    "date": "16/06/2569",
+    "items": [
+      "docs(CHANGELOG): สร้าง CHANGELOG.md ส่งกรรมการ — v223 voice SYNC (multi-device dict) [retry]"
+    ]
+  },
+  {
+    "ver": "v188",
+    "date": "16/06/2569",
+    "items": [
+      "docs(CHANGELOG): สร้าง CHANGELOG.md ส่งกรรมการ — v223 voice SYNC (multi-device dict)"
+    ]
+  },
+  {
     "ver": "v187",
     "date": "13/06/2569",
     "items": [
