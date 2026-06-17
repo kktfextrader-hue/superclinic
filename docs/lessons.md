@@ -60,3 +60,9 @@
 - **วิธีแก้:** (1) default tier = ดึงจาก LICENSE.plan โดยตรง · fallback = 'free' (เข้มสุด ไม่ใช่ผ่อนปรนสุด) (2) cap ส่งจาก single source of truth (server side) ไม่ hardcode client-side
 - **วิธีกันซ้ำ:** quotas/limits/cap ทุกตัว → default ให้เข้มสุดเสมอ ปลอดภัยกว่า · ใช้ server-driven config (single source of truth) ไม่ hardcode 2 ที่ · เมื่อมี policy change บนเอกสาร → grep ทุก hardcoded reference ก่อน ship (เคสนี้ 50 อยู่ frontend แต่ fallback 20 ทำให้ไหลผ่าน)
 
+## L10 — Static-looking HTML ที่จริงเป็น template string (modal)
+- **อาการ:** `getElementById('appt-type')` คืน null ตอน boot ทั้งที่อ่านโค้ดเห็นเป็น `<select>` ปกติ → ttPopulateStatic เข้าไม่ถึง
+- **สาเหตุ:** element อยู่ใน template literal ที่ส่งเข้า `openModal(title, \`...html...\`)` — ถูกสร้างตอนเปิด modal เท่านั้น ไม่อยู่ใน static DOM
+- **วิธีแก้:** element ใน template string → ใช้ inline `${fn()}` ใน template (เหมือน vappt-type) · element static จริง → populate ผ่าน DOM helper ได้
+- **วิธีกันซ้ำ:** ก่อนใช้ ttPopulateStatic/getElementById verify ด้วย browser `!!document.getElementById(id)` ตอน load จริง — อย่าเดาจากการอ่านโค้ด (อ่านเห็น HTML ไม่ได้แปลว่าอยู่ใน static DOM) · เช็ค anchor ขึ้นไป: ถ้าเจอ `\`,` / `openModal(` / `.innerHTML=` ใกล้ๆ = template
+

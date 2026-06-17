@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v193",
+    "date": "17/06/2569",
+    "items": [
+      "docs(Push C): treatment-types.md as-built + lessons L10 (static-looking template string)"
+    ]
+  },
+  {
     "ver": "v192",
     "date": "17/06/2569",
     "items": [
