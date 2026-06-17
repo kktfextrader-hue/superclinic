@@ -3299,7 +3299,11 @@ var qrcode = function() {
               <label class="form-label">ส่วนสูง (ซม.)</label>
               <input type="number" id="reg-height" class="form-control" placeholder="170" step="0.1">
             </div>
-            <div class="form-group"></div>
+            <div class="form-group" style="position:relative;">
+              <label class="form-label">ช่องทางที่ติดต่อ</label>
+              <input class="form-control" id="reg-channel-inp" name="channel" autocomplete="off" placeholder="Facebook / หน้าร้าน / เพื่อนแนะนำ ..." oninput="chAC(this.value,'reg-channel-dd')" onfocus="chAC(this.value,'reg-channel-dd')" onkeydown="acKeyNav(event,'reg-channel-dd',function(el){chPick(el,'reg-channel-dd');})" onblur="setTimeout(function(){var d=document.getElementById('reg-channel-dd');if(d)d.style.display='none';},200)">
+              <div id="reg-channel-dd" style="display:none;position:absolute;z-index:300;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;margin-top:2px;"></div>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">อาการป่วยที่เป็นอยู่ <span style="color:var(--er)">*</span><button type="button" id="vv-mic-symptoms" class="vv-only" onclick="vvDictate('reg-symptoms','vv-mic-symptoms')" title="พูดเพื่อบันทึกอาการ" style="width:30px;height:30px;flex-shrink:0;border-radius:8px;border:1px solid var(--go);background:#f3f8f4;color:var(--g1);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><i class="ti ti-microphone"></i></button><span id="vv-stat-symptoms" style="font-size:11px;color:var(--er);font-weight:500;"></span></label>
@@ -6182,6 +6186,8 @@ function selectRegPatient(id, name, hn){
     if(allergyEl) allergyEl.textContent = p.allergy ? `⚠️ แพ้: ${p.allergy}` : '';
     const medEl = document.getElementById('reg-med-info');
     if(medEl) medEl.textContent = p.current_medications ? `💊 ยาประจำ: ${p.current_medications}` : '';
+    const chEl = document.getElementById('reg-channel-inp');
+    if(chEl) chEl.value = p.channel || '';
   }
   showToast(`✅ เลือกผู้ป่วย: ${name}`);
 }
@@ -6225,7 +6231,8 @@ async function submitRegister(e){
   try {
     await callApi('appointments','create',data);
     showToast('✅ ลงทะเบียนสำเร็จ — สถานะ "กำลังรักษา"');
-    ['reg-patient-id','reg-patient-name','reg-bp','reg-temp','reg-pulse','reg-weight','reg-height','reg-symptoms','reg-current-meds','reg-allergy','reg-note','reg-plan'].forEach(id=>{
+    try{ var _rc=(document.getElementById('reg-channel-inp')||{}).value; if(_rc&&_rc.trim()&&patId){ callApi('patients','update',{id:patId,channel:_rc.trim()}); var _pp=(window.allPatients||[]).find(function(x){return x.hn===patId||x.id===patId;}); if(_pp) _pp.channel=_rc.trim(); } }catch(_){}
+    ['reg-patient-id','reg-patient-name','reg-bp','reg-temp','reg-pulse','reg-weight','reg-height','reg-symptoms','reg-current-meds','reg-allergy','reg-note','reg-plan','reg-channel-inp'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.value='';
     });
     const ai = document.getElementById('reg-allergy-info');
@@ -7655,6 +7662,7 @@ function thItemHtml(t){
     ['ยาที่จ่าย',         noteOf('herbs_note')|| t.herbs_used|| ''],
     ['ผลการรักษา/คำแนะนำ', noteOf('advice')   || t.result || t.advice || ''],
     ['ค่าบริการ',         (t.price&&t.price!=='0'&&t.price!==''&&t.price!==null)?String(t.price)+' บาท':''],
+    ['ช่องทางที่ติดต่อ',   ((window.allPatients||[]).find(function(x){return x.hn===t.patient_id||x.id===t.patient_id;})||{}).channel||''],
   ];
   const fieldsHtml=`<div style="margin-top:7px;font-size:12px;line-height:1.75;background:rgba(200,169,107,.06);padding:9px 12px;border-radius:8px;border-left:3px solid var(--go);">
     ${fields.map(([lbl,val])=>`<div><span style="font-weight:600;color:#7a6f5d;">${lbl}:</span> ${val?String(val):NA}</div>`).join('')}
@@ -9600,6 +9608,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v196', date:'17/06/2569', items:['feat(v227 Push B2): contact channel in register form (next to height) + prefill/save to patient + show as bottom line in treatment history card'] },
   { ver:'v195', date:'17/06/2569', items:['docs(Push B): contact-channel.md as-built + lessons L11 (header-driven self-heal column)'] },
   { ver:'v194', date:'17/06/2569', items:['feat(v226 Push B): contact channel field (pulldown+navkey+autocomplete+freetext) in add/edit/view patient + treatment history + ensureColumn self-heal GAS@18'] },
   { ver:'v226', date:'17/06/2569', items:['feat(Push B): ช่องทางที่ติดต่อ — เพิ่ม/แก้/ดู (pulldown+navkey+autocomplete+พิมพ์เอง) ในเพิ่ม/แก้ผู้ป่วย + แสดงในข้อมูล+ประวัติรักษา · column channel self-heal (settings sheet auto)'] },

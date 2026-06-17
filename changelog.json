@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v196",
+    "date": "17/06/2569",
+    "items": [
+      "feat(v227 Push B2): contact channel in register form (next to height) + prefill/save to patient + show as bottom line in treatment history card"
+    ]
+  },
+  {
     "ver": "v195",
     "date": "17/06/2569",
     "items": [
