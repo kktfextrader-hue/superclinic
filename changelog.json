@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v194",
+    "date": "17/06/2569",
+    "items": [
+      "feat(v226 Push B): contact channel field (pulldown+navkey+autocomplete+freetext) in add/edit/view patient + treatment history + ensureColumn self-heal GAS@18"
+    ]
+  },
+  {
     "ver": "v193",
     "date": "17/06/2569",
     "items": [

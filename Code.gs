@@ -100,7 +100,7 @@ const CONFIG = {
   SCHEMA: {
     patients: ['id','hn','prefix','first_name','last_name','dob','age','gender','phone','email',
                'address','blood_type','element','allergy','chronic_disease','patient_type',
-               'emergency_contact','created_at','updated_at','is_active','body_map','has_face'],
+               'emergency_contact','created_at','updated_at','is_active','body_map','has_face','channel'],
     appointments: ['id','patient_id','patient_name','date','time_start','time_end','doctor',
                    'treatment_type','note','status','room','created_at','updated_at','is_active'],
     treatments: ['id','patient_id','appointment_id','date','treatment_type','duration_min','doctor',
@@ -622,6 +622,7 @@ function createRow_(sheetName, body) {
   guardProtectedSetting_(sheetName, body[CONFIG.PRIMARY_KEY[sheetName]]);
 
   const sheet   = openSheet_(sheetName);
+  if (sheetName === 'patients' && body && body.channel !== undefined && body.channel !== '') ensureColumn_(sheet, 'channel');
   const headers = getHeaders_(sheet);
   const pk      = CONFIG.PRIMARY_KEY[sheetName];
 
@@ -662,6 +663,7 @@ function updateRow_(sheetName, id, body) {
   guardProtectedSetting_(sheetName, id);
 
   const sheet   = openSheet_(sheetName);
+  if (sheetName === 'patients' && body && body.channel !== undefined && body.channel !== '') ensureColumn_(sheet, 'channel');
   const headers = getHeaders_(sheet);
   const pk      = CONFIG.PRIMARY_KEY[sheetName];
   const pkCol   = headers.indexOf(pk);
@@ -794,6 +796,15 @@ function openSheet_(sheetName) {
   return sheet;
 }
 
+function ensureColumn_(sheet, colName){
+  try{
+    var lastCol = sheet.getLastColumn();
+    if(lastCol===0) return;
+    var hdr = sheet.getRange(1,1,1,lastCol).getValues()[0].map(function(h){return String(h).trim();});
+    if(hdr.indexOf(colName)!==-1) return;
+    sheet.getRange(1, lastCol+1).setValue(colName).setFontWeight('bold');
+  }catch(_){}
+}
 function getHeaders_(sheet) {
   if (sheet.getLastColumn() === 0) return [];
   return sheet.getRange(1, 1, 1, sheet.getLastColumn())

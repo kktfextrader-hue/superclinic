@@ -4993,6 +4993,7 @@ function viewPatient(id){
     ${fv('ธาตุประจำตัว',p.element||'—')}
     ${fv('เบอร์โทรศัพท์',p.phone||'—')}
     ${fv('อีเมล',p.email||'—')}
+    ${fv('ช่องทางที่ติดต่อ',p.channel||'—')}
     ${fv('เบอร์ฉุกเฉิน',p.emergency_contact||'—')}
     ${fv('ที่อยู่',p.address||'—',true)}
   </div>`,true);
@@ -5025,6 +5026,7 @@ function viewPatient(id){
       <i class="ti ti-chevron-down" id="pdc-s4hist-${id}" style="font-size:13px;color:rgba(0,0,0,.3);transition:transform .2s;transform:rotate(-90deg)"></i>
     </div>
     <div id="pds-s4hist-${id}" style="padding:10px 13px;display:none;">
+      <div style="font-size:12px;color:#666;margin-bottom:8px;padding:6px 9px;background:rgba(47,93,80,.05);border-radius:7px;">ช่องทางที่ติดต่อ: <b style="color:#2F5D50;">${p.channel||'—'}</b></div>
       <div id="pat-treat-section-${id}" style="margin-bottom:10px;"></div>
       <div id="pat-hist-section-${id}" style="font-size:13px;color:#aaa;">คลิกหัวข้อเพื่อโหลดข้อมูล</div>
     </div>
@@ -5232,6 +5234,12 @@ function openAddPatient(prefillName){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label class="form-label">เบอร์โทรศัพท์ <span style="color:var(--er)">*</span></label><input class="form-input" name="phone" required placeholder="0XX-XXX-XXXX"></div>
         <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="text" name="email" placeholder="email@example.com"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+        <div class="form-group" style="position:relative;"><label class="form-label">ช่องทางที่ติดต่อ <span style="font-size:11px;color:#aaa;font-weight:400;">(เลือกหรือพิมพ์เอง)</span></label>
+          <input class="form-input" id="addpat-channel-inp" name="channel" autocomplete="off" placeholder="Facebook / หน้าร้าน / เพื่อนแนะนำ ..." oninput="chAC(this.value,'addpat-channel-dd')" onfocus="chAC(this.value,'addpat-channel-dd')" onkeydown="acKeyNav(event,'addpat-channel-dd',function(el){chPick(el,'addpat-channel-dd');})" onblur="setTimeout(function(){var d=document.getElementById('addpat-channel-dd');if(d)d.style.display='none';},200)">
+          <div id="addpat-channel-dd" style="display:none;position:absolute;z-index:300;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;margin-top:2px;"></div>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label class="form-label">เบอร์ฉุกเฉิน</label><input class="form-input" name="emergency_contact" placeholder="ชื่อ — เบอร์โทร"></div>
@@ -5942,6 +5950,10 @@ function openEditPatient(id){
       <div class="form-group"><label class="form-label">ประเภทผู้ป่วย</label>${sel('patient_type',p.patient_type||'new',[['new','ผู้ป่วยใหม่'],['regular','ผู้ป่วยประจำ'],['vip','VIP']])}</div>
       <div class="form-group"><label class="form-label">เบอร์โทรศัพท์</label><input class="form-input" name="phone" value="${p.phone||''}"></div>
       <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="text" name="email" value="${p.email||''}"></div>
+      <div class="form-group" style="position:relative;"><label class="form-label">ช่องทางที่ติดต่อ</label>
+        <input class="form-input" id="editpat-channel-inp" name="channel" autocomplete="off" value="${p.channel||''}" placeholder="Facebook / หน้าร้าน ..." oninput="chAC(this.value,'editpat-channel-dd')" onfocus="chAC(this.value,'editpat-channel-dd')" onkeydown="acKeyNav(event,'editpat-channel-dd',function(el){chPick(el,'editpat-channel-dd');})" onblur="setTimeout(function(){var d=document.getElementById('editpat-channel-dd');if(d)d.style.display='none';},200)">
+        <div id="editpat-channel-dd" style="display:none;position:absolute;z-index:300;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;margin-top:2px;"></div>
+      </div>
       <div class="form-group"><label class="form-label">เบอร์ฉุกเฉิน</label><input class="form-input" name="emergency_contact" value="${p.emergency_contact||''}" placeholder="ชื่อ — เบอร์โทร"></div>
       <div class="form-group"><label class="form-label">ธาตุประจำตัว</label>${sel('element',p.element||'',[['','ไม่ระบุ'],['ดิน','ดิน'],['น้ำ','น้ำ'],['ลม','ลม'],['ไฟ','ไฟ']])}</div>
       <div class="form-group" style="grid-column:1/-1;"><label class="form-label">ที่อยู่</label><input class="form-input" name="address" value="${p.address||''}" placeholder="ที่อยู่"></div>
@@ -8029,6 +8041,22 @@ async function ttDeleteAt(i){
   catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
 }
 (function(){ function _tt(){ setTimeout(function(){ try{ if(typeof ttLoad==='function') ttLoad(); }catch(_){} }, 2600); } if(document.readyState!=='loading') _tt(); else document.addEventListener('DOMContentLoaded', _tt); })();
+/* ===== CONTACT-CHANNEL v100 (Push B) — pulldown+navkey+autocomplete+free text ===== */
+const CH_DEFAULT = ['หน้าร้าน (walk-in)','Facebook','LINE','Instagram','TikTok','Google Maps','เพื่อนแนะนำ','รถผ่าน / ป้ายหน้าร้าน','โรงพยาบาล/คลินิกส่งต่อ'];
+function chAC(val, ddId){
+  var dd=document.getElementById(ddId); if(!dd) return;
+  var q=(val||'').toLowerCase().trim();
+  var matches=CH_DEFAULT.filter(function(x){ return !q || x.toLowerCase().indexOf(q)>=0; });
+  if(!matches.length){ dd.style.display='none'; return; }
+  dd.innerHTML=matches.map(function(x){ return '<div onmousedown="chPick(this,\''+ddId+'\')" style="padding:8px 11px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(0,0,0,.05);">'+ttEsc(x)+'</div>'; }).join('');
+  dd.style.display='block';
+}
+function chPick(el, ddId){
+  var dd=document.getElementById(ddId);
+  var inp=document.getElementById(ddId.replace('-dd','-inp'));
+  if(inp) inp.value=(el.textContent||'').trim();
+  if(dd) dd.style.display='none';
+}
 async function loadSettings(){
   try {
     const res = await callApi('settings','list');
@@ -9572,6 +9600,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v194', date:'17/06/2569', items:['feat(v226 Push B): contact channel field (pulldown+navkey+autocomplete+freetext) in add/edit/view patient + treatment history + ensureColumn self-heal GAS@18'] },
+  { ver:'v226', date:'17/06/2569', items:['feat(Push B): ช่องทางที่ติดต่อ — เพิ่ม/แก้/ดู (pulldown+navkey+autocomplete+พิมพ์เอง) ในเพิ่ม/แก้ผู้ป่วย + แสดงในข้อมูล+ประวัติรักษา · column channel self-heal (settings sheet auto)'] },
   { ver:'v193', date:'17/06/2569', items:['docs(Push C): treatment-types.md as-built + lessons L10 (static-looking template string)'] },
   { ver:'v192', date:'17/06/2569', items:['feat(v225 Push C): treatment types editable add/edit/delete (settings manage) + soft-delete + single settings.treatment_types source'] },
   { ver:'v225', date:'17/06/2569', items:['feat(Push C): ประเภทการรักษา แก้ไข/เพิ่ม/ลบ ได้ (ตั้งค่า → จัดการ) · เก็บ settings.treatment_types · ทุก dropdown โหลดจากรายการเดียว · soft-delete ประวัติเก่าไม่หาย'] },
