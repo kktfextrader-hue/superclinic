@@ -28,3 +28,11 @@ field "ช่องทางที่ติดต่อ" (channel) = ผู้�
 ## ไม่แตะ
 - treatments sheet (channel เป็นของ patient · ประวัติรักษาแสดงค่าจาก patient record)
 - submit functions (FormData ครอบคลุม)
+
+## เพิ่มเติม (Push B2, v227/v104 · 2026-06-17)
+- **ฟอร์มลงทะเบียนก่อนรักษา (form-register):** เพิ่ม channel SearchX (`reg-channel-inp`) ตรงช่องว่างข้างส่วนสูง · reuse chAC/chPick/acKeyNav
+  - **prefill:** ตอนเลือกผู้ป่วย → เติม p.channel
+  - **save:** submitRegister → ถ้ากรอก channel → fire-and-forget callApi('patients','update',{id,channel}) + update local cache (allPatients)
+  - reset `reg-channel-inp` หลัง submit
+- **ประวัติการรักษา (thItemHtml):** เพิ่มบรรทัด "ช่องทางที่ติดต่อ" **ล่างสุด**ของการ์ด (หลังค่าบริการ) · ดึงจาก patient ของ `t.patient_id` (ว่าง→"ไม่มีข้อมูล" graceful)
+
