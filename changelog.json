@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v192",
+    "date": "17/06/2569",
+    "items": [
+      "feat(v225 Push C): treatment types editable add/edit/delete (settings manage) + soft-delete + single settings.treatment_types source"
+    ]
+  },
+  {
     "ver": "v191",
     "date": "16/06/2569",
     "items": [

@@ -3850,6 +3850,13 @@ var qrcode = function() {
           </div>
           <button id="toggle-voice" class="toggle" onclick="vvToggleVoice()"></button>
         </div>
+        <div class="setting-row" style="padding:14px 0;border-top:1px solid rgba(0,0,0,.07);">
+          <div style="flex:1;">
+            <div class="setting-label"><i class="ti ti-clipboard-list" style="color:var(--g1);margin-right:6px;"></i>ประเภทการรักษา</div>
+            <div class="setting-sub">เพิ่ม / แก้ไข / ลบ รายการที่แสดงในทุก dropdown (ลงทะเบียน · บันทึกรักษา · นัดหมาย)</div>
+          </div>
+          <button class="btn btn-green" style="background:var(--g1);flex-shrink:0;" onclick="ttManageOpen()"><i class="ti ti-edit"></i> จัดการ</button>
+        </div>
         <div class="setting-row vv-only" style="padding:14px 0;border-top:1px solid rgba(0,0,0,.07);">
           <div style="flex:1;">
             <div class="setting-label"><i class="ti ti-school" style="color:var(--g1);margin-right:6px;"></i>เทรนระบบสั่งงานด้วยเสียง</div>
@@ -6391,15 +6398,7 @@ function openAddAppt(){
         <div class="form-group">
           <label class="form-label">ประเภทการรักษา</label>
           <select id="appt-type" class="form-control">
-            <option value="นวดแผนไทย">นวดแผนไทย</option>
-            <option value="ประคบสมุนไพร">ประคบสมุนไพร</option>
-            <option value="อบสมุนไพร">อบสมุนไพร</option>
-            <option value="ฝังเข็ม">ฝังเข็ม</option>
-            <option value="ครอบแก้ว">ครอบแก้ว</option>
-            <option value="นวด + ประคบ">นวด + ประคบ</option>
-            <option value="ปรึกษาแพทย์">ปรึกษาแพทย์</option>
-            <option value="จ่ายยาสมุนไพร">จ่ายยาสมุนไพร</option>
-            <option value="อื่นๆ">อื่นๆ</option>
+            ${ttOpts('',{plainOther:true})}
           </select>
         </div>
         <div class="form-group">
@@ -6847,8 +6846,7 @@ async function viewAppt(id){
         <div class="form-group">
           <label class="form-label">ประเภทการรักษา</label>
           <select id="vappt-type" class="form-control">
-            ${['นวดแผนไทย','ประคบสมุนไพร','อบสมุนไพร','ฝังเข็ม','ครอบแก้ว','นวด + ประคบ','ปรึกษาแพทย์','จ่ายยาสมุนไพร','อื่นๆ']
-              .map(t=>`<option value="${t}" ${a.treatment_type===t?'selected':''}>${t}</option>`).join('')}
+            ${ttOpts(a.treatment_type,{plainOther:true})}
           </select>
         </div>
         <div class="form-group">
@@ -7943,6 +7941,94 @@ async function loadFinance(){
 /* ════════════════════════════════════════════════════════
    SETTINGS — โหลดและบันทึกการตั้งค่าจาก Google Sheets
 ════════════════════════════════════════════════════════ */
+/* ===== TREATMENT-TYPES v100 (Push C) — editable add/แก้/ลบ soft-delete ===== */
+const TT_DEFAULT = ['นวดแผนไทย','ประคบสมุนไพร','อบสมุนไพร','ฝังเข็ม','ครอบแก้ว','นวด + ประคบ','ปรึกษาแพทย์','จ่ายยาสมุนไพร'];
+window._ttList = null;
+function ttList(){ return (Array.isArray(window._ttList)&&window._ttList.length)?window._ttList.slice():TT_DEFAULT.slice(); }
+function ttEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ttOpts(selected, opt){
+  opt=opt||{}; var arr=ttList();
+  if(selected && arr.indexOf(selected)<0 && selected!=='อื่นๆ (กรอกเอง)' && selected!=='อื่นๆ' && selected!=='') arr=arr.concat([selected]); /* soft-delete: คงค่าเดิมไว้ดู/แก้ history ได้ */
+  var h='';
+  if(opt.blank) h+='<option value="">'+ttEsc(opt.blank)+'</option>';
+  h+=arr.map(function(t){ return '<option value="'+ttEsc(t)+'"'+(t===selected?' selected':'')+'>'+ttEsc(t)+'</option>'; }).join('');
+  if(opt.other) h+='<option value="อื่นๆ (กรอกเอง)"'+(selected==='อื่นๆ (กรอกเอง)'?' selected':'')+'>อื่นๆ (กรอกเอง)</option>';
+  if(opt.plainOther) h+='<option value="อื่นๆ"'+(selected==='อื่นๆ'?' selected':'')+'>อื่นๆ</option>';
+  return h;
+}
+function ttPopulateStatic(){
+  try{ var s1=document.getElementById('reg-plan-type'); if(s1){ var v1=s1.value||(ttList()[0]||''); s1.innerHTML=ttOpts(v1,{other:true}); } }catch(_){}
+  try{ var s2=document.querySelector('#form-treatment select[name="type"]'); if(s2){ var v2=s2.value||(ttList()[0]||''); s2.innerHTML=ttOpts(v2); } }catch(_){}
+  try{ var s3=document.querySelector('select[name="next_treatment_type"]'); if(s3){ var v3=s3.value; s3.innerHTML=ttOpts(v3,{blank:'— เหมือนเดิม —'}); } }catch(_){}
+  try{ var s4=document.getElementById('appt-type'); if(s4){ var v4=s4.value||(ttList()[0]||''); s4.innerHTML=ttOpts(v4,{plainOther:true}); } }catch(_){}
+}
+async function ttLoad(){
+  try{ var r=await callApi('settings','get',null,'treatment_types'); var v=r&&r.data&&((r.data.row&&r.data.row.value)||r.data.value); if(v){ var a=JSON.parse(v); if(Array.isArray(a)) window._ttList=a.filter(Boolean); } }catch(_){}
+  ttPopulateStatic(); return ttList();
+}
+async function ttSaveList(arr){
+  window._ttList=arr.slice(); var json=JSON.stringify(window._ttList);
+  try{ await callApi('settings','update',{key:'treatment_types',value:json,description:'ประเภทการรักษา (แก้ได้)'}); }
+  catch(e){ try{ await callApi('settings','create',{key:'treatment_types',value:json,description:'ประเภทการรักษา (แก้ได้)'}); }catch(_){ throw e; } }
+  ttPopulateStatic();
+}
+function ttManageOpen(){
+  var old=document.getElementById('tt-mng-ov'); if(old) old.remove();
+  var ov=document.createElement('div'); ov.id='tt-mng-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:40px 14px;overflow:auto;';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;width:100%;max-width:460px;box-shadow:0 12px 50px rgba(0,0,0,.3);">'
+    +'<div style="background:linear-gradient(135deg,#2F5D50,#3f7a68);color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div style="font-size:15px;font-weight:700;"><i class="ti ti-clipboard-list"></i> จัดการประเภทการรักษา</div>'
+    +'<button onclick="ttManageClose()" style="background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:16px;">&#10005;</button></div>'
+    +'<div style="padding:16px 18px;">'
+    +'<div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6;">รายการนี้แสดงในทุก dropdown (ลงทะเบียน · บันทึกรักษา · นัดหมาย) · ลบแล้วประวัติเก่ายังเก็บไว้ ไม่หาย</div>'
+    +'<div id="tt-mng-list" style="display:flex;flex-direction:column;gap:6px;"><div style="color:#999;font-size:13px;padding:8px;">กำลังโหลด...</div></div>'
+    +'<div style="display:flex;gap:8px;margin-top:14px;">'
+    +'<input id="tt-add-inp" class="form-control" placeholder="พิมพ์ประเภทใหม่ เช่น ครอบแก้วร้อน" style="flex:1;" onkeydown="if(event.key===String.fromCharCode(69,110,116,101,114)){event.preventDefault();ttAddNew();}">'
+    +'<button class="btn btn-green" style="background:#2F5D50;flex-shrink:0;" onclick="ttAddNew()"><i class="ti ti-plus"></i> เพิ่ม</button></div>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov) ttManageClose(); });
+  ttLoad().then(ttRenderManage);
+}
+function ttManageClose(){ var ov=document.getElementById('tt-mng-ov'); if(ov) ov.remove(); }
+function ttRenderManage(){
+  var box=document.getElementById('tt-mng-list'); if(!box) return;
+  var arr=ttList();
+  if(!arr.length){ box.innerHTML='<div style="color:#999;font-size:13px;padding:8px;">ยังไม่มีรายการ — เพิ่มด้านล่าง</div>'; return; }
+  box.innerHTML=arr.map(function(t,i){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid rgba(0,0,0,.09);border-radius:9px;background:#fafaf8;">'
+      +'<span style="color:#bbb;font-size:12px;min-width:16px;">'+(i+1)+'</span>'
+      +'<input value="'+ttEsc(t)+'" class="form-control" style="flex:1;padding:4px 7px;font-size:13.5px;height:auto;" onchange="ttEditAt('+i+',this.value)">'
+      +'<button class="btn btn-outline btn-sm" style="color:#C0392B;border-color:#C0392B;padding:3px 9px;flex-shrink:0;" onclick="ttDeleteAt('+i+')"><i class="ti ti-trash"></i></button>'
+      +'</div>';
+  }).join('');
+}
+async function ttAddNew(){
+  var inp=document.getElementById('tt-add-inp'); if(!inp) return;
+  var v=(inp.value||'').trim(); if(!v) return;
+  var arr=ttList(); if(arr.indexOf(v)>=0){ try{showToast('มีรายการนี้แล้ว','warning');}catch(_){} return; }
+  arr.push(v); inp.value='';
+  try{ await ttSaveList(arr); ttRenderManage(); try{showToast('เพิ่ม "'+v+'" แล้ว');}catch(_){} }
+  catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
+}
+async function ttEditAt(i,val){
+  val=(val||'').trim(); var arr=ttList(); if(i<0||i>=arr.length) return;
+  if(!val){ ttRenderManage(); return; }
+  if(arr[i]===val) return;
+  arr[i]=val;
+  try{ await ttSaveList(arr); ttRenderManage(); try{showToast('แก้ไขแล้ว');}catch(_){} }
+  catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
+}
+async function ttDeleteAt(i){
+  var arr=ttList(); if(i<0||i>=arr.length) return;
+  var name=arr[i];
+  if(!confirm('ลบ "'+name+'" ออกจากรายการ?\nประวัติการรักษาเก่าที่ใช้ประเภทนี้ยังเก็บไว้ ไม่หาย')) return;
+  arr.splice(i,1);
+  try{ await ttSaveList(arr); ttRenderManage(); try{showToast('ลบ "'+name+'" แล้ว');}catch(_){} }
+  catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
+}
+(function(){ function _tt(){ setTimeout(function(){ try{ if(typeof ttLoad==='function') ttLoad(); }catch(_){} }, 2600); } if(document.readyState!=='loading') _tt(); else document.addEventListener('DOMContentLoaded', _tt); })();
 async function loadSettings(){
   try {
     const res = await callApi('settings','list');
@@ -9486,6 +9572,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v192', date:'17/06/2569', items:['feat(v225 Push C): treatment types editable add/edit/delete (settings manage) + soft-delete + single settings.treatment_types source'] },
+  { ver:'v225', date:'17/06/2569', items:['feat(Push C): ประเภทการรักษา แก้ไข/เพิ่ม/ลบ ได้ (ตั้งค่า → จัดการ) · เก็บ settings.treatment_types · ทุก dropdown โหลดจากรายการเดียว · soft-delete ประวัติเก่าไม่หาย'] },
   { ver:'v191', date:'16/06/2569', items:['feat(v224 Push A): สี ชำระแล้ว→แดง (3จุด) · 3 profile เทรนเสียง (p1/p2/p3 + migration) · trust layer email 10 ธ.ไทย (BANK_SENDERS) — GAS @17'] },
   { ver:'v224', date:'16/06/2569', items:['feat(Push A): สี ชำระแล้ว→แดง · 3 profile เทรนเสียง + migration · trust layer email 10 ธนาคารไทย'] },
   { ver:'v190', date:'16/06/2569', items:['chore(security): migrate PAT จาก push-now.bat → push-now.local.bat (gitignored) + .gitignore เพิ่ม *.local.bat — lockstep pattern กับ scproject'] },
