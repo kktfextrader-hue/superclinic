@@ -66,3 +66,9 @@
 - **วิธีแก้:** element ใน template string → ใช้ inline `${fn()}` ใน template (เหมือน vappt-type) · element static จริง → populate ผ่าน DOM helper ได้
 - **วิธีกันซ้ำ:** ก่อนใช้ ttPopulateStatic/getElementById verify ด้วย browser `!!document.getElementById(id)` ตอน load จริง — อย่าเดาจากการอ่านโค้ด (อ่านเห็น HTML ไม่ได้แปลว่าอยู่ใน static DOM) · เช็ค anchor ขึ้นไป: ถ้าเจอ `\`,` / `openModal(` / `.innerHTML=` ใกล้ๆ = template
 
+## L11 — Header-driven sheet CRUD: field ใหม่ต้องมี column จริง (self-heal ดีกว่า migration มือ)
+- **อาการ:** เพิ่ม field ใหม่ (channel) ใน frontend form แต่ค่าไม่ persist ลง sheet
+- **สาเหตุ:** createRow_/updateRow_ map body → row ตาม header เท่านั้น (`headers.map(h=>body[h])`) — field ที่ไม่มีใน header row ถูกทิ้งเงียบ (ไม่ error)
+- **วิธีแก้:** `ensureColumn_(sheet,col)` guarded append header column ถ้ายังไม่มี · เรียกก่อน getHeaders_ เฉพาะตอน body มีค่า field นั้น · ทำทั้ง superclinic + LS proxy (มี CRUD แยกกัน)
+- **วิธีกันซ้ำ:** เพิ่ม field ใหม่ใน header-driven sheet ต้อง (1) เพิ่มใน SCHEMA/HEADERS สำหรับ sheet ใหม่ (2) self-heal สำหรับ sheet เดิม (multi-tenant: heal เองตอน save ดีกว่าให้ user แก้ทุก sheet) · guard try/catch ให้ degrade graceful (heal fail = field ถูกทิ้ง ไม่พัง save) · getHeaders ต้องอ่านสด ไม่ cache
+
