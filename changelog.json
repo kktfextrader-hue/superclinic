@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v199",
+    "date": "18/06/2569",
+    "items": [
+      "feat(v229 appt 1B): treatment color per type (set in manager, store [name,color] backward-compat) + dashboard ตารางสัปดาห์ tab timeline 08-18 rolling 7d-from-today, bars colored by type, 4 lines, click name->viewAppt"
+    ]
+  },
+  {
     "ver": "v198",
     "date": "18/06/2569",
     "items": [

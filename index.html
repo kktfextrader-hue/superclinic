@@ -3083,9 +3083,14 @@ var qrcode = function() {
           <button class="btn btn-outline btn-sm" onclick="showPage('appointments',null)">ดูทั้งหมด →</button>
         </div>
       </div>
+      <div style="display:inline-flex;border:1px solid #e3ddd0;border-radius:999px;overflow:hidden;font-size:12.5px;margin:2px 16px 6px;">
+        <button id="dashtab-td" onclick="dashTab('td')" style="padding:6px 15px;border:none;background:#2F5D50;color:#fff;cursor:pointer;font-family:inherit;">วันนี้ &amp; พรุ่งนี้</button>
+        <button id="dashtab-wk" onclick="dashTab('wk')" style="padding:6px 15px;border:none;background:transparent;color:#666;cursor:pointer;font-family:inherit;">ตารางสัปดาห์</button>
+      </div>
       <div id="dash-appt-list" style="padding:8px 0;">
         <div style="text-align:center;padding:30px;color:#aaa;"><i class="ti ti-loader" style="font-size:20px;"></i></div>
       </div>
+      <div id="dash-week" style="display:none;padding:4px 12px 12px;"></div>
     </div>
     <!-- Treatment stats -->
     <div class="card">
@@ -7979,7 +7984,13 @@ async function loadFinance(){
 /* ===== TREATMENT-TYPES v100 (Push C) — editable add/แก้/ลบ soft-delete ===== */
 const TT_DEFAULT = ['นวดแผนไทย','ประคบสมุนไพร','อบสมุนไพร','ฝังเข็ม','ครอบแก้ว','นวด + ประคบ','ปรึกษาแพทย์','จ่ายยาสมุนไพร'];
 window._ttList = null;
-function ttList(){ return (Array.isArray(window._ttList)&&window._ttList.length)?window._ttList.slice():TT_DEFAULT.slice(); }
+var TT_PAL={green:'#639922',teal:'#1D9E75',blue:'#378ADD',amber:'#BA7517',purple:'#7F77DD',pink:'#D4537E',coral:'#D85A30',red:'#E24B4A',gray:'#888780'};
+var TT_SHADE={green:['#EAF3DE','#639922','#173404'],teal:['#E1F5EE','#1D9E75','#04342C'],blue:['#E6F1FB','#378ADD','#042C53'],amber:['#FAEEDA','#BA7517','#412402'],purple:['#EEEDFE','#7F77DD','#26215C'],pink:['#FBEAF0','#D4537E','#4B1528'],coral:['#FAECE7','#D85A30','#4A1B0C'],red:['#FCEBEB','#E24B4A','#501313'],gray:['#F1EFE8','#888780','#2C2C2A']};
+function ttPairs(){ var raw=(Array.isArray(window._ttList)&&window._ttList.length)?window._ttList:TT_DEFAULT; return raw.map(function(it){ if(typeof it==='string') return {n:it,c:''}; if(Array.isArray(it)) return {n:it[0],c:it[1]||''}; if(it&&typeof it==='object') return {n:it.n||it.name||'',c:it.c||it.color||''}; return {n:String(it),c:''}; }).filter(function(p){return p.n;}); }
+function ttList(){ return ttPairs().map(function(p){return p.n;}); }
+function ttColor(name){ var p=ttPairs().filter(function(x){return x.n===name;})[0]; return p?p.c:''; }
+function ttColorShade(name){ var c=ttColor(name)||'gray'; return TT_SHADE[c]||TT_SHADE.gray; }
+async function ttSavePairs(pairs){ window._ttList=pairs.map(function(p){return [p.n,p.c||''];}); var json=JSON.stringify(window._ttList); try{ await callApi('settings','update',{key:'treatment_types',value:json,description:'ประเภทการรักษา (แก้ได้)'}); }catch(e){ try{ await callApi('settings','create',{key:'treatment_types',value:json,description:'ประเภทการรักษา'}); }catch(_){ throw e; } } ttPopulateStatic(); }
 function ttEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function ttOpts(selected, opt){
   opt=opt||{}; var arr=ttList();
@@ -8029,38 +8040,45 @@ function ttManageOpen(){
 function ttManageClose(){ var ov=document.getElementById('tt-mng-ov'); if(ov) ov.remove(); }
 function ttRenderManage(){
   var box=document.getElementById('tt-mng-list'); if(!box) return;
-  var arr=ttList();
-  if(!arr.length){ box.innerHTML='<div style="color:#999;font-size:13px;padding:8px;">ยังไม่มีรายการ — เพิ่มด้านล่าง</div>'; return; }
-  box.innerHTML=arr.map(function(t,i){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid rgba(0,0,0,.09);border-radius:9px;background:#fafaf8;">'
-      +'<span style="color:#bbb;font-size:12px;min-width:16px;">'+(i+1)+'</span>'
-      +'<input value="'+ttEsc(t)+'" class="form-control" style="flex:1;padding:4px 7px;font-size:13.5px;height:auto;" onchange="ttEditAt('+i+',this.value)">'
-      +'<button class="btn btn-outline btn-sm" style="color:#C0392B;border-color:#C0392B;padding:3px 9px;flex-shrink:0;" onclick="ttDeleteAt('+i+')"><i class="ti ti-trash"></i></button>'
+  var pairs=ttPairs();
+  if(!pairs.length){ box.innerHTML='<div style="color:#999;font-size:13px;padding:8px;">ยังไม่มีรายการ — เพิ่มด้านล่าง</div>'; return; }
+  box.innerHTML=pairs.map(function(p,i){
+    var sw=Object.keys(TT_PAL).map(function(k){ var on=(p.c||'gray')===k; return '<span onclick="ttSetColor('+i+',\''+k+'\')" title="'+k+'" style="width:16px;height:16px;border-radius:50%;background:'+TT_PAL[k]+';cursor:pointer;display:inline-block;box-shadow:'+(on?'0 0 0 2px #fff,0 0 0 4px '+TT_PAL[k]:'none')+';"></span>'; }).join('');
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid rgba(0,0,0,.09);border-radius:9px;background:#fafaf8;flex-wrap:wrap;">'
+      +'<span style="color:#bbb;font-size:12px;min-width:14px;">'+(i+1)+'</span>'
+      +'<input value="'+ttEsc(p.n)+'" class="form-control" style="width:118px;padding:4px 7px;font-size:13px;height:auto;flex-shrink:0;" onchange="ttEditAt('+i+',this.value)">'
+      +'<div style="display:flex;gap:4px;flex:1;flex-wrap:wrap;min-width:140px;">'+sw+'</div>'
+      +'<button class="btn btn-outline btn-sm" style="color:#C0392B;border-color:#C0392B;padding:3px 8px;flex-shrink:0;" onclick="ttDeleteAt('+i+')"><i class="ti ti-trash"></i></button>'
       +'</div>';
   }).join('');
 }
 async function ttAddNew(){
   var inp=document.getElementById('tt-add-inp'); if(!inp) return;
   var v=(inp.value||'').trim(); if(!v) return;
-  var arr=ttList(); if(arr.indexOf(v)>=0){ try{showToast('มีรายการนี้แล้ว','warning');}catch(_){} return; }
-  arr.push(v); inp.value='';
-  try{ await ttSaveList(arr); ttRenderManage(); try{showToast('เพิ่ม "'+v+'" แล้ว');}catch(_){} }
+  var pairs=ttPairs(); if(pairs.some(function(p){return p.n===v;})){ try{showToast('มีรายการนี้แล้ว','warning');}catch(_){} return; }
+  pairs.push({n:v,c:''}); inp.value='';
+  try{ await ttSavePairs(pairs); ttRenderManage(); try{showToast('เพิ่ม "'+v+'" แล้ว');}catch(_){} }
   catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
 }
 async function ttEditAt(i,val){
-  val=(val||'').trim(); var arr=ttList(); if(i<0||i>=arr.length) return;
+  val=(val||'').trim(); var pairs=ttPairs(); if(i<0||i>=pairs.length) return;
   if(!val){ ttRenderManage(); return; }
-  if(arr[i]===val) return;
-  arr[i]=val;
-  try{ await ttSaveList(arr); ttRenderManage(); try{showToast('แก้ไขแล้ว');}catch(_){} }
+  if(pairs[i].n===val) return;
+  pairs[i].n=val;
+  try{ await ttSavePairs(pairs); ttRenderManage(); try{showToast('แก้ไขแล้ว');}catch(_){} }
   catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
 }
+async function ttSetColor(i,c){
+  var pairs=ttPairs(); if(i<0||i>=pairs.length) return;
+  pairs[i].c=c;
+  try{ await ttSavePairs(pairs); ttRenderManage(); }catch(e){ try{showToast('บันทึกสีไม่สำเร็จ','error');}catch(_){} }
+}
 async function ttDeleteAt(i){
-  var arr=ttList(); if(i<0||i>=arr.length) return;
-  var name=arr[i];
+  var pairs=ttPairs(); if(i<0||i>=pairs.length) return;
+  var name=pairs[i].n;
   if(!confirm('ลบ "'+name+'" ออกจากรายการ?\nประวัติการรักษาเก่าที่ใช้ประเภทนี้ยังเก็บไว้ ไม่หาย')) return;
-  arr.splice(i,1);
-  try{ await ttSaveList(arr); ttRenderManage(); try{showToast('ลบ "'+name+'" แล้ว');}catch(_){} }
+  pairs.splice(i,1);
+  try{ await ttSavePairs(pairs); ttRenderManage(); try{showToast('ลบ "'+name+'" แล้ว');}catch(_){} }
   catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
 }
 (function(){ function _tt(){ setTimeout(function(){ try{ if(typeof ttLoad==='function') ttLoad(); }catch(_){} }, 2600); } if(document.readyState!=='loading') _tt(); else document.addEventListener('DOMContentLoaded', _tt); })();
@@ -8079,6 +8097,64 @@ function chPick(el, ddId){
   var inp=document.getElementById(ddId.replace('-dd','-inp'));
   if(inp) inp.value=(el.textContent||'').trim();
   if(dd) dd.style.display='none';
+}
+/* ===== DASH-WEEK v1 (เฟส 1B) — timeline สัปดาห์ในกรอบ dashboard ===== */
+function dashWkDays(){ var base=(typeof todayISO==='function')?todayISO():(new Date()).toISOString().slice(0,10); var out=[]; var TH=['อา','จ','อ','พ','พฤ','ศ','ส']; var d0=new Date(base+'T00:00:00'); for(var i=0;i<7;i++){ var dt=new Date(d0.getTime()+i*86400000); var iso=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); out.push({iso:iso,lbl:TH[dt.getDay()],dm:dt.getDate()+'/'+(dt.getMonth()+1),today:i===0}); } return out; }
+function dashWkChIcon(ch){ ch=(ch||'').toLowerCase(); if(ch.indexOf('line')>=0)return 'ti-brand-line'; if(ch.indexOf('face')>=0)return 'ti-brand-facebook'; if(ch.indexOf('insta')>=0)return 'ti-brand-instagram'; if(ch.indexOf('tiktok')>=0)return 'ti-brand-tiktok'; if(ch.indexOf('google')>=0)return 'ti-brand-google'; if(ch.indexOf('หน้าร้าน')>=0||ch.indexOf('walk')>=0)return 'ti-walk'; if(ch)return 'ti-phone'; return ''; }
+function renderDashWeek(){
+  var box=document.getElementById('dash-week'); if(!box) return;
+  var GAPW=3, MW=240, AW=300, TOT=540, mW=(MW/TOT)*(100-GAPW), aW=(AW/TOT)*(100-GAPW);
+  function toMin(s){ if(!s)return 0; var p=String(s).split(':'); return (+p[0])*60+(+(p[1]||0)); }
+  function xPct(m){ if(m<=720) return ((m-480)/MW)*mW; return mW+GAPW+((m-780)/AW)*aW; }
+  var HRS=[8,9,10,11,12,13,14,15,16,17,18], LBLW=52;
+  var days=dashWkDays();
+  var appts=(window.allAppts||[]).filter(function(a){ return a && (typeof normalizeStatus==='function'?normalizeStatus(a.status):a.status)!=='cancelled'; });
+  var pats=window.allPatients||[];
+  function patOf(id){ return pats.filter(function(p){return p.hn===id||p.id===id;})[0]||null; }
+  function esc(s){ return (typeof ttEsc==='function')?ttEsc(s):String(s==null?'':s); }
+  var gl='';
+  HRS.forEach(function(hr){ var x=xPct(hr*60); gl+='<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(0,0,0,.05);"></div>'; });
+  gl+='<div style="position:absolute;left:'+mW+'%;width:'+GAPW+'%;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(0,0,0,.03),rgba(0,0,0,.03) 4px,transparent 4px,transparent 8px);"></div>';
+  var html='<div style="overflow-x:auto;"><div style="min-width:880px;">';
+  html+='<div style="position:relative;height:15px;margin-left:'+LBLW+'px;">';
+  HRS.forEach(function(hr){ var x=xPct(hr*60); html+='<span style="position:absolute;left:'+x+'%;transform:translateX(-50%);font-size:10px;color:#aaa;">'+(hr<10?'0':'')+hr+'</span>'; });
+  html+='</div>';
+  days.forEach(function(day){
+    var rows=appts.filter(function(a){ return (typeof dateToISO==='function'?dateToISO(a.date):a.date)===day.iso; });
+    var bg=day.today?'background:rgba(55,138,221,.06);':''; var lc=day.today?'#0C447C':'#666';
+    html+='<div style="display:flex;border-top:0.5px solid rgba(0,0,0,.07);'+bg+'">'
+      +'<div style="width:'+LBLW+'px;flex-shrink:0;padding:6px 4px;font-size:11px;color:'+lc+';line-height:1.3;">'+day.lbl+'<br><span style="font-size:10px;color:#aaa;">'+day.dm+(day.today?'·วันนี้':'')+'</span></div>'
+      +'<div style="position:relative;flex:1;height:70px;">'+gl;
+    rows.forEach(function(a){
+      var sm=toMin(a.time_start); var em=a.time_end?toMin(a.time_end):(sm+60); if(em<=sm) em=sm+60;
+      if(sm<480) sm=480; if(em>1080) em=1080; if(em<=480||sm>=1080) return;
+      var L=xPct(sm), W=xPct(em)-L; if(W<2) W=2;
+      var sh=(typeof ttColorShade==='function')?ttColorShade(a.treatment_type):['#F1EFE8','#888780','#2C2C2A'];
+      var dur=em-sm; var al=dur>60?'center':'flex-start'; var ta=dur>60?'center':'left';
+      var p=patOf(a.patient_id); var ph=(p&&p.phone)||a.phone||''; var ch=(p&&p.channel)||a.channel||''; var ci=dashWkChIcon(ch);
+      var nm=esc(a.patient_name||(p?((p.prefix||'')+(p.first_name||'')+' '+(p.last_name||'')).trim():'')||'—');
+      var tid=String(a.id||'').replace(/'/g,'');
+      html+='<div title="'+esc(a.time_start)+(a.time_end?'-'+esc(a.time_end):'')+' '+nm+'" style="position:absolute;left:'+L+'%;width:'+W+'%;top:2px;bottom:2px;background:'+sh[0]+';border-left:3px solid '+sh[1]+';border-radius:6px;padding:3px 5px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:'+al+';text-align:'+ta+';">'
+        +'<div onclick="if(typeof viewAppt===\'function\')viewAppt(\''+tid+'\')" style="font-size:11px;font-weight:500;color:'+sh[2]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;cursor:pointer;text-decoration:underline;text-decoration-thickness:.5px;">'+nm+'</div>'
+        +(ph?'<div style="font-size:11px;color:'+sh[1]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;"><i class="ti ti-phone" aria-hidden="true"></i> '+esc(ph)+'</div>':'')
+        +'<div style="font-size:11px;color:'+sh[1]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;"><i class="ti ti-stethoscope" aria-hidden="true"></i> '+esc(a.treatment_type||'—')+'</div>'
+        +(ch?'<div style="font-size:11px;color:'+sh[1]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;">'+(ci?'<i class="ti '+ci+'" aria-hidden="true"></i> ':'')+esc(ch)+'</div>':'')
+        +'</div>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div></div>';
+  html+='<div style="font-size:10.5px;color:#aaa;margin-top:6px;">แท่ง = เวลานัด→ถึงเวลา · สีตามประเภท (ตั้งในจัดการประเภทการรักษา) · คลิกชื่อ→แก้นัด</div>';
+  box.innerHTML=html;
+}
+function dashTab(m){
+  var td=document.getElementById('dash-appt-list'), wk=document.getElementById('dash-week');
+  var pt=document.getElementById('dashtab-td'), pw=document.getElementById('dashtab-wk');
+  if(!td||!wk) return;
+  function on(b){ if(b){b.style.background='#2F5D50';b.style.color='#fff';} }
+  function off(b){ if(b){b.style.background='transparent';b.style.color='#666';} }
+  if(m==='wk'){ td.style.display='none'; wk.style.display='block'; on(pw); off(pt); renderDashWeek(); }
+  else { td.style.display='block'; wk.style.display='none'; on(pt); off(pw); }
 }
 async function loadSettings(){
   try {
@@ -9623,6 +9699,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v199', date:'18/06/2569', items:['feat(v229 appt 1B): treatment color per type (set in manager, store [name,color] backward-compat) + dashboard ตารางสัปดาห์ tab timeline 08-18 rolling 7d-from-today, bars colored by type, 4 lines, click name->viewAppt'] },
+  { ver:'v229', date:'18/06/2569', items:['feat(นัดหมาย 1B): สีต่อประเภทการรักษา (เลือกในจัดการ · เก็บ [ชื่อ,สี] backward compat) + แท็บ "ตารางสัปดาห์" ในกรอบภาพรวม timeline 08-18 rolling 7 วันจากวันนี้ แท่งสีตามประเภท 4 บรรทัด คลิกชื่อแก้นัด'] },
   { ver:'v198', date:'18/06/2569', items:['feat(v228 appt D1): duration combo (datalist 30/45/60/90/120 typeable default 60) in add/edit appointment -> compute time_end (foundation for week timeline)'] },
   { ver:'v228', date:'18/06/2569', items:['feat(นัดหมาย D1): เพิ่มระยะเวลา (datalist 30/45/60/90/120 พิมพ์เองได้ default 60) ในสร้าง/แก้นัด -> บันทึก time_end · ฐานของตาราง timeline'] },
   { ver:'v197', date:'17/06/2569', items:['docs(Push B2): contact-channel.md — register field + history bottom line'] },
