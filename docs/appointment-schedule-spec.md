@@ -24,10 +24,10 @@
 - ปุ่มแดง ~300px บนตาราง "กำหนดเวลาไม่รับจอง" → ฟอร์มหลายแถว (วันที่/จาก/ถึง/หมายเหตุ) เพิ่มได้เรื่อยๆ
 - แสดงในตารางเป็นแท่งดำ "ปิดรับจอง" (มีหมายเหตุ→โชว์หมายเหตุ)
 
-### เฟส 3 — แท็บ "ตารางว่างนัด"
+### เฟส 3 — แท็บ "ตารางว่างนัด"  ✅ (เสร็จ v231/v108)
 - แท็บขวาของ "ตารางสัปดาห์" · โชว์ช่องว่าง = เขียว "ว่าง" (เวลาเปิด − นัด − closed_slots)
 
-### เฟส 4 — ส่งตารางว่างให้คนไข้
+### เฟส 4 — ส่งตารางว่างให้คนไข้  ✅ (เสร็จ v232/v109 · appointment.html GitHub Pages · e2e verified)
 - ปุ่มส้ม (ตำแหน่ง/ขนาดเดียวกับปุ่มแดง) "ส่งตารางว่างให้คนไข้"
 - copy 3 แบบ: plain text (ลิสต์เวลาว่างรายวัน) / URL (appointment.html#snapshot) / QR
 - appointment.html (pages.dev): โลโก้ + ชื่อ/เบอร์คลินิก + ตารางว่าง · decode snapshot จาก hash
@@ -35,3 +35,10 @@
 ## หมายเหตุสถาปัตยกรรม
 - appointments เชื่อม patients ผ่าน patient_id อยู่แล้ว · เบอร์/ช่องทาง ดึงจาก patient (allPatients) ตอน render
 - timeline + ปิดรับจอง + ว่าง = อ่าน allAppts + closed_slots + open_time/close_time (settings)
+
+## as-built (เสร็จครบ 4 เฟส 2026-06-18)
+- หน้า public = GitHub Pages (ไม่ใช่ pages.dev) — appointment.html อยู่ใน repo เดียวกับแอป (superclinic/scproject) · URL = liveURL + /appointment.html#snapshot · snapshot = encodeURIComponent(JSON{c,p,d:[{l,f}]}) ใน hash (ไม่ต้อง login, ไม่หลุดข้อมูลคนไข้)
+- closed_slots sheet self-heal (superclinic openSheet_ + LS HEADERS) · live CRUD verified
+- ฟังก์ชันหลัก: apptAddMin/apptDurOf · ttColor/ttColorShade · dashWkDays · renderDashWeek/renderDashFree · freeSlotsForDay · csOpen · sndOpen/sndUrl/sndText
+- QR: qrcode lib เดิม (level L รองรับ url ~2900 ตัว · url จริง ~1370)
+- ค้างทดสอบ: คลิกปุ่ม/modal จริงผ่าน UI บนเครื่อง (logic + e2e appointment.html verified แล้ว)
