@@ -8265,6 +8265,58 @@ async function csDelete(id){
   try{ await callApi('closed_slots','delete',{id:id}); await csLoad(); csRenderExisting(); if(typeof renderDashWeek==='function') renderDashWeek(); try{showToast('ลบแล้ว');}catch(_){} }
   catch(e){ try{showToast('ลบไม่สำเร็จ','error');}catch(_){} }
 }
+/* ===== SEND-FREE v1 (เฟส 4) — ส่งตารางว่างให้คนไข้ ===== */
+function sndButtonHtml(){ return '<button onclick="sndOpen()" style="display:block;width:300px;max-width:100%;border:none;background:#E0913C;color:#fff;border-radius:9px;padding:9px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;margin:0 0 12px;"><i class="ti ti-send" aria-hidden="true"></i> ส่งตารางว่างให้คนไข้</button>'; }
+function sndClose(){ var o=document.getElementById('snd-ov'); if(o) o.remove(); }
+function sndDayLabel(day){ var full={'อา':'อาทิตย์','จ':'จันทร์','อ':'อังคาร','พ':'พุธ','พฤ':'พฤหัส','ศ':'ศุกร์','ส':'เสาร์'}; return day.today?('วันนี้ ('+(full[day.lbl]||day.lbl)+' '+day.dm+')'):((full[day.lbl]||day.lbl)+' '+day.dm); }
+function sndModel(){ var days=(typeof dashWkDays==='function')?dashWkDays():[]; return days.map(function(day){ var fr=(typeof freeSlotsForDay==='function')?freeSlotsForDay(day.iso).map(function(f){return [_afM2hm(f.s),_afM2hm(f.e)];}):[]; return {l:sndDayLabel(day), f:fr}; }); }
+function sndText(model, clinic, phone){
+  var lines=['🟢 เวลาว่าง — '+(clinic||'คลินิก')];
+  if(phone) lines.push('โทร '+phone);
+  lines.push('');
+  model.forEach(function(d){ if(!d.f.length) return; var allday=d.f.length===1&&d.f[0][0]==='08:00'&&d.f[0][1]==='18:00'; lines.push(d.l+' ว่าง: '+(allday?'ว่างทั้งวัน':d.f.map(function(x){return x[0]+'–'+x[1];}).join(', '))); });
+  lines.push(''); lines.push('จองได้ที่เบอร์คลินิกเลยค่ะ 🙏');
+  return lines.join('\n');
+}
+function sndUrl(model, clinic, phone){
+  var snap={c:clinic||'',p:phone||'',d:model.map(function(d){return {l:d.l,f:d.f};})};
+  var base=location.origin+location.pathname.replace(/[^/]*$/,'')+'appointment.html';
+  return base+'#'+encodeURIComponent(JSON.stringify(snap));
+}
+async function sndOpen(){
+  var old=document.getElementById('snd-ov'); if(old) old.remove();
+  var ov=document.createElement('div'); ov.id='snd-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:36px 14px;overflow:auto;';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;width:100%;max-width:540px;box-shadow:0 12px 50px rgba(0,0,0,.3);"><div style="background:#E0913C;color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;"><div style="font-size:15px;font-weight:700;"><i class="ti ti-send"></i> ส่งตารางว่างให้คนไข้</div><button onclick="sndClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:16px;">&#10005;</button></div><div id="snd-body" style="padding:16px 18px;"><div style="color:#999;font-size:13px;">กำลังเตรียมข้อมูล...</div></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov) sndClose(); });
+  var clinic='คลินิก', phone='';
+  try{ var r=await callApi('settings','list'); var rows=(r&&r.data&&r.data.rows)||[]; rows.forEach(function(s){ if(s.key==='clinic_name'&&s.value) clinic=s.value; if((s.key==='clinic_phone'||s.key==='phone')&&s.value) phone=s.value; }); }catch(_){}
+  try{ if(typeof csLoad==='function') await csLoad(); }catch(_){}
+  var model=sndModel();
+  window._sndText=sndText(model,clinic,phone); window._sndUrl=sndUrl(model,clinic,phone);
+  var body=document.getElementById('snd-body'); if(!body) return;
+  body.innerHTML='<div style="font-size:12px;color:#8a5a1a;margin-bottom:10px;">กดเลือกแบบที่จะส่ง แล้วก๊อปไปวางให้คนไข้</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button onclick="sndPick(\'text\')" id="spk-text" style="border:none;background:#E0913C;color:#fff;border-radius:8px;padding:7px 13px;cursor:pointer;font-family:inherit;font-size:12.5px;"><i class="ti ti-clipboard-text"></i> ข้อความ</button><button onclick="sndPick(\'url\')" id="spk-url" style="border:0.5px solid #d9bd95;background:#fff;color:#8a5a1a;border-radius:8px;padding:7px 13px;cursor:pointer;font-family:inherit;font-size:12.5px;"><i class="ti ti-link"></i> ลิงก์</button><button onclick="sndPick(\'qr\')" id="spk-qr" style="border:0.5px solid #d9bd95;background:#fff;color:#8a5a1a;border-radius:8px;padding:7px 13px;cursor:pointer;font-family:inherit;font-size:12.5px;"><i class="ti ti-qrcode"></i> QR</button></div>'
+    +'<div id="snd-opt"></div>';
+  sndPick('text');
+}
+function sndPick(m){
+  ['text','url','qr'].forEach(function(k){ var b=document.getElementById('spk-'+k); if(!b)return; if(k===m){b.style.background='#E0913C';b.style.color='#fff';b.style.border='none';}else{b.style.background='#fff';b.style.color='#8a5a1a';b.style.border='0.5px solid #d9bd95';} });
+  var box=document.getElementById('snd-opt'); if(!box) return;
+  if(m==='text'){
+    box.innerHTML='<textarea id="snd-ta" readonly style="width:100%;height:158px;font-size:12.5px;font-family:inherit;border:1px solid #eee;border-radius:8px;padding:10px;box-sizing:border-box;"></textarea><button onclick="sndCopy(\'snd-ta\')" style="margin-top:8px;border:none;background:#2F5D50;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:12.5px;"><i class="ti ti-copy"></i> คัดลอกข้อความ</button>';
+    document.getElementById('snd-ta').value=window._sndText||'';
+  } else if(m==='url'){
+    box.innerHTML='<div style="font-size:11px;color:#999;margin-bottom:5px;">ลิงก์หน้าตารางว่าง (คนไข้เปิดได้เลย ไม่ต้องล็อกอิน)</div><div style="display:flex;gap:6px;"><input id="snd-url-inp" readonly style="flex:1;font-size:12px;padding:8px;border:1px solid #ddd;border-radius:8px;"><button onclick="sndCopy(\'snd-url-inp\')" style="border:none;background:#2F5D50;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;"><i class="ti ti-copy"></i></button></div><div style="font-size:11px;color:#aaa;margin-top:6px;">เปิดทดสอบ: <a href="#" id="snd-url-open" target="_blank" style="color:#185FA5;">เปิดลิงก์</a></div>';
+    var ui=document.getElementById('snd-url-inp'); ui.value=window._sndUrl||''; var ol=document.getElementById('snd-url-open'); if(ol) ol.href=window._sndUrl||'#';
+  } else {
+    box.innerHTML='<div style="text-align:center;"><div style="font-size:11px;color:#999;margin-bottom:8px;">คนไข้สแกนเปิดดูตารางว่าง</div><div id="snd-qr"></div></div>';
+    try{ var qr=qrcode(0,'L'); qr.addData(window._sndUrl||''); qr.make(); document.getElementById('snd-qr').innerHTML='<img src="'+qr.createDataURL(5,10)+'" style="width:170px;height:170px;border:6px solid #fff;border-radius:8px;box-shadow:0 0 0 1px #ddd;">'; }
+    catch(e){ document.getElementById('snd-qr').innerHTML='<div style="color:#C0392B;font-size:12px;">ลิงก์ยาวเกินสร้าง QR — ใช้แบบลิงก์/ข้อความแทน</div>'; }
+  }
+}
+function sndCopy(id){ var el=document.getElementById(id); if(!el)return; try{ el.focus(); el.select&&el.select(); }catch(_){} if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(el.value).then(function(){ try{showToast('คัดลอกแล้ว');}catch(_){} },function(){ try{document.execCommand('copy');showToast('คัดลอกแล้ว');}catch(__){} }); } else { try{document.execCommand('copy');showToast('คัดลอกแล้ว');}catch(_){} } }
 async function loadSettings(){
   try {
     const res = await callApi('settings','list');
@@ -9808,6 +9860,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v202', date:'18/06/2569', items:['feat(v232 appt 4): ส่งตารางว่างให้คนไข้ — orange button + 3 copy modes (text/url/QR) + appointment.html public page (snapshot in hash, decode+render verified e2e)'] },
+  { ver:'v232', date:'18/06/2569', items:['feat(นัดหมาย 4): ส่งตารางว่างให้คนไข้ — ปุ่มส้มในแท็บว่าง · 3 แบบ copy: ข้อความ/ลิงก์/QR · appointment.html (หน้า public ฝัง snapshot ใน hash) · qrcode lib'] },
   { ver:'v201', date:'18/06/2569', items:['feat(v231 appt 3): ตารางว่างนัด tab (7 days from today) — green ว่าง bars = open 08-18 minus appointments minus closed_slots (freeSlotsForDay)'] },
   { ver:'v231', date:'18/06/2569', items:['feat(นัดหมาย 3): แท็บ "ตารางว่างนัด" 7 วันจากวันนี้ — แท่งเขียว "ว่าง" = เวลาเปิด08-18 − นัด − ปิดรับจอง (freeSlotsForDay merge/subtract)'] },
   { ver:'v200', date:'18/06/2569', items:['feat(v230 appt 2): closed_slots ปิดรับจอง — new sheet self-heal + red button + multi-row form (date/from/to/note) + black bars in week timeline · GAS@19 · live CRUD verified'] },

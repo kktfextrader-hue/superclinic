@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตารางเวลาว่าง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sarabun',sans-serif;background:#eef2ee;color:#2b2b2b;padding:18px 12px;display:flex;justify-content:center;}
+  .card{background:#fff;border-radius:18px;max-width:420px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.12);}
+  .hd{background:linear-gradient(135deg,#2F5D50,#3f7a68);color:#fff;padding:20px 16px;text-align:center;}
+  .logo{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.18);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;}
+  .logo img{width:100%;height:100%;object-fit:cover;}
+  .cname{font-size:18px;font-weight:600;}
+  .cphone{font-size:14px;opacity:.9;margin-top:3px;}
+  .bd{padding:16px 18px;}
+  .ttl{font-size:15px;font-weight:600;color:#2F5D50;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .day{padding:9px 0;border-bottom:1px solid #f0ede6;}
+  .day:last-child{border-bottom:none;}
+  .dlbl{font-size:14px;font-weight:600;color:#333;}
+  .slots{margin-top:3px;}
+  .slot{display:inline-block;background:#E1F5EE;color:#0F6E56;border:1px solid #9FE1CB;border-radius:7px;padding:2px 9px;font-size:13px;margin:3px 4px 0 0;font-weight:500;}
+  .full{font-size:12.5px;color:#bbb;}
+  .ft{padding:13px 18px;background:#f7f9f7;font-size:12.5px;color:#666;text-align:center;border-top:1px solid #eee;}
+  .gen{font-size:11px;color:#aaa;text-align:center;padding:8px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hd">
+    <div class="logo" id="logo">🌿</div>
+    <div class="cname" id="cname">คลินิก</div>
+    <div class="cphone" id="cphone"></div>
+  </div>
+  <div class="bd">
+    <div class="ttl"><span>🟢</span> เวลาว่าง สัปดาห์นี้</div>
+    <div id="days"></div>
+  </div>
+  <div class="ft">📞 จองได้ที่เบอร์คลินิกเลยค่ะ</div>
+  <div class="gen" id="gen"></div>
+</div>
+<script>
+(function(){
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var data=null;
+  try{ var h=location.hash.replace(/^#/,''); if(h) data=JSON.parse(decodeURIComponent(h)); }catch(e){}
+  if(!data){ document.getElementById('days').innerHTML='<div class="full">ไม่พบข้อมูลตารางว่าง</div>'; return; }
+  if(data.c) document.getElementById('cname').textContent=data.c;
+  if(data.p){ document.getElementById('cphone').textContent='📞 '+data.p; } else { document.getElementById('cphone').style.display='none'; }
+  if(data.logo){ document.getElementById('logo').innerHTML='<img src="'+esc(data.logo)+'" alt="logo">'; }
+  var days=data.d||[];
+  var any=false;
+  var html=days.map(function(d){
+    var f=d.f||[];
+    if(!f.length) return '';
+    any=true;
+    var allday = f.length===1 && f[0][0]==='08:00' && f[0][1]==='18:00';
+    var slots = allday ? '<span class="slot">ว่างทั้งวัน</span>' : f.map(function(x){ return '<span class="slot">'+esc(x[0])+'–'+esc(x[1])+'</span>'; }).join('');
+    return '<div class="day"><div class="dlbl">'+esc(d.l)+'</div><div class="slots">'+slots+'</div></div>';
+  }).join('');
+  document.getElementById('days').innerHTML = any ? html : '<div class="full">สัปดาห์นี้เต็มแล้ว — ติดต่อคลินิกเพื่อสอบถามคิวค่ะ</div>';
+  document.getElementById('gen').textContent='อัปเดตล่าสุดจากคลินิก';
+})();
+</script>
+</body>
+</html>

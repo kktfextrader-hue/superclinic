@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v202",
+    "date": "18/06/2569",
+    "items": [
+      "feat(v232 appt 4): ส่งตารางว่างให้คนไข้ — orange button + 3 copy modes (text/url/QR) + appointment.html public page (snapshot in hash, decode+render verified e2e)"
+    ]
+  },
+  {
     "ver": "v201",
     "date": "18/06/2569",
     "items": [
