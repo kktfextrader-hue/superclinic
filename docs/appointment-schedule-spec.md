@@ -42,3 +42,9 @@
 - ฟังก์ชันหลัก: apptAddMin/apptDurOf · ttColor/ttColorShade · dashWkDays · renderDashWeek/renderDashFree · freeSlotsForDay · csOpen · sndOpen/sndUrl/sndText
 - QR: qrcode lib เดิม (level L รองรับ url ~2900 ตัว · url จริง ~1370)
 - ค้างทดสอบ: คลิกปุ่ม/modal จริงผ่าน UI บนเครื่อง (logic + e2e appointment.html verified แล้ว)
+
+## Cloudflare Pages (เพิ่ม 2026-06-18 · ทั้งคู่)
+- **superclinic-appt.pages.dev** = หน้าตารางว่างคนไข้ (appointment) · sndUrl ในแอปชี้มาที่นี่แล้ว · source = Desktop\Claude\cf-appt
+- **superclinic.pages.dev / scproject.pages.dev** = มิเรอร์แอป (deploy จาก public repo · ไม่มี secret)
+- **sync:** รัน Desktop\Claude\deploy-cf.bat (clone public repo + wrangler pages deploy ทั้ง 3) — ⚠️ มิเรอร์ไม่ auto-sync กับ github push-now ต้องรัน deploy-cf.bat เอง
+- wrangler login: kktfextrader@gmail.com (OAuth) · account d7e07327...

@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v205",
+    "date": "18/06/2569",
+    "items": [
+      "docs(appt): cloudflare pages deploy notes (superclinic-appt + app mirrors + deploy-cf.bat)"
+    ]
+  },
+  {
     "ver": "v204",
     "date": "18/06/2569",
     "items": [
