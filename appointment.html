@@ -6,6 +6,7 @@
 <title>ตารางเวลาว่าง</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Sarabun',sans-serif;background:#eef2ee;color:#2b2b2b;padding:18px 12px;display:flex;justify-content:center;}
@@ -23,6 +24,10 @@
   .slots{margin-top:3px;}
   .slot{display:inline-block;background:#E1F5EE;color:#0F6E56;border:1px solid #9FE1CB;border-radius:7px;padding:2px 9px;font-size:13px;margin:3px 4px 0 0;font-weight:500;}
   .full{font-size:12.5px;color:#bbb;}
+  .share{padding:14px 18px;text-align:center;border-top:1px solid #eee;background:#fafdfb;}
+  .share-h{font-size:11px;color:#999;margin-bottom:8px;}
+  .share img{width:122px;height:122px;border:6px solid #fff;border-radius:8px;box-shadow:0 0 0 1px #e3e3e3;}
+  .vlink{display:inline-block;margin-top:9px;color:#185FA5;font-size:13.5px;font-weight:500;text-decoration:underline;}
   .ft{padding:13px 18px;background:#f7f9f7;font-size:12.5px;color:#666;text-align:center;border-top:1px solid #eee;}
   .gen{font-size:11px;color:#aaa;text-align:center;padding:8px;}
 </style>
@@ -38,6 +43,11 @@
     <div class="ttl"><span>🟢</span> เวลาว่าง สัปดาห์นี้</div>
     <div id="days"></div>
   </div>
+  <div class="share">
+    <div class="share-h">สแกน QR หรือกดลิงก์เพื่อเปิดตารางนี้</div>
+    <div id="qr"></div>
+    <a id="vlink" href="#" class="vlink">🔗 ดูตารางว่าง</a>
+  </div>
   <div class="ft">📞 จองได้ที่เบอร์คลินิกเลยค่ะ</div>
   <div class="gen" id="gen"></div>
 </div>
@@ -46,22 +56,33 @@
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   var data=null;
   try{ var h=location.hash.replace(/^#/,''); if(h) data=JSON.parse(decodeURIComponent(h)); }catch(e){}
-  if(!data){ document.getElementById('days').innerHTML='<div class="full">ไม่พบข้อมูลตารางว่าง</div>'; return; }
-  if(data.c) document.getElementById('cname').textContent=data.c;
-  if(data.p){ document.getElementById('cphone').textContent='📞 '+data.p; } else { document.getElementById('cphone').style.display='none'; }
-  if(data.logo){ document.getElementById('logo').innerHTML='<img src="'+esc(data.logo)+'" alt="logo">'; }
-  var days=data.d||[];
-  var any=false;
-  var html=days.map(function(d){
-    var f=d.f||[];
-    if(!f.length) return '';
-    any=true;
-    var allday = f.length===1 && f[0][0]==='08:00' && f[0][1]==='18:00';
-    var slots = allday ? '<span class="slot">ว่างทั้งวัน</span>' : f.map(function(x){ return '<span class="slot">'+esc(x[0])+'–'+esc(x[1])+'</span>'; }).join('');
-    return '<div class="day"><div class="dlbl">'+esc(d.l)+'</div><div class="slots">'+slots+'</div></div>';
-  }).join('');
-  document.getElementById('days').innerHTML = any ? html : '<div class="full">สัปดาห์นี้เต็มแล้ว — ติดต่อคลินิกเพื่อสอบถามคิวค่ะ</div>';
-  document.getElementById('gen').textContent='อัปเดตล่าสุดจากคลินิก';
+  if(!data){ document.getElementById('days').innerHTML='<div class="full">ไม่พบข้อมูลตารางว่าง</div>'; }
+  else {
+    if(data.c) document.getElementById('cname').textContent=data.c;
+    if(data.p){ document.getElementById('cphone').textContent='📞 '+data.p; } else { document.getElementById('cphone').style.display='none'; }
+    if(data.logo){ document.getElementById('logo').innerHTML='<img src="'+esc(data.logo)+'" alt="logo">'; }
+    var days=data.d||[];
+    var any=false;
+    var html=days.map(function(d){
+      var f=d.f||[];
+      if(!f.length) return '';
+      any=true;
+      var allday = f.length===1 && f[0][0]==='08:00' && f[0][1]==='18:00';
+      var slots = allday ? '<span class="slot">ว่างทั้งวัน</span>' : f.map(function(x){ return '<span class="slot">'+esc(x[0])+'–'+esc(x[1])+'</span>'; }).join('');
+      return '<div class="day"><div class="dlbl">'+esc(d.l)+'</div><div class="slots">'+slots+'</div></div>';
+    }).join('');
+    document.getElementById('days').innerHTML = any ? html : '<div class="full">สัปดาห์นี้เต็มแล้ว — ติดต่อคลินิกเพื่อสอบถามคิวค่ะ</div>';
+    document.getElementById('gen').textContent='อัปเดตล่าสุดจากคลินิก';
+  }
+  // QR + ลิงก์ของหน้านี้ (ส่งต่อ/สแกนเปิดตารางสด)
+  var url=location.href;
+  var a=document.getElementById('vlink'); if(a) a.href=url;
+  try{
+    if(typeof qrcode==='function' && location.hash){
+      var qr=qrcode(0,'L'); qr.addData(url); qr.make();
+      document.getElementById('qr').innerHTML=qr.createImgTag(4,6);
+    } else { var sh=document.querySelector('.share'); if(sh && !location.hash) sh.style.display='none'; }
+  }catch(e){ var q=document.getElementById('qr'); if(q) q.innerHTML='<div style="font-size:11px;color:#bbb;">QR ยาวเกิน — ใช้ลิงก์ด้านล่าง</div>'; }
 })();
 </script>
 </body>

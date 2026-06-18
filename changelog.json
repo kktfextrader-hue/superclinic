@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v206",
+    "date": "18/06/2569",
+    "items": [
+      "feat(v234 appt): appointment.html + QR code + ดูตารางว่าง hyperlink (qrcode-generator CDN) · push-now auto-deploys Cloudflare Pages (mirror + appointment)"
+    ]
+  },
+  {
     "ver": "v205",
     "date": "18/06/2569",
     "items": [
