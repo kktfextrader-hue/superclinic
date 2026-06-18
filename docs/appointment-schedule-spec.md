@@ -46,5 +46,5 @@
 ## Cloudflare Pages (เพิ่ม 2026-06-18 · ทั้งคู่)
 - **superclinic-appt.pages.dev** = หน้าตารางว่างคนไข้ (appointment) · sndUrl ในแอปชี้มาที่นี่แล้ว · source = Desktop\Claude\cf-appt
 - **superclinic.pages.dev / scproject.pages.dev** = มิเรอร์แอป (deploy จาก public repo · ไม่มี secret)
-- **sync:** รัน Desktop\Claude\deploy-cf.bat (clone public repo + wrangler pages deploy ทั้ง 3) — ⚠️ มิเรอร์ไม่ auto-sync กับ github push-now ต้องรัน deploy-cf.bat เอง
+- **sync:** push-now.bat auto-deploy CF ทุก push แล้ว (superclinic→mirror+appointment · scproject→mirror) · deploy-cf.bat = full re-sync ทั้ง 3 ด้วยมือ (fallback)
 - wrangler login: kktfextrader@gmail.com (OAuth) · account d7e07327...

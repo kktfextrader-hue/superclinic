@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v207",
+    "date": "18/06/2569",
+    "items": [
+      "fix(appt 3): hide free slots shorter than 60 min in freeSlotsForDay (affects free tab + patient page + text + QR)"
+    ]
+  },
+  {
     "ver": "v206",
     "date": "18/06/2569",
     "items": [

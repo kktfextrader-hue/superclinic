@@ -8186,7 +8186,7 @@ function freeSlotsForDay(iso){
   var free=[], cur=OPEN;
   merged.forEach(function(b){ if(b[0]>cur) free.push({s:cur,e:b[0]}); cur=Math.max(cur,b[1]); });
   if(cur<CLOSE) free.push({s:cur,e:CLOSE});
-  return free;
+  return free.filter(function(f){ return (f.e-f.s)>=60; }); /* ข้ามช่องว่าง < 1 ชม. */
 }
 function renderDashFree(){
   var box=document.getElementById('dash-free'); if(!box) return;
@@ -9860,6 +9860,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v207', date:'18/06/2569', items:['fix(appt 3): hide free slots shorter than 60 min in freeSlotsForDay (affects free tab + patient page + text + QR)'] },
   { ver:'v206', date:'18/06/2569', items:['feat(v234 appt): appointment.html + QR code + ดูตารางว่าง hyperlink (qrcode-generator CDN) · push-now auto-deploys Cloudflare Pages (mirror + appointment)'] },
   { ver:'v205', date:'18/06/2569', items:['docs(appt): cloudflare pages deploy notes (superclinic-appt + app mirrors + deploy-cf.bat)'] },
   { ver:'v204', date:'18/06/2569', items:['feat(v233 appt): patient link points to superclinic-appt.pages.dev (Cloudflare) — cleaner public URL'] },
