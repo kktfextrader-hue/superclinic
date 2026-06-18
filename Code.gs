@@ -58,7 +58,8 @@ const CONFIG = {
     finance:            'finance',
     settings:           'settings',
     users:              'users',
-    face_data:          'face_data'
+    face_data:          'face_data',
+    closed_slots:       'closed_slots'
   },
 
   // ใช้สร้าง ID อัตโนมัติ
@@ -70,7 +71,8 @@ const CONFIG = {
     herbs:              { col: 'id',  prefix: 'HRB-', pad: 3 },
     stock_transactions: { col: 'id',  prefix: 'STK-', pad: 6 },
     finance:            { col: 'id',  prefix: 'FIN-', pad: 6 },
-    users:              { col: 'id',  prefix: 'USR-', pad: 4 }
+    users:              { col: 'id',  prefix: 'USR-', pad: 4 },
+    closed_slots:       { col: 'id',  prefix: 'CSL-', pad: 6 }
   },
 
   // primary key
@@ -84,7 +86,8 @@ const CONFIG = {
     finance:            'id',
     settings:           'key',
     users:              'id',
-    face_data:          'hn'
+    face_data:          'hn',
+    closed_slots:       'id'
   },
 
   // ชีตที่รองรับ soft delete (มี column is_active)
@@ -115,7 +118,8 @@ const CONFIG = {
               'receipt_no','created_by','created_at'],
     settings: ['key','value','description','updated_at'],
     users: ['id','name','role','email','is_active','created_at','updated_at'],
-    face_data: ['hn','face_descriptor','updated_at']
+    face_data: ['hn','face_descriptor','updated_at'],
+    closed_slots: ['id','date','time_start','time_end','note','created_at']
   }
 };
 
@@ -792,7 +796,14 @@ function openSheet_(sheetName) {
   if (!tab) throw new Error('Unknown sheet: ' + sheetName);
   const ss = SpreadsheetApp.openById(getDbId_());
   const sheet = ss.getSheetByName(tab);
-  if (!sheet) throw new Error('Tab not found: ' + tab);
+  if (!sheet) {
+    var _hdr = (CONFIG.SCHEMA && CONFIG.SCHEMA[sheetName]) ? CONFIG.SCHEMA[sheetName] : null;
+    if (!_hdr) throw new Error('Tab not found: ' + tab);
+    var _ns = ss.insertSheet(tab);
+    _ns.getRange(1,1,1,_hdr.length).setValues([_hdr]).setFontWeight('bold');
+    _ns.setFrozenRows(1);
+    return _ns;
+  }
   return sheet;
 }
 

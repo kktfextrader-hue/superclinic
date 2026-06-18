@@ -72,3 +72,12 @@
 - **วิธีแก้:** `ensureColumn_(sheet,col)` guarded append header column ถ้ายังไม่มี · เรียกก่อน getHeaders_ เฉพาะตอน body มีค่า field นั้น · ทำทั้ง superclinic + LS proxy (มี CRUD แยกกัน)
 - **วิธีกันซ้ำ:** เพิ่ม field ใหม่ใน header-driven sheet ต้อง (1) เพิ่มใน SCHEMA/HEADERS สำหรับ sheet ใหม่ (2) self-heal สำหรับ sheet เดิม (multi-tenant: heal เองตอน save ดีกว่าให้ user แก้ทุก sheet) · guard try/catch ให้ degrade graceful (heal fail = field ถูกทิ้ง ไม่พัง save) · getHeaders ต้องอ่านสด ไม่ cache
 
+## L12 — str.replace anchor: ใช้ raw string เมื่อ anchor มี backslash escape (
+)
+- **อาการ:** patch abort "[TT_B] found 0" ทั้งที่ข้อความมีจริงในไฟล์ (grep เจอ)
+- **สาเหตุ:** anchor ภาษา Python ใช้ """...""" ธรรมดา → `
+` ใน confirm string กลายเป็น newline จริงตอน Python parse แต่ในไฟล์ HTML เป็น backslash-n (2 ตัวอักษร JS escape) → ไม่ match
+- **วิธีแก้:** anchor/replacement ที่มี `
+` `	` `'` ฯลฯ (โค้ด JS ที่มี escape) ต้องใช้ **raw string** r"""...""" เสมอ
+- **วิธีกันซ้ำ:** เขียน OLD/NEW ของ str.replace เป็น r""" โดย default ทุกครั้งที่ก๊อปโค้ด JS มาเป็น anchor · ถ้า abort found 0 ทั้งที่ grep เจอ → สงสัย escape ก่อน
+

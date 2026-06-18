@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v200",
+    "date": "18/06/2569",
+    "items": [
+      "feat(v230 appt 2): closed_slots ปิดรับจอง — new sheet self-heal + red button + multi-row form (date/from/to/note) + black bars in week timeline · GAS@19 · live CRUD verified"
+    ]
+  },
+  {
     "ver": "v199",
     "date": "18/06/2569",
     "items": [

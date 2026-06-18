@@ -8115,7 +8115,7 @@ function renderDashWeek(){
   var gl='';
   HRS.forEach(function(hr){ var x=xPct(hr*60); gl+='<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(0,0,0,.05);"></div>'; });
   gl+='<div style="position:absolute;left:'+mW+'%;width:'+GAPW+'%;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(0,0,0,.03),rgba(0,0,0,.03) 4px,transparent 4px,transparent 8px);"></div>';
-  var html='<div style="overflow-x:auto;"><div style="min-width:880px;">';
+  var html=(typeof csButtonHtml==='function'?csButtonHtml():'')+'<div style="overflow-x:auto;"><div style="min-width:880px;">';
   html+='<div style="position:relative;height:15px;margin-left:'+LBLW+'px;">';
   HRS.forEach(function(hr){ var x=xPct(hr*60); html+='<span style="position:absolute;left:'+x+'%;transform:translateX(-50%);font-size:10px;color:#aaa;">'+(hr<10?'0':'')+hr+'</span>'; });
   html+='</div>';
@@ -8141,6 +8141,16 @@ function renderDashWeek(){
         +(ch?'<div style="font-size:11px;color:'+sh[1]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;">'+(ci?'<i class="ti '+ci+'" aria-hidden="true"></i> ':'')+esc(ch)+'</div>':'')
         +'</div>';
     });
+    (window.allClosed||[]).filter(function(c){ return c && c.date===day.iso; }).forEach(function(c){
+      var sm=toMin(c.time_start), em=toMin(c.time_end); if(em<=sm) em=sm+30;
+      if(sm<480) sm=480; if(em>1080) em=1080; if(em<=480||sm>=1080) return;
+      var L=xPct(sm), W=xPct(em)-L; if(W<1.5) W=1.5;
+      var note=esc(c.note||'');
+      html+='<div title="ปิดรับจอง '+esc(c.time_start)+'-'+esc(c.time_end)+(note?(" "+note):"")+'" style="position:absolute;left:'+L+'%;width:'+W+'%;top:2px;bottom:2px;background:#2b2b2b;border-radius:6px;padding:3px 5px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;">'
+        +'<div style="font-size:11px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;"><i class="ti ti-lock" aria-hidden="true"></i> ปิดรับจอง</div>'
+        +(note?('<div style="font-size:10px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.2;">'+note+'</div>'):'')
+        +'</div>';
+    });
     html+='</div></div>';
   });
   html+='</div></div>';
@@ -8153,8 +8163,55 @@ function dashTab(m){
   if(!td||!wk) return;
   function on(b){ if(b){b.style.background='#2F5D50';b.style.color='#fff';} }
   function off(b){ if(b){b.style.background='transparent';b.style.color='#666';} }
-  if(m==='wk'){ td.style.display='none'; wk.style.display='block'; on(pw); off(pt); renderDashWeek(); }
+  if(m==='wk'){ td.style.display='none'; wk.style.display='block'; on(pw); off(pt); renderDashWeek(); if(typeof csLoad==='function') csLoad().then(function(){ renderDashWeek(); }); }
   else { td.style.display='block'; wk.style.display='none'; on(pt); off(pw); }
+}
+/* ===== CLOSED-SLOTS v1 (เฟส 2) — ปิดรับจอง ===== */
+window.allClosed = window.allClosed || [];
+function csButtonHtml(){ return '<button onclick="csOpen()" style="width:300px;max-width:100%;border:none;background:#C0392B;color:#fff;border-radius:9px;padding:9px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;margin:0 0 10px;"><i class="ti ti-calendar-off" aria-hidden="true"></i> กำหนดเวลาไม่รับจอง</button>'; }
+async function csLoad(){ try{ var r=await callApi('closed_slots','list'); window.allClosed=(r&&r.data&&r.data.rows)||[]; }catch(_){ window.allClosed=window.allClosed||[]; } return window.allClosed; }
+function csClose(){ var ov=document.getElementById('cs-ov'); if(ov) ov.remove(); }
+function csOpen(){
+  var old=document.getElementById('cs-ov'); if(old) old.remove();
+  var ov=document.createElement('div'); ov.id='cs-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:36px 14px;overflow:auto;';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;width:100%;max-width:560px;box-shadow:0 12px 50px rgba(0,0,0,.3);">'
+    +'<div style="background:#C0392B;color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;"><div style="font-size:15px;font-weight:700;"><i class="ti ti-calendar-off"></i> กำหนดเวลาไม่รับจอง</div><button onclick="csClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:16px;">&#10005;</button></div>'
+    +'<div style="padding:16px 18px;"><div style="font-size:12px;color:#888;margin-bottom:8px;">ช่วงที่ปิดอยู่</div><div id="cs-existing" style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px;"><div style="color:#999;font-size:12px;">กำลังโหลด...</div></div>'
+    +'<div style="font-size:12px;color:#A32D2D;border-top:1px solid #eee;padding-top:10px;margin-bottom:8px;">เพิ่มช่วงใหม่ (ไม่กรอกหมายเหตุ = "ปิดรับจอง")</div><div id="cs-newrows" style="display:flex;flex-direction:column;gap:7px;"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="csAddFormRow()" style="border:0.5px solid #C0392B;background:#fff;color:#C0392B;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:12.5px;"><i class="ti ti-plus"></i> เพิ่มแถว</button><button id="cs-save-btn" onclick="csSaveNew()" style="border:none;background:#2F5D50;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font-family:inherit;font-size:12.5px;"><i class="ti ti-device-floppy"></i> บันทึก</button></div></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov) csClose(); });
+  csAddFormRow();
+  csLoad().then(csRenderExisting);
+}
+function csRenderExisting(){
+  var box=document.getElementById('cs-existing'); if(!box) return;
+  var rows=(window.allClosed||[]).slice().sort(function(a,b){ return String((a.date||'')+(a.time_start||'')).localeCompare(String((b.date||'')+(b.time_start||''))); });
+  if(!rows.length){ box.innerHTML='<div style="color:#999;font-size:12px;">ยังไม่มี</div>'; return; }
+  var esc=(typeof ttEsc==='function')?ttEsc:function(s){return String(s==null?'':s);};
+  box.innerHTML=rows.map(function(c){ var id=String(c.id||'').replace(/'/g,''); var note=esc(c.note||'');
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 9px;background:#f7f3f2;border:1px solid #efdcd9;border-radius:8px;font-size:12.5px;"><span style="color:#2b2b2b;white-space:nowrap;"><i class="ti ti-lock"></i> '+esc(c.date||'')+'</span><span style="color:#666;white-space:nowrap;">'+esc(c.time_start||'')+'-'+esc(c.time_end||'')+'</span><span style="flex:1;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(note||'ปิดรับจอง')+'</span><button onclick="csDelete(\''+id+'\')" style="border:none;background:transparent;color:#C0392B;cursor:pointer;padding:2px;"><i class="ti ti-trash"></i></button></div>';
+  }).join('');
+}
+function csAddFormRow(){
+  var box=document.getElementById('cs-newrows'); if(!box) return;
+  var d=document.createElement('div'); d.className='cs-newrow'; d.style.cssText='display:flex;gap:6px;align-items:center;flex-wrap:wrap;';
+  d.innerHTML='<input type="date" class="cs-d" style="font-size:12px;padding:5px 7px;border:1px solid #e3d5d2;border-radius:7px;font-family:inherit;"><span style="font-size:11px;color:#999;">จาก</span><input type="time" class="cs-f" value="12:00" style="font-size:12px;padding:5px 7px;border:1px solid #e3d5d2;border-radius:7px;font-family:inherit;"><span style="font-size:11px;color:#999;">ถึง</span><input type="time" class="cs-t" value="13:00" style="font-size:12px;padding:5px 7px;border:1px solid #e3d5d2;border-radius:7px;font-family:inherit;"><input class="cs-n" placeholder="หมายเหตุ (ไม่บังคับ)" style="flex:1;min-width:110px;font-size:12px;padding:5px 8px;border:1px solid #e3d5d2;border-radius:7px;font-family:inherit;"><button onclick="this.parentNode.remove()" style="border:none;background:transparent;color:#C0392B;cursor:pointer;padding:3px;"><i class="ti ti-trash" style="font-size:14px;"></i></button>';
+  box.appendChild(d);
+}
+async function csSaveNew(){
+  var rows=Array.prototype.slice.call(document.querySelectorAll('#cs-newrows .cs-newrow')); var todo=[];
+  rows.forEach(function(r){ var d=r.querySelector('.cs-d').value, f=r.querySelector('.cs-f').value, t=r.querySelector('.cs-t').value, n=r.querySelector('.cs-n').value; if(d&&f&&t){ todo.push({date:d,time_start:f,time_end:t,note:(n||'').trim()}); } });
+  if(!todo.length){ try{showToast('กรอกวันที่/เวลาอย่างน้อย 1 แถว','warning');}catch(_){} return; }
+  var btn=document.getElementById('cs-save-btn'); var done=(typeof showLoading==='function')?showLoading(btn):function(){};
+  try{ for(var i=0;i<todo.length;i++){ await callApi('closed_slots','create',todo[i]); } done(); try{showToast('บันทึกปิดรับจอง '+todo.length+' ช่วงแล้ว');}catch(_){} await csLoad(); csRenderExisting(); var nr=document.getElementById('cs-newrows'); if(nr) nr.innerHTML=''; csAddFormRow(); if(typeof renderDashWeek==='function') renderDashWeek(); }
+  catch(e){ done(); try{showToast('บันทึกไม่สำเร็จ: '+e.message,'error');}catch(_){} }
+}
+async function csDelete(id){
+  if(!confirm('ลบช่วงปิดรับจองนี้?')) return;
+  try{ await callApi('closed_slots','delete',{id:id}); await csLoad(); csRenderExisting(); if(typeof renderDashWeek==='function') renderDashWeek(); try{showToast('ลบแล้ว');}catch(_){} }
+  catch(e){ try{showToast('ลบไม่สำเร็จ','error');}catch(_){} }
 }
 async function loadSettings(){
   try {
@@ -9699,6 +9756,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v200', date:'18/06/2569', items:['feat(v230 appt 2): closed_slots ปิดรับจอง — new sheet self-heal + red button + multi-row form (date/from/to/note) + black bars in week timeline · GAS@19 · live CRUD verified'] },
+  { ver:'v230', date:'18/06/2569', items:['feat(นัดหมาย 2): ปิดรับจอง — sheet closed_slots (self-heal) + ปุ่มแดงกำหนดเวลาไม่รับจอง + ฟอร์มหลายแถว(วันที่/จาก/ถึง/หมายเหตุ) + แท่งดำในตารางสัปดาห์'] },
   { ver:'v199', date:'18/06/2569', items:['feat(v229 appt 1B): treatment color per type (set in manager, store [name,color] backward-compat) + dashboard ตารางสัปดาห์ tab timeline 08-18 rolling 7d-from-today, bars colored by type, 4 lines, click name->viewAppt'] },
   { ver:'v229', date:'18/06/2569', items:['feat(นัดหมาย 1B): สีต่อประเภทการรักษา (เลือกในจัดการ · เก็บ [ชื่อ,สี] backward compat) + แท็บ "ตารางสัปดาห์" ในกรอบภาพรวม timeline 08-18 rolling 7 วันจากวันนี้ แท่งสีตามประเภท 4 บรรทัด คลิกชื่อแก้นัด'] },
   { ver:'v198', date:'18/06/2569', items:['feat(v228 appt D1): duration combo (datalist 30/45/60/90/120 typeable default 60) in add/edit appointment -> compute time_end (foundation for week timeline)'] },
