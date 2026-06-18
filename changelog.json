@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v204",
+    "date": "18/06/2569",
+    "items": [
+      "feat(v233 appt): patient link points to superclinic-appt.pages.dev (Cloudflare) — cleaner public URL"
+    ]
+  },
+  {
     "ver": "v203",
     "date": "18/06/2569",
     "items": [
