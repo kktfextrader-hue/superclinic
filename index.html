@@ -3086,11 +3086,13 @@ var qrcode = function() {
       <div style="display:inline-flex;border:1px solid #e3ddd0;border-radius:999px;overflow:hidden;font-size:12.5px;margin:2px 16px 6px;">
         <button id="dashtab-td" onclick="dashTab('td')" style="padding:6px 15px;border:none;background:#2F5D50;color:#fff;cursor:pointer;font-family:inherit;">วันนี้ &amp; พรุ่งนี้</button>
         <button id="dashtab-wk" onclick="dashTab('wk')" style="padding:6px 15px;border:none;background:transparent;color:#666;cursor:pointer;font-family:inherit;">ตารางสัปดาห์</button>
+        <button id="dashtab-free" onclick="dashTab('free')" style="padding:6px 15px;border:none;background:transparent;color:#666;cursor:pointer;font-family:inherit;border-left:1px solid #e3ddd0;">ตารางว่างนัด</button>
       </div>
       <div id="dash-appt-list" style="padding:8px 0;">
         <div style="text-align:center;padding:30px;color:#aaa;"><i class="ti ti-loader" style="font-size:20px;"></i></div>
       </div>
       <div id="dash-week" style="display:none;padding:4px 12px 12px;"></div>
+      <div id="dash-free" style="display:none;padding:4px 12px 12px;"></div>
     </div>
     <!-- Treatment stats -->
     <div class="card">
@@ -8158,13 +8160,63 @@ function renderDashWeek(){
   box.innerHTML=html;
 }
 function dashTab(m){
-  var td=document.getElementById('dash-appt-list'), wk=document.getElementById('dash-week');
-  var pt=document.getElementById('dashtab-td'), pw=document.getElementById('dashtab-wk');
+  var td=document.getElementById('dash-appt-list'), wk=document.getElementById('dash-week'), fr=document.getElementById('dash-free');
+  var pt=document.getElementById('dashtab-td'), pw=document.getElementById('dashtab-wk'), pf=document.getElementById('dashtab-free');
   if(!td||!wk) return;
   function on(b){ if(b){b.style.background='#2F5D50';b.style.color='#fff';} }
   function off(b){ if(b){b.style.background='transparent';b.style.color='#666';} }
-  if(m==='wk'){ td.style.display='none'; wk.style.display='block'; on(pw); off(pt); renderDashWeek(); if(typeof csLoad==='function') csLoad().then(function(){ renderDashWeek(); }); }
-  else { td.style.display='block'; wk.style.display='none'; on(pt); off(pw); }
+  td.style.display='none'; wk.style.display='none'; if(fr) fr.style.display='none'; off(pt); off(pw); off(pf);
+  if(m==='wk'){ wk.style.display='block'; on(pw); renderDashWeek(); if(typeof csLoad==='function') csLoad().then(function(){ renderDashWeek(); }); }
+  else if(m==='free'){ if(fr) fr.style.display='block'; on(pf); if(typeof renderDashFree==='function'){ renderDashFree(); if(typeof csLoad==='function') csLoad().then(function(){ renderDashFree(); }); } }
+  else { td.style.display='block'; on(pt); }
+}
+/* ===== DASH-FREE v1 (เฟส 3) — ตารางว่างนัด 7 วันจากวันนี้ ===== */
+function _afHm2m(s){ if(!s)return 0; var p=String(s).split(':'); return (+p[0])*60+(+(p[1]||0)); }
+function _afM2hm(m){ var h=Math.floor(m/60), mm=m%60; return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm; }
+function apptBusyOf(iso){
+  var busy=[];
+  (window.allAppts||[]).forEach(function(a){ if(!a) return; var st=(typeof normalizeStatus==='function'?normalizeStatus(a.status):a.status); if(st==='cancelled') return; if((typeof dateToISO==='function'?dateToISO(a.date):a.date)!==iso) return; var s=_afHm2m(a.time_start), e=a.time_end?_afHm2m(a.time_end):s+60; if(e>s) busy.push([s,e]); });
+  (window.allClosed||[]).forEach(function(c){ if(!c||c.date!==iso) return; var s=_afHm2m(c.time_start), e=_afHm2m(c.time_end); if(e>s) busy.push([s,e]); });
+  return busy;
+}
+function freeSlotsForDay(iso){
+  var OPEN=480, CLOSE=1080;
+  var busy=apptBusyOf(iso).map(function(b){ return [Math.max(b[0],OPEN), Math.min(b[1],CLOSE)]; }).filter(function(b){ return b[1]>b[0]; }).sort(function(a,b){ return a[0]-b[0]; });
+  var merged=[]; busy.forEach(function(b){ if(merged.length && b[0]<=merged[merged.length-1][1]){ merged[merged.length-1][1]=Math.max(merged[merged.length-1][1],b[1]); } else merged.push(b.slice()); });
+  var free=[], cur=OPEN;
+  merged.forEach(function(b){ if(b[0]>cur) free.push({s:cur,e:b[0]}); cur=Math.max(cur,b[1]); });
+  if(cur<CLOSE) free.push({s:cur,e:CLOSE});
+  return free;
+}
+function renderDashFree(){
+  var box=document.getElementById('dash-free'); if(!box) return;
+  var GAPW=3, MW=240, AW=300, TOT=540, mW=(MW/TOT)*(100-GAPW), aW=(AW/TOT)*(100-GAPW);
+  function xPct(m){ if(m<=720) return ((m-480)/MW)*mW; return mW+GAPW+((m-780)/AW)*aW; }
+  var HRS=[8,9,10,11,12,13,14,15,16,17,18], LBLW=52;
+  var days=(typeof dashWkDays==='function')?dashWkDays():[];
+  var gl='';
+  HRS.forEach(function(hr){ var x=xPct(hr*60); gl+='<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(0,0,0,.05);"></div>'; });
+  gl+='<div style="position:absolute;left:'+mW+'%;width:'+GAPW+'%;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(0,0,0,.03),rgba(0,0,0,.03) 4px,transparent 4px,transparent 8px);"></div>';
+  var html=(typeof sndButtonHtml==='function'?sndButtonHtml():'');
+  html+='<div style="overflow-x:auto;"><div style="min-width:880px;">';
+  html+='<div style="position:relative;height:15px;margin-left:'+LBLW+'px;">';
+  HRS.forEach(function(hr){ var x=xPct(hr*60); html+='<span style="position:absolute;left:'+x+'%;transform:translateX(-50%);font-size:10px;color:#aaa;">'+(hr<10?'0':'')+hr+'</span>'; });
+  html+='</div>';
+  days.forEach(function(day){
+    var free=freeSlotsForDay(day.iso);
+    var bg=day.today?'background:rgba(55,138,221,.06);':''; var lc=day.today?'#0C447C':'#666';
+    html+='<div style="display:flex;border-top:0.5px solid rgba(0,0,0,.07);'+bg+'">'
+      +'<div style="width:'+LBLW+'px;flex-shrink:0;padding:6px 4px;font-size:11px;color:'+lc+';line-height:1.3;">'+day.lbl+'<br><span style="font-size:10px;color:#aaa;">'+day.dm+(day.today?'·วันนี้':'')+'</span></div>'
+      +'<div style="position:relative;flex:1;height:40px;">'+gl;
+    free.forEach(function(f){
+      var L=xPct(f.s), W=xPct(f.e)-L; if(W<1.5) W=1.5;
+      html+='<div title="ว่าง '+_afM2hm(f.s)+'-'+_afM2hm(f.e)+'" style="position:absolute;left:'+L+'%;width:'+W+'%;top:4px;bottom:4px;background:#E1F5EE;border:1px solid #5DCAA5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#0F6E56;font-size:10.5px;font-weight:500;overflow:hidden;">ว่าง</div>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div></div>';
+  html+='<div style="font-size:10.5px;color:#aaa;margin-top:6px;">เขียว "ว่าง" = เวลาเปิด 08:00–18:00 − นัด − ปิดรับจอง</div>';
+  box.innerHTML=html;
 }
 /* ===== CLOSED-SLOTS v1 (เฟส 2) — ปิดรับจอง ===== */
 window.allClosed = window.allClosed || [];
@@ -9756,6 +9808,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v201', date:'18/06/2569', items:['feat(v231 appt 3): ตารางว่างนัด tab (7 days from today) — green ว่าง bars = open 08-18 minus appointments minus closed_slots (freeSlotsForDay)'] },
+  { ver:'v231', date:'18/06/2569', items:['feat(นัดหมาย 3): แท็บ "ตารางว่างนัด" 7 วันจากวันนี้ — แท่งเขียว "ว่าง" = เวลาเปิด08-18 − นัด − ปิดรับจอง (freeSlotsForDay merge/subtract)'] },
   { ver:'v200', date:'18/06/2569', items:['feat(v230 appt 2): closed_slots ปิดรับจอง — new sheet self-heal + red button + multi-row form (date/from/to/note) + black bars in week timeline · GAS@19 · live CRUD verified'] },
   { ver:'v230', date:'18/06/2569', items:['feat(นัดหมาย 2): ปิดรับจอง — sheet closed_slots (self-heal) + ปุ่มแดงกำหนดเวลาไม่รับจอง + ฟอร์มหลายแถว(วันที่/จาก/ถึง/หมายเหตุ) + แท่งดำในตารางสัปดาห์'] },
   { ver:'v199', date:'18/06/2569', items:['feat(v229 appt 1B): treatment color per type (set in manager, store [name,color] backward-compat) + dashboard ตารางสัปดาห์ tab timeline 08-18 rolling 7d-from-today, bars colored by type, 4 lines, click name->viewAppt'] },

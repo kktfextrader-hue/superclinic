@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v201",
+    "date": "18/06/2569",
+    "items": [
+      "feat(v231 appt 3): ตารางว่างนัด tab (7 days from today) — green ว่าง bars = open 08-18 minus appointments minus closed_slots (freeSlotsForDay)"
+    ]
+  },
+  {
     "ver": "v200",
     "date": "18/06/2569",
     "items": [
