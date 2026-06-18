@@ -1,5 +1,12 @@
 [
   {
+    "ver": "v198",
+    "date": "18/06/2569",
+    "items": [
+      "feat(v228 appt D1): duration combo (datalist 30/45/60/90/120 typeable default 60) in add/edit appointment -> compute time_end (foundation for week timeline)"
+    ]
+  },
+  {
     "ver": "v197",
     "date": "17/06/2569",
     "items": [

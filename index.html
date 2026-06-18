@@ -6413,6 +6413,11 @@ function openAddAppt(){
           <select id="appt-time-start" class="form-control" required><option value="00:00">00:00</option><option value="00:30">00:30</option><option value="01:00">01:00</option><option value="01:30">01:30</option><option value="02:00">02:00</option><option value="02:30">02:30</option><option value="03:00">03:00</option><option value="03:30">03:30</option><option value="04:00">04:00</option><option value="04:30">04:30</option><option value="05:00">05:00</option><option value="05:30">05:30</option><option value="06:00">06:00</option><option value="06:30">06:30</option><option value="07:00">07:00</option><option value="07:30">07:30</option><option value="08:00">08:00</option><option value="08:30">08:30</option><option value="09:00" selected>09:00</option><option value="09:30">09:30</option><option value="10:00">10:00</option><option value="10:30">10:30</option><option value="11:00">11:00</option><option value="11:30">11:30</option><option value="12:00">12:00</option><option value="12:30">12:30</option><option value="13:00">13:00</option><option value="13:30">13:30</option><option value="14:00">14:00</option><option value="14:30">14:30</option><option value="15:00">15:00</option><option value="15:30">15:30</option><option value="16:00">16:00</option><option value="16:30">16:30</option><option value="17:00">17:00</option><option value="17:30">17:30</option><option value="18:00">18:00</option><option value="18:30">18:30</option><option value="19:00">19:00</option><option value="19:30">19:30</option><option value="20:00">20:00</option><option value="20:30">20:30</option><option value="21:00">21:00</option><option value="21:30">21:30</option><option value="22:00">22:00</option><option value="22:30">22:30</option><option value="23:00">23:00</option><option value="23:30">23:30</option></select>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">ระยะเวลา (นาที)</label>
+        <input id="appt-duration" class="form-control" list="appt-dur-presets" value="60" inputmode="numeric" placeholder="นาที (พิมพ์เองได้ เช่น 60)">
+        <datalist id="appt-dur-presets"><option value="30"></option><option value="45"></option><option value="60"></option><option value="90"></option><option value="120"></option></datalist>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group">
           <label class="form-label">ประเภทการรักษา</label>
@@ -6653,6 +6658,9 @@ function apptPatSelect(id, name, isNew){
   if(box) box.style.display='none';
 }
 
+/* ===== APPT-DURATION v1 (Push D1) ===== */
+function apptAddMin(t, m){ if(!t) return ''; var p=String(t).split(':'); var tot=(+p[0])*60+(+(p[1]||0))+(+m||0); if(tot>1439)tot=1439; if(tot<0)tot=0; var h=Math.floor(tot/60), mm=tot%60; return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm; }
+function apptDurOf(a){ try{ if(a&&a.time_start&&a.time_end){ var s=String(a.time_start).split(':'),e=String(a.time_end).split(':'); var d=((+e[0])*60+(+e[1]))-((+s[0])*60+(+s[1])); if(d>0) return d; } }catch(_){} return 60; }
 async function submitAddAppt(e){
   e.preventDefault();
   const _done = showLoading(e.submitter);
@@ -6661,7 +6669,8 @@ async function submitAddAppt(e){
   const isNew   = document.getElementById('appt-pat-is-new').value === '1';
   const date    = dpGetValue('appt-date-in') || document.getElementById('appt-date-in').value;
   const tStart  = document.getElementById('appt-time-start').value;
-  const tEnd    = document.getElementById('appt-time-end')?.value || '';
+  const _adur   = parseInt((document.getElementById('appt-duration')?.value)||'60',10)||60;
+  const tEnd    = apptAddMin(tStart, _adur);
   const type    = document.getElementById('appt-type').value;
   const doctor  = document.getElementById('appt-room').value;
   const note    = document.getElementById('appt-note').value;
@@ -6863,6 +6872,11 @@ async function viewAppt(id){
           <select id="vappt-time" class="form-control">${(()=>{const tv=a.time_start||'09:00';let o='';for(let h=0;h<24;h++){for(const m of[0,30]){const t=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');o+=`<option value="${t}"${t===tv?' selected':''}>${t}</option>`;}}return o;})()}</select>
         </div>
         <div class="form-group">
+          <label class="form-label">ระยะเวลา (นาที)</label>
+          <input id="vappt-duration" class="form-control" list="vappt-dur-presets" value="${apptDurOf(a)}" inputmode="numeric">
+          <datalist id="vappt-dur-presets"><option value="30"></option><option value="45"></option><option value="60"></option><option value="90"></option><option value="120"></option></datalist>
+        </div>
+        <div class="form-group">
           <label class="form-label">ประเภทการรักษา</label>
           <select id="vappt-type" class="form-control">
             ${ttOpts(a.treatment_type,{plainOther:true})}
@@ -6910,6 +6924,7 @@ async function submitEditAppt(id){
       id,
       date:           dpGetValue('vappt-date') || '',
       time_start:     document.getElementById('vappt-time')?.value||'',
+      time_end:       apptAddMin(document.getElementById('vappt-time')?.value||'', parseInt(document.getElementById('vappt-duration')?.value||'60',10)||60),
       treatment_type: document.getElementById('vappt-type')?.value||'',
       status:         document.getElementById('vappt-status')?.value||'pending',
       doctor:         document.getElementById('vappt-doctor')?.value||'',
@@ -9608,6 +9623,8 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v198', date:'18/06/2569', items:['feat(v228 appt D1): duration combo (datalist 30/45/60/90/120 typeable default 60) in add/edit appointment -> compute time_end (foundation for week timeline)'] },
+  { ver:'v228', date:'18/06/2569', items:['feat(นัดหมาย D1): เพิ่มระยะเวลา (datalist 30/45/60/90/120 พิมพ์เองได้ default 60) ในสร้าง/แก้นัด -> บันทึก time_end · ฐานของตาราง timeline'] },
   { ver:'v197', date:'17/06/2569', items:['docs(Push B2): contact-channel.md — register field + history bottom line'] },
   { ver:'v196', date:'17/06/2569', items:['feat(v227 Push B2): contact channel in register form (next to height) + prefill/save to patient + show as bottom line in treatment history card'] },
   { ver:'v195', date:'17/06/2569', items:['docs(Push B): contact-channel.md as-built + lessons L11 (header-driven self-heal column)'] },
