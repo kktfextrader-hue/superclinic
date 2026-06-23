@@ -6750,6 +6750,7 @@ async function loadAppointments(){
     allAppts=window.allAppts=res.data?.rows||[];
     renderCalendar();
     renderApptDay(selApptDate);
+    try{ var _csp=[]; if(typeof csLoad==='function') _csp.push(csLoad()); if(typeof csLoadColor==='function') _csp.push(csLoadColor()); if(_csp.length) Promise.all(_csp).then(function(){ renderApptDay(selApptDate); }).catch(function(){}); }catch(_){}
     renderTreatTodayAppts(); // อัปเดต sidebar นัดวันนี้ในหน้ารักษา
   } catch(e){
     if(el) el.innerHTML=`<div style="padding:40px;text-align:center;color:#aaa;">⚠️ ${e.message}</div>`;
@@ -6794,11 +6795,12 @@ function renderApptDay(dateISO){
     el.classList.toggle('selected', el.getAttribute('onclick')===`renderApptDay('${dateISO}')`);
   });
   const dayA=allAppts.filter(a=>dateToISO(a.date)===dateISO).sort((a,b)=>(a.time_start||'').localeCompare(b.time_start||''));
+  const dayC=(window.allClosed||[]).filter(c=>c && c.date===dateISO).sort((a,b)=>(a.time_start||'').localeCompare(b.time_start||''));
   const hdr=document.getElementById('appt-day-header');
   if(hdr) hdr.innerHTML=`<i class="ti ti-list"></i>${toThaiDateFull(dateISO)} — ${dayA.length} นัด`;
   const el=document.getElementById('appt-list-container');
   if(!el) return;
-  if(!dayA.length){ el.innerHTML=`<div style="padding:40px;text-align:center;color:#aaa;">ไม่มีนัดหมายในวันนี้</div>`; return; }
+  if(!dayA.length && !dayC.length){ el.innerHTML=`<div style="padding:40px;text-align:center;color:#aaa;">ไม่มีนัดหมายในวันนี้</div>`; return; }
   const today=todayISO();
   // ── ตรวจนัดซ้ำ: นับชื่อผู้ป่วยที่ไม่ถูก cancelled ───────────────────────
   const nameCounts = {};
@@ -6812,7 +6814,7 @@ function renderApptDay(dateISO){
   Object.values(nameCounts).forEach(ids=>{
     if(ids.length > 1) ids.slice(1).forEach(id=>duplicateIds.add(id));
   });
-  el.innerHTML=dayA.map(a=>{
+  const _items=dayA.map(a=>{
     const tStart = parseTimeStr(a.time_start);
     const h=parseInt((tStart||'00:00').split(':')[0]);
     const lbl=apptStatusLabel(a.status);
@@ -6820,7 +6822,7 @@ function renderApptDay(dateISO){
     const lc=ns==='completed'?'var(--g2)':ns==='cancelled'?'#C0392B':'var(--go)';
     const pid=(a.id||'').replace(/'/g,"\\'"), pname=(a.patient_name||'').replace(/'/g,"\\'");
     const overdue=isOverdue(a,today);
-    return `<div class="appt-card">
+    return {t:a.time_start||'', html:`<div class="appt-card">
       <div class="appt-time-box"><div class="appt-time-h">${tStart||'—'}</div></div>
       <div class="appt-line-v" style="background:${lc};"></div>
       ${avatarHTML(a.patient_id||a.patient_name,34)}
@@ -6840,8 +6842,23 @@ function renderApptDay(dateISO){
           <div class="status-opt" onclick="setApptStatus('${pid}','completed',this)">😊 💵 รักษาแล้ว</div>
         </div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`};
+  });
+  const _closed=dayC.map(c=>{
+    const note=(c.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const sh=(typeof csShade==='function')?csShade():['#E6E6E6','#2b2b2b','#141414'];
+    const tr=(c.time_start||'')+(c.time_end?('-'+c.time_end):'');
+    return {t:c.time_start||'', html:`<div class="appt-card" style="background:${sh[0]};border-left:4px solid ${sh[1]};" onclick="if(typeof csOpen==='function')csOpen()" title="จัดการเวลาปิดรับจอง">
+      <div class="appt-time-box" style="background:rgba(0,0,0,.05);"><div class="appt-time-h" style="color:${sh[2]};">${c.time_start||'—'}</div></div>
+      <div style="width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.07);display:flex;align-items:center;justify-content:center;color:${sh[2]};flex-shrink:0;font-size:18px;"><i class="ti ti-lock"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13.5px;font-weight:500;color:${sh[2]};"><i class="ti ti-calendar-off"></i> ปิดรับจอง</div>
+        <div style="font-size:12px;color:${sh[1]};">${tr}${note?' • '+note:''}</div>
+      </div>
+      <span class="badge" style="background:${sh[1]};color:#fff;">ไม่รับนัด</span>
+    </div>`};
+  });
+  el.innerHTML=_items.concat(_closed).sort((x,y)=>(x.t||'').localeCompare(y.t||'')).map(o=>o.html).join('');
 }
 
 // ── View / Edit Appointment ──────────────────────────────────────────────────
@@ -7986,12 +8003,25 @@ async function loadFinance(){
 /* ===== TREATMENT-TYPES v100 (Push C) — editable add/แก้/ลบ soft-delete ===== */
 const TT_DEFAULT = ['นวดแผนไทย','ประคบสมุนไพร','อบสมุนไพร','ฝังเข็ม','ครอบแก้ว','นวด + ประคบ','ปรึกษาแพทย์','จ่ายยาสมุนไพร'];
 window._ttList = null;
-var TT_PAL={green:'#639922',teal:'#1D9E75',blue:'#378ADD',amber:'#BA7517',purple:'#7F77DD',pink:'#D4537E',coral:'#D85A30',red:'#E24B4A',gray:'#888780'};
-var TT_SHADE={green:['#EAF3DE','#639922','#173404'],teal:['#E1F5EE','#1D9E75','#04342C'],blue:['#E6F1FB','#378ADD','#042C53'],amber:['#FAEEDA','#BA7517','#412402'],purple:['#EEEDFE','#7F77DD','#26215C'],pink:['#FBEAF0','#D4537E','#4B1528'],coral:['#FAECE7','#D85A30','#4A1B0C'],red:['#FCEBEB','#E24B4A','#501313'],gray:['#F1EFE8','#888780','#2C2C2A']};
+var TT_PAL={green:'#639922',teal:'#1D9E75',blue:'#378ADD',amber:'#BA7517',purple:'#7F77DD',pink:'#D4537E',coral:'#D85A30',red:'#E24B4A',gray:'#888780',dark:'#2b2b2b'};
+var TT_SHADE={green:['#EAF3DE','#639922','#173404'],teal:['#E1F5EE','#1D9E75','#04342C'],blue:['#E6F1FB','#378ADD','#042C53'],amber:['#FAEEDA','#BA7517','#412402'],purple:['#EEEDFE','#7F77DD','#26215C'],pink:['#FBEAF0','#D4537E','#4B1528'],coral:['#FAECE7','#D85A30','#4A1B0C'],red:['#FCEBEB','#E24B4A','#501313'],gray:['#F1EFE8','#888780','#2C2C2A'],dark:['#E6E6E6','#2b2b2b','#141414']};
 function ttPairs(){ var raw=(Array.isArray(window._ttList)&&window._ttList.length)?window._ttList:TT_DEFAULT; return raw.map(function(it){ if(typeof it==='string') return {n:it,c:''}; if(Array.isArray(it)) return {n:it[0],c:it[1]||''}; if(it&&typeof it==='object') return {n:it.n||it.name||'',c:it.c||it.color||''}; return {n:String(it),c:''}; }).filter(function(p){return p.n;}); }
 function ttList(){ return ttPairs().map(function(p){return p.n;}); }
 function ttColor(name){ var p=ttPairs().filter(function(x){return x.n===name;})[0]; return p?p.c:''; }
-function ttColorShade(name){ var c=ttColor(name)||'gray'; return TT_SHADE[c]||TT_SHADE.gray; }
+function ttPalKeysNoDark(){ return Object.keys(TT_PAL).filter(function(k){ return k!=='dark'; }); }
+function ttHashColor(name){ var ks=ttPalKeysNoDark(); var s=String(name||''),h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return ks[h%ks.length]||'gray'; }
+function ttEffColorKey(name){ var c=ttColor(name); if(c&&TT_PAL[c]&&c!=='dark') return c; var ks=ttPalKeysNoDark(); var idx=ttList().indexOf(name); if(idx<0) return ttHashColor(name); return ks[idx%ks.length]||'gray'; }
+function ttColorShade(name){ return TT_SHADE[ttEffColorKey(name)]||TT_SHADE.gray; }
+
+/* ===== CLOSED-SLOT COLOR v1 (v208) — สีปิดรับจอง (เลือกใน จัดการประเภทการรักษา · default dark) ===== */
+window._csColor=null;
+function csColorKey(){ var k=window._csColor; return (k&&TT_PAL[k])?k:'dark'; }
+function csShade(){ return TT_SHADE[csColorKey()]||TT_SHADE.dark; }
+async function csLoadColor(){ try{ var r=await callApi('settings','get',null,'closed_slot_color'); var v=r&&r.data&&((r.data.row&&r.data.row.value)||r.data.value); if(v&&TT_PAL[v]) window._csColor=v; }catch(_){} return csColorKey(); }
+function csSaveColor(k){ try{ var p=callApi('settings','update',{key:'closed_slot_color',value:k,description:'สีปิดรับจอง'}); if(p&&p.catch) p.catch(function(){ try{ callApi('settings','create',{key:'closed_slot_color',value:k,description:'สีปิดรับจอง'}).catch(function(){}); }catch(_){} }); }catch(_){} }
+function csPickColor(k){ if(!TT_PAL[k]) return; window._csColor=k; try{ if(typeof ttRenderManage==='function') ttRenderManage(); }catch(_){} try{ if(typeof renderDashWeek==='function') renderDashWeek(); }catch(_){} try{ if(typeof renderApptDay==='function' && typeof selApptDate!=='undefined' && selApptDate) renderApptDay(selApptDate); }catch(_){} csSaveColor(k); try{showToast('ตั้งสีปิดรับจองแล้ว');}catch(_){} }
+function csManageRowHtml(){ var cur=csColorKey(); var sw=Object.keys(TT_PAL).map(function(k){ var on=cur===k; return '<span onclick="csPickColor(\''+k+'\')" title="'+k+'" style="width:16px;height:16px;border-radius:50%;background:'+TT_PAL[k]+';cursor:pointer;display:inline-block;box-shadow:'+(on?'0 0 0 2px #fff,0 0 0 4px '+TT_PAL[k]:'none')+';"></span>'; }).join(''); return '<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid #e3d6cf;border-radius:9px;background:#fbf7f4;flex-wrap:wrap;margin-bottom:8px;"><span style="color:#7a2e2e;font-size:13px;font-weight:500;width:118px;flex-shrink:0;"><i class="ti ti-calendar-off"></i> ปิดรับจอง</span><div style="display:flex;gap:4px;flex:1;flex-wrap:wrap;min-width:140px;">'+sw+'</div></div>'; }
+
 async function ttSavePairs(pairs){ window._ttList=pairs.map(function(p){return [p.n,p.c||''];}); var json=JSON.stringify(window._ttList); try{ await callApi('settings','update',{key:'treatment_types',value:json,description:'ประเภทการรักษา (แก้ได้)'}); }catch(e){ try{ await callApi('settings','create',{key:'treatment_types',value:json,description:'ประเภทการรักษา'}); }catch(_){ throw e; } } ttPopulateStatic(); }
 function ttEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function ttOpts(selected, opt){
@@ -8043,9 +8073,9 @@ function ttManageClose(){ var ov=document.getElementById('tt-mng-ov'); if(ov) ov
 function ttRenderManage(){
   var box=document.getElementById('tt-mng-list'); if(!box) return;
   var pairs=ttPairs();
-  if(!pairs.length){ box.innerHTML='<div style="color:#999;font-size:13px;padding:8px;">ยังไม่มีรายการ — เพิ่มด้านล่าง</div>'; return; }
-  box.innerHTML=pairs.map(function(p,i){
-    var sw=Object.keys(TT_PAL).map(function(k){ var on=(p.c||'gray')===k; return '<span onclick="ttSetColor('+i+',\''+k+'\')" title="'+k+'" style="width:16px;height:16px;border-radius:50%;background:'+TT_PAL[k]+';cursor:pointer;display:inline-block;box-shadow:'+(on?'0 0 0 2px #fff,0 0 0 4px '+TT_PAL[k]:'none')+';"></span>'; }).join('');
+  if(!pairs.length){ box.innerHTML=(typeof csManageRowHtml==='function'?csManageRowHtml():'')+'<div style="color:#999;font-size:13px;padding:8px;">ยังไม่มีรายการ — เพิ่มด้านล่าง</div>'; return; }
+  box.innerHTML=(typeof csManageRowHtml==='function'?csManageRowHtml():'')+pairs.map(function(p,i){
+    var sw=ttPalKeysNoDark().map(function(k){ var on=ttEffColorKey(p.n)===k; return '<span onclick="ttSetColor('+i+',\''+k+'\')" title="'+k+'" style="width:16px;height:16px;border-radius:50%;background:'+TT_PAL[k]+';cursor:pointer;display:inline-block;box-shadow:'+(on?'0 0 0 2px #fff,0 0 0 4px '+TT_PAL[k]:'none')+';"></span>'; }).join('');
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid rgba(0,0,0,.09);border-radius:9px;background:#fafaf8;flex-wrap:wrap;">'
       +'<span style="color:#bbb;font-size:12px;min-width:14px;">'+(i+1)+'</span>'
       +'<input value="'+ttEsc(p.n)+'" class="form-control" style="width:118px;padding:4px 7px;font-size:13px;height:auto;flex-shrink:0;" onchange="ttEditAt('+i+',this.value)">'
@@ -8083,7 +8113,7 @@ async function ttDeleteAt(i){
   try{ await ttSavePairs(pairs); ttRenderManage(); try{showToast('ลบ "'+name+'" แล้ว');}catch(_){} }
   catch(e){ try{showToast('บันทึกไม่สำเร็จ','error');}catch(_){} }
 }
-(function(){ function _tt(){ setTimeout(function(){ try{ if(typeof ttLoad==='function') ttLoad(); }catch(_){} }, 2600); } if(document.readyState!=='loading') _tt(); else document.addEventListener('DOMContentLoaded', _tt); })();
+(function(){ function _tt(){ setTimeout(function(){ try{ if(typeof ttLoad==='function') ttLoad(); }catch(_){} try{ if(typeof csLoadColor==='function') csLoadColor(); }catch(_){} }, 2600); } if(document.readyState!=='loading') _tt(); else document.addEventListener('DOMContentLoaded', _tt); })();
 /* ===== CONTACT-CHANNEL v100 (Push B) — pulldown+navkey+autocomplete+free text ===== */
 const CH_DEFAULT = ['หน้าร้าน (walk-in)','Facebook','LINE','Instagram','TikTok','Google Maps','เพื่อนแนะนำ','รถผ่าน / ป้ายหน้าร้าน','โรงพยาบาล/คลินิกส่งต่อ'];
 function chAC(val, ddId){
@@ -8143,12 +8173,13 @@ function renderDashWeek(){
         +(ch?'<div style="font-size:11px;color:'+sh[1]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;">'+(ci?'<i class="ti '+ci+'" aria-hidden="true"></i> ':'')+esc(ch)+'</div>':'')
         +'</div>';
     });
+    var _csSh=(typeof csShade==='function')?csShade():['#E6E6E6','#2b2b2b','#141414'];
     (window.allClosed||[]).filter(function(c){ return c && c.date===day.iso; }).forEach(function(c){
       var sm=toMin(c.time_start), em=toMin(c.time_end); if(em<=sm) em=sm+30;
       if(sm<480) sm=480; if(em>1080) em=1080; if(em<=480||sm>=1080) return;
       var L=xPct(sm), W=xPct(em)-L; if(W<1.5) W=1.5;
       var note=esc(c.note||'');
-      html+='<div title="ปิดรับจอง '+esc(c.time_start)+'-'+esc(c.time_end)+(note?(" "+note):"")+'" style="position:absolute;left:'+L+'%;width:'+W+'%;top:2px;bottom:2px;background:#2b2b2b;border-radius:6px;padding:3px 5px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;">'
+      html+='<div title="ปิดรับจอง '+esc(c.time_start)+'-'+esc(c.time_end)+(note?(" "+note):"")+'" style="position:absolute;left:'+L+'%;width:'+W+'%;top:2px;bottom:2px;background:'+_csSh[1]+';border-radius:6px;padding:3px 5px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;">'
         +'<div style="font-size:11px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.3;"><i class="ti ti-lock" aria-hidden="true"></i> ปิดรับจอง</div>'
         +(note?('<div style="font-size:10px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.2;">'+note+'</div>'):'')
         +'</div>';
@@ -8257,12 +8288,12 @@ async function csSaveNew(){
   rows.forEach(function(r){ var d=r.querySelector('.cs-d').value, f=r.querySelector('.cs-f').value, t=r.querySelector('.cs-t').value, n=r.querySelector('.cs-n').value; if(d&&f&&t){ todo.push({date:d,time_start:f,time_end:t,note:(n||'').trim()}); } });
   if(!todo.length){ try{showToast('กรอกวันที่/เวลาอย่างน้อย 1 แถว','warning');}catch(_){} return; }
   var btn=document.getElementById('cs-save-btn'); var done=(typeof showLoading==='function')?showLoading(btn):function(){};
-  try{ for(var i=0;i<todo.length;i++){ await callApi('closed_slots','create',todo[i]); } done(); try{showToast('บันทึกปิดรับจอง '+todo.length+' ช่วงแล้ว');}catch(_){} await csLoad(); csRenderExisting(); var nr=document.getElementById('cs-newrows'); if(nr) nr.innerHTML=''; csAddFormRow(); if(typeof renderDashWeek==='function') renderDashWeek(); }
+  try{ for(var i=0;i<todo.length;i++){ await callApi('closed_slots','create',todo[i]); } done(); try{showToast('บันทึกปิดรับจอง '+todo.length+' ช่วงแล้ว');}catch(_){} await csLoad(); csRenderExisting(); var nr=document.getElementById('cs-newrows'); if(nr) nr.innerHTML=''; csAddFormRow(); if(typeof renderDashWeek==='function') renderDashWeek(); if(typeof renderApptDay==='function'&&typeof selApptDate!=='undefined'&&selApptDate)renderApptDay(selApptDate); }
   catch(e){ done(); try{showToast('บันทึกไม่สำเร็จ: '+e.message,'error');}catch(_){} }
 }
 async function csDelete(id){
   if(!confirm('ลบช่วงปิดรับจองนี้?')) return;
-  try{ await callApi('closed_slots','delete',{id:id}); await csLoad(); csRenderExisting(); if(typeof renderDashWeek==='function') renderDashWeek(); try{showToast('ลบแล้ว');}catch(_){} }
+  try{ await callApi('closed_slots','delete',{id:id}); await csLoad(); csRenderExisting(); if(typeof renderDashWeek==='function') renderDashWeek(); if(typeof renderApptDay==='function'&&typeof selApptDate!=='undefined'&&selApptDate)renderApptDay(selApptDate); try{showToast('ลบแล้ว');}catch(_){} }
   catch(e){ try{showToast('ลบไม่สำเร็จ','error');}catch(_){} }
 }
 /* ===== SEND-FREE v1 (เฟส 4) — ส่งตารางว่างให้คนไข้ ===== */
@@ -9860,6 +9891,7 @@ const CL_KEY = 'superclinic_changelog';
 /* ===== RT-SYNC-EXPERIMENT END ===== */
 
 const CHANGELOG = [
+  { ver:'v208', date:'23/06/2569', items:['closed slots in appt list time-ordered plus closed-slot color setting plus per-type random colors reserve black'] },
   { ver:'v207', date:'18/06/2569', items:['fix(appt 3): hide free slots shorter than 60 min in freeSlotsForDay (affects free tab + patient page + text + QR)'] },
   { ver:'v206', date:'18/06/2569', items:['feat(v234 appt): appointment.html + QR code + ดูตารางว่าง hyperlink (qrcode-generator CDN) · push-now auto-deploys Cloudflare Pages (mirror + appointment)'] },
   { ver:'v205', date:'18/06/2569', items:['docs(appt): cloudflare pages deploy notes (superclinic-appt + app mirrors + deploy-cf.bat)'] },
